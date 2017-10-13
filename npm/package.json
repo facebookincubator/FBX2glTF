@@ -1,0 +1,27 @@
+{
+  "name": "fbx2gltf",
+  "version": "0.9.0",
+  "description": "Node wrapper around FBX2glTF tools.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/facebookincubator/FBX2glTF.git"
+  },
+  "contributors": [
+    "Pär Winzell <zell@fb.com>",
+    "J.M.P. van Waveren",
+    "Amanda Watson"
+  ],
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/facebookincubator/FBX2glTF/issues"
+  },
+  "homepage": "https://github.com/facebookincubator/FBX2glTF"
+  "files": [
+    "LICENSE",
+    "PATENTS",
+    "README.md",
+    "bin",
+    "index.js"
+  ]
+}

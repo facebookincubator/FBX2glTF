@@ -1,0 +1,6 @@
+This directory must be populated with the following files prior to building the
+NPM package:
+
+Darwin/FBX2glTF
+Linux/FBX2glTF
+Windows/FBX2glTF.exe
