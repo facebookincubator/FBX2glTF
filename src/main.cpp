@@ -40,8 +40,7 @@ int main(int argc, char *argv[])
     std::string inputPath;
     std::string outputPath;
 
-    Mat2f texturesTransform(0.0f);
-    bool  doTransformTextures = false;
+    std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
 
     GltfOptions gltfOptions{
         -1,            // keepAttribs
@@ -123,20 +122,16 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
 
     if (!gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
         if (verboseOutput) {
-            fmt::printf("Defaulting to KHR_materials_common material support.\n");
+            fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
         }
-        gltfOptions.useKHRMatCom = true;
+        gltfOptions.usePBRMetRough = true;
     }
 
     if (options.count("flip-u") > 0) {
-        texturesTransform(0, 0) = -1.0f;
-        texturesTransform(1, 1) =  1.0f;
-        doTransformTextures = true;
+        texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
     }
     if (options.count("flip-v") > 0) {
-        texturesTransform(0, 0) =  1.0f;
-        texturesTransform(1, 1) = -1.0f;
-        doTransformTextures = true;
+        texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
     }
 
     if (options.count("keepAttribute")) {
@@ -192,8 +187,8 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         return 1;
     }
 
-    if (doTransformTextures) {
-        raw.TransformTextures(texturesTransform);
+    if (!texturesTransforms.empty()) {
+        raw.TransformTextures(texturesTransforms);
     }
     raw.Condense();
 

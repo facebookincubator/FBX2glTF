@@ -336,14 +336,18 @@ void RawModel::Condense()
     }
 }
 
-void RawModel::TransformTextures(const Mat2f &transform)
+void RawModel::TransformTextures(const std::vector<std::function<Vec2f(Vec2f)>> &transforms)
 {
-    for (size_t i = 0; i < vertices.size(); i++) {
+    for (auto &vertice : vertices) {
         if ((vertexAttributes & RAW_VERTEX_ATTRIBUTE_UV0) != 0) {
-            vertices[i].uv0 = transform * vertices[i].uv0;
+            for (const auto &fun : transforms) {
+                vertice.uv0 = fun(vertice.uv0);
+            }
         }
         if ((vertexAttributes & RAW_VERTEX_ATTRIBUTE_UV1) != 0) {
-            vertices[i].uv1 = transform * vertices[i].uv1;
+            for (const auto &fun : transforms) {
+                vertice.uv1 = fun(vertice.uv1);
+            }
         }
     }
 }
