@@ -255,7 +255,7 @@ public:
     // Remove unused vertices, textures or materials after removing vertex attributes, textures, materials or surfaces.
     void Condense();
 
-    void TransformTextures(const Mat2f &transform);
+    void TransformTextures(const std::vector<std::function<Vec2f(Vec2f)>> &transforms);
 
     // Get the attributes stored per vertex.
     int GetVertexAttributes() const { return vertexAttributes; }
