@@ -327,10 +327,10 @@ ModelData *Raw2Gltf(
 
         for (int textureIndex = 0; textureIndex < raw.GetTextureCount(); textureIndex++) {
             const RawTexture  &texture    = raw.GetTexture(textureIndex);
-            std::string       textureName = Gltf::StringUtils::GetFileBaseString(texture.name);
-            // texture.name is the inferred filename on *our* system
-            const std::string texFilename = texture.name;
-            ImageData         *source     = nullptr;
+            const std::string textureName = Gltf::StringUtils::GetFileBaseString(texture.name);
+            const std::string texFilename = texture.fileName;
+
+            ImageData *source = nullptr;
             if (options.outputBinary) {
                 std::ifstream file(texFilename, std::ios::binary | std::ios::ate);
                 if (file) {
