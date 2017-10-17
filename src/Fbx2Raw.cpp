@@ -563,7 +563,9 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
             const auto maybeAddTexture = [&](FbxFileTexture *tex, RawTextureUsage usage) {
                 if (tex != nullptr) {
-                    textures[usage] = raw.AddTexture(tex->GetName(), tex->GetFileName(), usage);
+                    // dig out the inferred filename from the textureNames map
+                    const char *inferredPath = textureNames.find(tex)->second;
+                    textures[usage] = raw.AddTexture(tex->GetName(), inferredPath, usage);
                 }
             };
 
@@ -946,18 +948,6 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
     }
 }
 
-static FbxString GetFileFolder(const char *fileName)
-{
-    std::string clean = Gltf::StringUtils::GetCleanPathString(fileName, Gltf::StringUtils::PATH_UNIX);
-
-    FbxString folder = clean.c_str();
-    folder = folder.Left(folder.ReverseFind('/') + 1);    // strip the file name
-    if (folder.GetLen() < 2 || folder[1] != ':') {
-        folder = std::string(FileUtils::GetCurrentFolder() + folder.Buffer()).c_str();
-    }
-    return folder;
-}
-
 static std::string GetInferredFileName(const char *fbxFileName, const char *directory, const std::vector<std::string> &directoryFileList)
 {
     // Get the file name with file extension.
@@ -1004,7 +994,7 @@ static void
 FindFbxTextures(FbxScene *pScene, const char *fbxFileName, const char *extensions, std::map<const FbxTexture *, FbxString> &textureNames)
 {
     // Get the folder the FBX file is in.
-    const FbxString folder = GetFileFolder(fbxFileName);
+    const FbxString folder = Gltf::StringUtils::GetFolderString(fbxFileName).c_str();
 
     // Check if there is a filename.fbm folder to which embedded textures were extracted.
     const FbxString fbmFolderName = folder + Gltf::StringUtils::GetFileBaseString(fbxFileName).c_str() + ".fbm/";
