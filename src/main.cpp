@@ -169,11 +169,11 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
     } else {
         // in gltf mode, we create a folder and write into that
         outputFolder = outputPath + "_out/";
-        if (!FileUtils::CreatePath(outputFolder.c_str())) {
-            fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
-            return 1;
-        }
         modelPath = outputFolder + Gltf::StringUtils::GetFileNameString(outputPath) + ".gltf";
+    }
+    if (!FileUtils::CreatePath(modelPath.c_str())) {
+        fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
+        return 1;
     }
 
     ModelData *data_render_model = nullptr;
