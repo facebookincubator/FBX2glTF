@@ -11,6 +11,7 @@
 #define __RAWMODEL_H__
 
 #include <unordered_map>
+#include <functional>
 
 enum RawVertexAttribute
 {

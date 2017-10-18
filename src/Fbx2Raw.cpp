@@ -240,7 +240,7 @@ class FbxMaterialsAccess
 {
 public:
 
-    FbxMaterialAccess(const FbxMesh *pMesh) :
+    FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<const FbxTexture *, FbxString> &textureNames) :
         mappingMode(FbxGeometryElement::eNone),
         mesh(nullptr),
         indices(nullptr)
@@ -490,7 +490,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const FbxLayerElementAccess<FbxVector2> uvLayer0(pMesh->GetElementUV(0), pMesh->GetElementUVCount());
     const FbxLayerElementAccess<FbxVector2> uvLayer1(pMesh->GetElementUV(1), pMesh->GetElementUVCount());
     const FbxSkinningAccess                 skinning(pMesh, pScene, pNode);
-    const FbxMaterialsAccess                 materials(pMesh, textureNames);
+    const FbxMaterialsAccess                materials(pMesh, textureNames);
 
     if (verboseOutput) {
         fmt::printf(
