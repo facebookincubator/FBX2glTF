@@ -367,6 +367,11 @@ ModelData *Raw2Gltf(
 
         for (int materialIndex = 0; materialIndex < raw.GetMaterialCount(); materialIndex++) {
             const RawMaterial &material = raw.GetMaterial(materialIndex);
+            const bool isTransparent =
+                           material.type == RAW_MATERIAL_TYPE_VERTEX_COLORED ||
+                           material.type == RAW_MATERIAL_TYPE_SKINNED_VERTEX_COLORED ||
+                           material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
+                           material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
 
             // find a texture by usage and return it as a TextureData*, or nullptr if none exists.
             auto getTex = [&](RawTextureUsage usage)
@@ -407,7 +412,7 @@ ModelData *Raw2Gltf(
             }
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
-                    material.name, getTex(RAW_TEXTURE_USAGE_NORMAL),
+                    material.name, isTransparent, getTex(RAW_TEXTURE_USAGE_NORMAL),
                     getTex(RAW_TEXTURE_USAGE_EMISSIVE), material.emissiveFactor,
                     khrComMat, pbrMetRough, pbrSpecGloss));
             materialsByName[materialHash(material)] = mData;
