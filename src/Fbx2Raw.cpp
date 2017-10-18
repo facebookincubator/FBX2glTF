@@ -169,7 +169,7 @@ public:
             fmt::printf("Warning: Mat [%s]: Can't handle texture for %s; discarding.\n", name, FbxSurfaceMaterial::sTransparencyFactor);
         }
         // FBX color is RGB, so we supply the A channel from TransparencyFactor
-        res.colDiffuse[3] = transparency[3];
+        res.colDiffuse[3] = 1.0 - transparency[3];
 
         return res;
     }

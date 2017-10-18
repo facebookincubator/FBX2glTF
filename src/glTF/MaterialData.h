@@ -82,7 +82,7 @@ struct PBRMetallicRoughness
 struct MaterialData : Holdable
 {
     MaterialData(
-        std::string name, const TextureData *normalTexture,
+        std::string name, bool isTransparent, const TextureData *normalTexture,
         const TextureData *emissiveTexture, const Vec3f &emissiveFactor,
         std::shared_ptr<KHRCommonMats> const khrCommonMats,
         std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness,
@@ -91,6 +91,7 @@ struct MaterialData : Holdable
     json serialize() const override;
 
     const std::string                name;
+    const bool                       isTransparent;
     const std::unique_ptr<const Tex> normalTexture;
     const std::unique_ptr<const Tex> emissiveTexture;
     const Vec3f                      emissiveFactor;

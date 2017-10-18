@@ -95,7 +95,7 @@ int RawModel::AddTexture(const char *name, const char *fileName, const RawTextur
         }
     }
 
-    const ImageProperties properties = GetImageProperties(name);
+    const ImageProperties properties = GetImageProperties(fileName);
 
     RawTexture texture;
     texture.name      = name;
@@ -421,12 +421,12 @@ void RawModel::CreateMaterialModels(
         // Sort the transparent triangles in the reverse direction.
         std::sort(transparentTriangles.begin(), transparentTriangles.end(), TriangleModelSortNeg::Compare);
 
-        for (const auto &transparentTriangle : transparentTriangles) {
-            sortedTriangles.push_back(transparentTriangle);
-        }
         // Add the triangles to the sorted list.
         for (const auto &opaqueTriangle : opaqueTriangles) {
             sortedTriangles.push_back(opaqueTriangle);
+        }
+        for (const auto &transparentTriangle : transparentTriangles) {
+            sortedTriangles.push_back(transparentTriangle);
         }
     } else {
         sortedTriangles = triangles;
