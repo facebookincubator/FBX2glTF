@@ -653,10 +653,14 @@ ModelData *Raw2Gltf(
           { "asset", {
               { "generator", "FBX2glTF" },
               { "version", "2.0" }}},
-          { "extensionsUsed", extensionsUsed },
-          { "extensionsRequired", extensionsRequired },
           { "scene", rootScene.ix }
         };
+        if (!extensionsUsed.empty()) {
+            glTFJson["extensionsUsed"] = extensionsUsed;
+        }
+        if (!extensionsRequired.empty()) {
+            glTFJson["extensionsRequired"] = extensionsRequired;
+        }
 
         gltf->serializeHolders(glTFJson);
         gltfOutStream << glTFJson.dump(options.outputBinary ? 0 : 4);
