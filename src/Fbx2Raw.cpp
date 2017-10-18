@@ -536,7 +536,6 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
     }
 
-    std::set<std::string> collectedWarnings;
     int polygonVertexIndex = 0;
 
     for (int polygonIndex = 0; polygonIndex < pMesh->GetPolygonCount(); polygonIndex++) {
@@ -690,9 +689,6 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         }
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
-    }
-    for (const auto &warning : collectedWarnings) {
-        fmt::fprintf(stderr, "%s\n", warning);
     }
 }
 
