@@ -13,6 +13,35 @@ and located in three eponymous directories:
  - bin/Linux/FBX2glTF
  - bin/Windows/FBX2glTF.exe
 
+# Usage
+
+```js
+/**
+ * Converts an FBX to a GTLF or GLB file.
+ * @param string srcFile path to the source file.
+ * @param string destFile path to the destination file.
+ * This must end in `.glb` or `.gltf` (case matters).
+ * @param string[] [opts] options to pass to the converter tool.
+ * @return Promise<string> a promise that yields the full path to the converted
+ * file, an error on conversion failure.
+ */
+convert(srcPath :string, destPath :string, args :?string[]) :Promise<string>
+```
+
+For example:
+
+```js
+const convert = require('fbx2gltf');
+convert('path/to/some.fbx', 'path/to/target.glb', ['--flip-v']).then(
+  destPath => {
+    // yay, do what we will with our shiny new GLB file!
+  },
+  error => {
+    // ack, conversion failed: inspect 'error' for details
+  }
+);
+```
+
 # Further Reading
 
 The home of this tool is [here](https://github.com/facebookincubator/FBX2glTF).
