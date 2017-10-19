@@ -93,6 +93,35 @@ struct GLTFData
         return bufferView;
     }
 
+    std::shared_ptr<BufferViewData> AddBufferViewForFile(BufferData &buffer, const std::string &filename)
+    {
+        // see if we've already created a BufferViewData for this precise file
+        auto iter = filenameToBufferView.find(filename);
+        if (iter != filenameToBufferView.end()) {
+            return iter->second;
+        }
+
+        std::shared_ptr<BufferViewData> result;
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+        if (file) {
+            std::streamsize size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            std::vector<char> fileBuffer(size);
+            if (file.read(fileBuffer.data(), size)) {
+                result = AddRawBufferView(buffer, fileBuffer.data(), size);
+            } else {
+                fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping\n", size, filename);
+            }
+        } else {
+            fmt::printf("Warning: Couldn't open texture file %s, skipping\n", filename);
+        }
+        // note that we persist here not only success, but also failure, as nullptr
+        filenameToBufferView[filename] = result;
+        return result;
+    }
+
+
     template<class T>
     std::shared_ptr<AccessorData> AddAccessorWithView(
         BufferViewData &bufferView, const GLType &type, const std::vector<T> &source)
@@ -164,7 +193,12 @@ struct GLTFData
     }
 
     const bool isGlb;
+
+    // cache BufferViewData instances that've already been created from a given filename
+    const std::map<std::string, std::shared_ptr<BufferViewData>> filenameToBufferView;
+
     std::shared_ptr<std::vector<uint8_t> > binary;
+
 
     Holder<BufferData>     buffers;
     Holder<BufferViewData> bufferViews;
@@ -332,23 +366,13 @@ ModelData *Raw2Gltf(
 
             ImageData *source = nullptr;
             if (options.outputBinary) {
-                std::ifstream file(texFilename, std::ios::binary | std::ios::ate);
-                if (file) {
-                    std::streamsize size = file.tellg();
-                    file.seekg(0, std::ios::beg);
-
-                    std::vector<char> fileBuffer(size);
-                    if (file.read(fileBuffer.data(), size)) {
-                        auto bufferView = gltf->AddRawBufferView(buffer, fileBuffer.data(), size);
-                        source = new ImageData(textureName, *bufferView, "image/png");
-                    } else {
-                        fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping\n", size, texFilename.c_str());
-                    }
-                } else {
-                    fmt::printf("Warning: Couldn't open texture file %s, skipping\n", texFilename.c_str());
+                auto bufferView = gltf->AddBufferViewForFile(buffer, texFilename);
+                if (bufferView) {
+                    source = new ImageData(textureName, *bufferView, "image/png");
                 }
+
             } else {
-                // TODO: write to buffer.bin?
+                // TODO: don't add .ktx here; try to work out a reasonable relative path.
                 source = new ImageData(textureName, textureName + ".ktx");
             }
             if (!source) {
