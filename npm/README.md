@@ -11,7 +11,7 @@ This package contains three versions of `FBX2glTF`, compiled for three platforms
 and located in three eponymous directories:
  - bin/Darwin/FBX2glTF
  - bin/Linux/FBX2glTF
- - bin/Windows/FBX2glTF.exe
+ - bin/Windows_NT/FBX2glTF.exe
 
 # Further Reading
 

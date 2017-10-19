@@ -16,12 +16,15 @@
   "bugs": {
     "url": "https://github.com/facebookincubator/FBX2glTF/issues"
   },
-  "homepage": "https://github.com/facebookincubator/FBX2glTF"
+  "homepage": "https://github.com/facebookincubator/FBX2glTF",
   "files": [
     "LICENSE",
     "PATENTS",
     "README.md",
     "bin",
     "index.js"
-  ]
+  ],
+  "dependencies": {
+    "rimraf": "^2.6.2"
+  }
 }
