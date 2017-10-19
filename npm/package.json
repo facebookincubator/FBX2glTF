@@ -23,5 +23,8 @@
     "README.md",
     "bin",
     "index.js"
-  ]
+  ],
+  "dependencies": {
+    "rimraf": "^2.6.2"
+  }
 }
