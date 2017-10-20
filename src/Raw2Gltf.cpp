@@ -14,6 +14,7 @@
 
 #include "FBX2glTF.h"
 #include "utils/String_Utils.h"
+#include "utils/Image_Utils.h"
 #include "RawModel.h"
 #include "Raw2Gltf.h"
 
@@ -360,27 +361,27 @@ ModelData *Raw2Gltf(
         //
 
         for (int textureIndex = 0; textureIndex < raw.GetTextureCount(); textureIndex++) {
-            const RawTexture  &texture    = raw.GetTexture(textureIndex);
-            const std::string textureName = Gltf::StringUtils::GetFileBaseString(texture.name);
-            const std::string texFilename = texture.fileName;
+            const RawTexture  &texture         = raw.GetTexture(textureIndex);
+            const std::string textureName      = Gltf::StringUtils::GetFileBaseString(texture.name);
+            const std::string relativeFilename = Gltf::StringUtils::GetFileNameString(texture.fileLocation);
 
             ImageData *source = nullptr;
             if (options.outputBinary) {
-                auto bufferView = gltf->AddBufferViewForFile(buffer, texFilename);
+                auto bufferView = gltf->AddBufferViewForFile(buffer, texture.fileLocation);
                 if (bufferView) {
-                    source = new ImageData(textureName, *bufferView, "image/png");
+                    std::string suffix = Gltf::StringUtils::GetFileSuffixString(texture.fileLocation);
+                    source = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
                 }
 
             } else {
-                // TODO: don't add .ktx here; try to work out a reasonable relative path.
-                source = new ImageData(textureName, textureName + ".ktx");
+                source = new ImageData(relativeFilename, relativeFilename);
             }
             if (!source) {
                 // fallback is tiny transparent gif
                 source = new ImageData(textureName, "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=");
             }
 
-            TextureData &texDat = *gltf->textures.hold(
+            const TextureData &texDat = *gltf->textures.hold(
                 new TextureData(textureName, defaultSampler, *gltf->images.hold(source)));
             assert(texDat.ix == textureIndex);
         }

@@ -122,13 +122,14 @@ enum RawTextureOcclusion
 
 struct RawTexture
 {
-    std::string         name;
+    std::string         name;           // logical name in FBX file
     int                 width;
     int                 height;
     int                 mipLevels;
     RawTextureUsage     usage;
     RawTextureOcclusion occlusion;
-    std::string         fileName;
+    std::string         fileName;       // original filename in FBX file
+    std::string         fileLocation;   // inferred path in local filesystem, or ""
 };
 
 enum RawMaterialType
@@ -233,7 +234,7 @@ public:
     void AddVertexAttribute(const RawVertexAttribute attrib);
     int AddVertex(const RawVertex &vertex);
     int AddTriangle(const int v0, const int v1, const int v2, const int materialIndex, const int surfaceIndex);
-    int AddTexture(const char *name, const char *fileName, const RawTextureUsage usage);
+    int AddTexture(const std::string &name, const std::string &fileName, const std::string &fileLocation, RawTextureUsage usage);
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
         const char *name, const char *shadingModel, RawMaterialType materialType,
