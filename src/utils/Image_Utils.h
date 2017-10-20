@@ -10,8 +10,6 @@
 #ifndef __IMAGE_UTILS_H__
 #define __IMAGE_UTILS_H__
 
-#include <map>
-
 enum ImageOcclusion
 {
     IMAGE_OPAQUE,
