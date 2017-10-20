@@ -13,10 +13,10 @@
 namespace FileUtils {
     std::string GetCurrentFolder();
 
-    bool FolderExists(const char *folderPath);
+    bool FolderExists(const std::string &folderPath);
 
     bool MatchExtension(const char *fileExtension, const char *matchExtensions);
-    void ListFolderFiles(std::vector<std::string> &fileList, const char *folder, const char *matchExtensions);
+    std::vector<std::string> ListFolderFiles(const char *folder, const char *matchExtensions);
 
     bool CreatePath(const char *path);
 }

@@ -31,8 +31,9 @@ ImageData::ImageData(std::string name, const BufferViewData &bufferView, std::st
 
 json ImageData::serialize() const
 {
-    if (mimeType.empty()) {
+    if (bufferView < 0) {
         return {
+            { "name", name },
             { "uri", uri }
         };
     }

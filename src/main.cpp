@@ -182,7 +182,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
     if (verboseOutput) {
         fmt::printf("Loading FBX File: %s\n", inputPath);
     }
-    if (!LoadFBXFile(raw, inputPath.c_str(), "tga;bmp;png;jpg")) {
+    if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg")) {
         fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
         return 1;
     }

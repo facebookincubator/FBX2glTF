@@ -54,17 +54,17 @@ namespace FileUtils {
         return std::string(cwd);
     }
 
-    bool FolderExists(const char *folderPath)
+    bool FolderExists(const std::string &folderPath)
     {
 #if defined( __unix__ ) || defined( __APPLE__ )
-        DIR *dir = opendir(folderPath);
+        DIR *dir = opendir(folderPath.c_str());
         if (dir) {
             closedir(dir);
             return true;
         }
         return false;
 #else
-        const DWORD ftyp = GetFileAttributesA( folderPath );
+        const DWORD ftyp = GetFileAttributesA( folderPath.c_str() );
         if ( ftyp == INVALID_FILE_ATTRIBUTES )
         {
             return false;  // bad path
@@ -97,34 +97,34 @@ namespace FileUtils {
         return false;
     }
 
-    void ListFolderFiles(std::vector<std::string> &fileList, const char *folder, const char *matchExtensions)
+    std::vector<std::string> ListFolderFiles(const char *folder, const char *matchExtensions)
     {
+        std::vector<std::string> fileList;
 #if defined( __unix__ ) || defined( __APPLE__ )
         DIR *dir = opendir(folder);
-        if (dir == nullptr) {
-            return;
+        if (dir != nullptr) {
+            for (;;) {
+                struct dirent *dp = readdir(dir);
+                if (dp == nullptr) {
+                    break;
+                }
+
+                if (dp->d_type == DT_DIR) {
+                    continue;
+                }
+
+                const char *fileName = dp->d_name;
+                const char *fileExt  = strrchr(fileName, '.');
+
+                if (!fileExt || !MatchExtension(fileExt, matchExtensions)) {
+                    continue;
+                }
+
+                fileList.emplace_back(fileName);
+            }
+
+            closedir(dir);
         }
-        for (;;) {
-            struct dirent *dp = readdir(dir);
-            if (dp == nullptr) {
-                break;
-            }
-
-            if (dp->d_type == DT_DIR) {
-                continue;
-            }
-
-            const char *fileName = dp->d_name;
-            const char *fileExt  = strrchr(fileName, '.');
-
-            if (!fileExt || !MatchExtension(fileExt, matchExtensions)) {
-                continue;
-            }
-
-            fileList.emplace_back(fileName);
-        }
-
-        closedir(dir);
 #else
         std::string pathStr = folder;
         pathStr += "*";
@@ -148,6 +148,7 @@ namespace FileUtils {
             FindClose( hFind );
         }
 #endif
+        return fileList;
     }
 
     bool CreatePath(const char *path)
