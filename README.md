@@ -244,4 +244,4 @@ TODO items can be found
  - Amanda Watson
 
 ## License
-`FBX2glTF` is BSD-licensed. We also provide an additional patent grant.
+FBX2glTF is BSD-licensed. We also provide an additional patent grant.
