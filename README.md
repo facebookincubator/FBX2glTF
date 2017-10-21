@@ -221,7 +221,10 @@ ratification process.**
 
 ## Future Improvements
 This tool is under continuous development. We do not have a development roadmap
-per se, but some aspirations have been noted above.
+per se, but some aspirations have been noted above. The canonical list of active
+TODO items can be found
+[on GitHub](https://github.com/facebookincubator/FBX2glTF/labels/enhancement).
+
 
 ## Authors
  - Pär Winzell
