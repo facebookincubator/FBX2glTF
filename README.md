@@ -92,11 +92,11 @@ and [fmt](https://github.com/fmtlib/fmt);
 all of which are automatically downloaded, configured and built.
 
 You must manually download and install the
-[Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) 2018.1.1 and
-accept its license agreement. Once installed, the build system will attempt to
-find the SDK in its default location for each system.
+[Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) and
+accept its license agreement.
 
-Once that's all done...
+**At present, only version 2018.1.1 of the FBX SDK is supported**. The
+build system will not successfully locate any other version.
 
 ### Linux and MacOS X
 Compilation on Unix machines should be as simple as:
@@ -113,9 +113,11 @@ If all goes well, you will end up with a statically linked executable.
 
 Windows users may [download](https://cmake.org/download) CMake for Windows,
 install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
-checkout (choose a build directory distinct from the source). As part of this
-process, you will be asked to choose which generator to use; the code is only
-known to compile on ***Visual Studio 2017***.
+checkout (choose a build directory distinct from the source).
+
+As part of this process, you will be asked to choose which generator
+to use. **At present, only Visual Studio 2017 is supported.** Older
+versions of the IDE are unlikely to successfully build the cool.
 
 *(MinGW support may be plausible. Contributions welcome.)*
 

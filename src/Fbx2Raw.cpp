@@ -106,7 +106,7 @@ class FbxMaterialAccess
 
 private:
     const FbxSurfaceMaterial *fbxMaterial;
-    const std::map<const FbxTexture *, FbxString> &textureNames;
+    const std::map<const FbxTexture *, FbxString> &textureLocations;
 
 public:
     const FbxString name;
@@ -119,7 +119,7 @@ public:
         fbxMaterial(fbxMaterial),
         name(fbxMaterial->GetName()),
         shadingModel(fbxMaterial->ShadingModel),
-        textureNames(textureNames),
+        textureLocations(textureNames),
         props(extractTextures())
     {}
 
@@ -180,7 +180,7 @@ public:
 
         FbxDouble val(0);
         FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
-        if (tex != nullptr && textureNames.find(tex) == textureNames.end()) {
+        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
             tex = nullptr;
         }
         if (tex == nullptr && prop.IsValid()) {
@@ -195,7 +195,7 @@ public:
 
         FbxDouble3 val(1, 1, 1);
         FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
-        if (tex != nullptr && textureNames.find(tex) == textureNames.end()) {
+        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
             tex = nullptr;
         }
         if (tex == nullptr && prop.IsValid()) {
@@ -213,14 +213,14 @@ public:
         FbxDouble  factorVal(1);
 
         FbxFileTexture *colTex = colProp.GetSrcObject<FbxFileTexture>();
-        if (colTex != nullptr && textureNames.find(colTex) == textureNames.end()) {
+        if (colTex != nullptr && textureLocations.find(colTex) == textureLocations.end()) {
             colTex = nullptr;
         }
         if (colTex == nullptr && colProp.IsValid()) {
             colorVal = colProp.Get<FbxDouble3>();
         }
         FbxFileTexture *facTex = facProp.GetSrcObject<FbxFileTexture>();
-        if (facTex != nullptr && textureNames.find(facTex) == textureNames.end()) {
+        if (facTex != nullptr && textureLocations.find(facTex) == textureLocations.end()) {
             facTex = nullptr;
         }
         if (facTex == nullptr && facProp.IsValid()) {
@@ -240,7 +240,7 @@ class FbxMaterialsAccess
 {
 public:
 
-    FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<const FbxTexture *, FbxString> &textureNames) :
+    FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<const FbxTexture *, FbxString> &textureLocations) :
         mappingMode(FbxGeometryElement::eNone),
         mesh(nullptr),
         indices(nullptr)
@@ -272,7 +272,7 @@ public:
             if (summary == nullptr) {
                 summary = summaries[materialNum] = std::make_shared<FbxMaterialAccess>(
                     mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum),
-                    textureNames);
+                    textureLocations);
             }
         }
     }
@@ -473,7 +473,7 @@ GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], 
     return skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE;
 }
 
-static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std::map<const FbxTexture *, FbxString> &textureNames)
+static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std::map<const FbxTexture *, FbxString> &textureLocations)
 {
     FbxGeometryConverter meshConverter(pScene->GetFbxManager());
     meshConverter.Triangulate(pNode->GetNodeAttribute(), true);
@@ -490,7 +490,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const FbxLayerElementAccess<FbxVector2> uvLayer0(pMesh->GetElementUV(0), pMesh->GetElementUVCount());
     const FbxLayerElementAccess<FbxVector2> uvLayer1(pMesh->GetElementUV(1), pMesh->GetElementUVCount());
     const FbxSkinningAccess                 skinning(pMesh, pScene, pNode);
-    const FbxMaterialsAccess                materials(pMesh, textureNames);
+    const FbxMaterialsAccess                materials(pMesh, textureLocations);
 
     if (verboseOutput) {
         fmt::printf(
@@ -562,9 +562,9 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
             const auto maybeAddTexture = [&](FbxFileTexture *tex, RawTextureUsage usage) {
                 if (tex != nullptr) {
-                    // dig out the inferred filename from the textureNames map
-                    const char *inferredPath = textureNames.find(tex)->second;
-                    textures[usage] = raw.AddTexture(tex->GetName(), inferredPath, usage);
+                    // dig out the inferred filename from the textureLocations map
+                    FbxString inferredPath = textureLocations.find(tex)->second;
+                    textures[usage] = raw.AddTexture(tex->GetName(), tex->GetFileName(), inferredPath.Buffer(), usage);
                 }
             };
 
@@ -708,7 +708,8 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
     }
 }
 
-static void ReadNodeAttributes(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std::map<const FbxTexture *, FbxString> &textureNames)
+static void ReadNodeAttributes(
+    RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std::map<const FbxTexture *, FbxString> &textureLocations)
 {
     if (!pNode->GetVisibility()) {
         return;
@@ -723,7 +724,7 @@ static void ReadNodeAttributes(RawModel &raw, FbxScene *pScene, FbxNode *pNode, 
             case FbxNodeAttribute::eNurbsSurface:
             case FbxNodeAttribute::eTrimNurbsSurface:
             case FbxNodeAttribute::ePatch: {
-                ReadMesh(raw, pScene, pNode, textureNames);
+                ReadMesh(raw, pScene, pNode, textureLocations);
                 break;
             }
             case FbxNodeAttribute::eCamera: {
@@ -752,7 +753,7 @@ static void ReadNodeAttributes(RawModel &raw, FbxScene *pScene, FbxNode *pNode, 
     }
 
     for (int child = 0; child < pNode->GetChildCount(); child++) {
-        ReadNodeAttributes(raw, pScene, pNode->GetChild(child), textureNames);
+        ReadNodeAttributes(raw, pScene, pNode->GetChild(child), textureLocations);
     }
 }
 
@@ -944,7 +945,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
     }
 }
 
-static std::string GetInferredFileName(const char *fbxFileName, const char *directory, const std::vector<std::string> &directoryFileList)
+static std::string GetInferredFileName(const std::string &fbxFileName, const std::string &directory, const std::vector<std::string> &directoryFileList)
 {
     // Get the file name with file extension.
     const std::string fileName = Gltf::StringUtils::GetFileNameString(Gltf::StringUtils::GetCleanPathString(fbxFileName));
@@ -956,25 +957,19 @@ static std::string GetInferredFileName(const char *fbxFileName, const char *dire
         }
     }
 
-    // Some FBX textures end with "_c.dds" while the source texture is a ".tga".
-    const bool isDDS = fileName.rfind("_c.dds") != std::string::npos;
-
     // Get the file name without file extension.
-    const std::string fileBase = isDDS ? fileName.substr(0, fileName.length() - 6) : Gltf::StringUtils::GetFileBaseString(fileName);
+    const std::string fileBase = Gltf::StringUtils::GetFileBaseString(fileName);
 
     // Try to find a match without file extension.
     for (const auto &file : directoryFileList) {
-        const std::string listedFileBase = Gltf::StringUtils::GetFileBaseString(file.c_str());
-
         // If the two extension-less base names match.
-        if (Gltf::StringUtils::CompareNoCase(fileBase, listedFileBase) == 0) {
+        if (Gltf::StringUtils::CompareNoCase(fileBase, Gltf::StringUtils::GetFileBaseString(file)) == 0) {
             // Return the name with extension of the file in the directory.
             return std::string(directory) + file;
         }
     }
 
-    // Return the original file with extension
-    return fbxFileName;
+    return "";
 }
 
 /*
@@ -987,30 +982,34 @@ static std::string GetInferredFileName(const char *fbxFileName, const char *dire
     it to a list of existing texture files in the same directory as the FBX file.
 */
 static void
-FindFbxTextures(FbxScene *pScene, const char *fbxFileName, const char *extensions, std::map<const FbxTexture *, FbxString> &textureNames)
+FindFbxTextures(
+    FbxScene *pScene, const char *fbxFileName, const char *extensions, std::map<const FbxTexture *, FbxString> &textureLocations)
 {
     // Get the folder the FBX file is in.
-    const FbxString folder = Gltf::StringUtils::GetFolderString(fbxFileName).c_str();
+    const std::string folder = Gltf::StringUtils::GetFolderString(fbxFileName);
 
     // Check if there is a filename.fbm folder to which embedded textures were extracted.
-    const FbxString fbmFolderName = folder + Gltf::StringUtils::GetFileBaseString(fbxFileName).c_str() + ".fbm/";
+    const std::string fbmFolderName = folder + Gltf::StringUtils::GetFileBaseString(fbxFileName) + ".fbm/";
 
     // Search either in the folder with embedded textures or in the same folder as the FBX file.
-    const FbxString searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;
+    const std::string searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;
 
     // Get a list with all the texture files from either the folder with embedded textures or the same folder as the FBX file.
-    std::vector<std::string> fileList;
-    FileUtils::ListFolderFiles(fileList, searchFolder, extensions);
+    std::vector<std::string> fileList = FileUtils::ListFolderFiles(searchFolder.c_str(), extensions);
 
     // Try to match the FBX texture names with the actual files on disk.
     for (int i = 0; i < pScene->GetTextureCount(); i++) {
-        const FbxTexture     *pTexture     = pScene->GetTexture(i);
-        const FbxFileTexture *pFileTexture = FbxCast<FbxFileTexture>(pTexture);
+        const FbxFileTexture *pFileTexture = FbxCast<FbxFileTexture>(pScene->GetTexture(i));
         if (pFileTexture == nullptr) {
             continue;
         }
-        const FbxString name = GetInferredFileName(pFileTexture->GetFileName(), searchFolder, fileList).c_str();
-        textureNames.emplace(pTexture, name);
+        const std::string inferredName = GetInferredFileName(pFileTexture->GetFileName(), searchFolder, fileList);
+        if (inferredName.empty()) {
+            fmt::printf("Warning: could not find a local image file for texture: %s.\n"
+            "Original filename: %s\n", pFileTexture->GetName(), pFileTexture->GetFileName());
+        }
+        // always extend the mapping, even for files we didn't find
+        textureLocations.emplace(pFileTexture, inferredName.c_str());
     }
 }
 
@@ -1041,8 +1040,8 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
         return false;
     }
 
-    std::map<const FbxTexture *, FbxString> textureNames;
-    FindFbxTextures(pScene, fbxFileName, textureExtensions, textureNames);
+    std::map<const FbxTexture *, FbxString> textureLocations;
+    FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
 
     // Use Y up for glTF
     FbxAxisSystem::MayaYUp.ConvertScene(pScene);
@@ -1054,7 +1053,7 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
     }
 
     ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), "", "");
-    ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureNames);
+    ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
     ReadAnimations(raw, pScene);
 
     pScene->Destroy();

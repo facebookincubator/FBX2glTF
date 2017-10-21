@@ -84,9 +84,9 @@ int RawModel::AddTriangle(const int v0, const int v1, const int v2, const int ma
     return (int) triangles.size() - 1;
 }
 
-int RawModel::AddTexture(const char *name, const char *fileName, const RawTextureUsage usage)
+int RawModel::AddTexture(const std::string &name, const std::string &fileName, const std::string &fileLocation, RawTextureUsage usage)
 {
-    if (name[0] == '\0') {
+    if (name.empty()) {
         return -1;
     }
     for (size_t i = 0; i < textures.size(); i++) {
@@ -95,17 +95,18 @@ int RawModel::AddTexture(const char *name, const char *fileName, const RawTextur
         }
     }
 
-    const ImageProperties properties = GetImageProperties(fileName);
+    const ImageProperties properties = GetImageProperties(!fileLocation.empty() ? fileLocation.c_str() : fileName.c_str());
 
     RawTexture texture;
-    texture.name      = name;
-    texture.width     = properties.width;
-    texture.height    = properties.height;
-    texture.mipLevels = (int) ceilf(Log2f(std::max((float) properties.width, (float) properties.height)));
-    texture.usage     = usage;
-    texture.occlusion = (properties.occlusion == IMAGE_TRANSPARENT) ?
-                        RAW_TEXTURE_OCCLUSION_TRANSPARENT : RAW_TEXTURE_OCCLUSION_OPAQUE;
-    texture.fileName  = fileName;
+    texture.name         = name;
+    texture.width        = properties.width;
+    texture.height       = properties.height;
+    texture.mipLevels    = (int) ceilf(Log2f(std::max((float) properties.width, (float) properties.height)));
+    texture.usage        = usage;
+    texture.occlusion    = (properties.occlusion == IMAGE_TRANSPARENT) ?
+                           RAW_TEXTURE_OCCLUSION_TRANSPARENT : RAW_TEXTURE_OCCLUSION_OPAQUE;
+    texture.fileName     = fileName;
+    texture.fileLocation = fileLocation;
     textures.emplace_back(texture);
     return (int) textures.size() - 1;
 }
@@ -312,9 +313,9 @@ void RawModel::Condense()
         for (auto &material : materials) {
             for (int j = 0; j < RAW_TEXTURE_USAGE_MAX; j++) {
                 if (material.textures[j] >= 0) {
-                    const RawTexture &texture     = oldTextures[material.textures[j]];
-                    const int        textureIndex = AddTexture(texture.name.c_str(), texture.fileName.c_str(), texture.usage);
-                    textures[textureIndex]   = texture;
+                    const RawTexture &texture = oldTextures[material.textures[j]];
+                    const int textureIndex = AddTexture(texture.name, texture.fileName, texture.fileLocation, texture.usage);
+                    textures[textureIndex] = texture;
                     material.textures[j] = textureIndex;
                 }
             }

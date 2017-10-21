@@ -73,6 +73,16 @@ namespace Gltf // TODO replace
             return fileName.substr(0, fileName.rfind('.')).c_str();
         }
 
+        inline const std::string GetFileSuffixString(const std::string &path)
+        {
+            const std::string fileName = GetFileNameString(path);
+            unsigned long pos          = fileName.rfind('.');
+            if (pos == std::string::npos) {
+                return "";
+            }
+            return fileName.substr(++pos);
+        }
+
         inline int CompareNoCase(const std::string &s1, const std::string &s2)
         {
             return strncasecmp(s1.c_str(), s2.c_str(), MAX_PATH_LENGTH);
