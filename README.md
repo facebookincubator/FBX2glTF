@@ -123,8 +123,8 @@ versions of the IDE are unlikely to successfully build the tool.
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
-you will be choose one of the canonical build types -- *Debug*,
-*Release*, *MinSizeRel*, and so on.
+you will be choose one of the canonical build types — **Debug**,
+**Release**, **MinSizeRel**, and so on.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends
@@ -156,7 +156,7 @@ There are two future enhancements we hope to see for animations:
   it into a long sequence of linear approximations.
 - Perhaps more useful in practice is the idea of compressing animation curves
   the same way we use Draco to compress meshes (see below). Like geometry,
-  animations are highly redundant -- each new value is highly predictable from
+  animations are highly redundant — each new value is highly predictable from
   preceding values. If Draco extends its support for animations (it's on their
   roadmap), or if someone else develops a glTF extension for animation
   compression, we will likely add support in this tool.
@@ -178,13 +178,13 @@ Some material settings remain well supported and transfer automatically:
  - Normal maps
 
 This leaves the other traditional settings of Lambert:
- - Ambient -- this is anathema in the PBR world, where such effects should
+ - Ambient — this is anathema in the PBR world, where such effects should
    emerge naturally from the fundamental colour of the material and any ambient
    lighting present.
- - Diffuse -- the material's direction-agnostic, non-specular reflection,
+ - Diffuse — the material's direction-agnostic, non-specular reflection,
 and additionally, with Blinn/Phong:
- - Specular -- a more polished material's direction-sensitive reflection,
- - Shininess -- just how polished the material is,
+ - Specular — a more polished material's direction-sensitive reflection,
+ - Shininess — just how polished the material is,
 
 (All these can be either constants or textures.)
 
@@ -224,7 +224,7 @@ This tool is under continuous development. We do not have a development roadmap
 per se, but some aspirations have been noted above.
 
 ## Authors
- - P�r Winzell
+ - Pär Winzell
  - J.M.P. van Waveren
  - Amanda Watson
 
