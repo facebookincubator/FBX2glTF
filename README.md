@@ -114,18 +114,20 @@ If all goes well, you will end up with a statically linked executable.
 Windows users may [download](https://cmake.org/download) CMake for Windows,
 install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
 checkout (choose a build directory distinct from the source). As part of this
-process, you will be asked to choose which generator to use; it should be fine
-to pick any recent Visual Studio option relevant to your system.
+process, you will be asked to choose which generator to use; the code is only
+known to compile on ***Visual Studio 2017***.
 
-Note that the CMAKE_BUILD_TYPE variable from the Unix Makefile system is
+*(MinGW support may be plausible. Contributions welcome.)*
+
+Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; the Visual Studio solution that's generated handles all
 the canonical build types -- Debug, Release, MinSizeRel, and so on. You will
 choose which one to build in the Visual Studio IDE.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends
-with the generation of the core `JSON` description that forms the core of glTF,
-along with binary buffers that hold geometry and animations (and optionally also
+with the generation of the descriptive `JSON` that forms the core of glTF, along
+with binary buffers that hold geometry and animations (and optionally also
 emedded resources such as textures.)
 
 In the process, each node and mesh in the FBX is ripped apart into a long list
