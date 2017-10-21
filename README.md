@@ -5,7 +5,7 @@ venerable [FBX](https://www.autodesk.com/products/fbx/overview) format to
 [glTF 2.0](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0),
 a modern runtime asset delivery format.
 
-Precompiled binaries releases may be
+Precompiled binaries releases for Windows, Mac OS X and Linux may be
 found [here](https://github.com/facebookincubator/FBX2glTF/releases).
 
 ## Running
