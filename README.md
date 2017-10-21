@@ -66,11 +66,11 @@ Some of these switches are not obvious:
   likely constructed with the assumption that `(0, 0)` is bottom left, whereas
   glTF has `(0, 0)` as top left. To produce spec-compliant glTF, you will want
   to pass `--flip-v`.
-- All three material options are, in their own way, works in progress. The
-  `--pbr-metallic-roughness` switch will be chosen by default if you supply
-  none of the others, and is the only one that produces glTF that does not
-  depend on an extension. It is documented further below, as is
-  `--khr-materials-common`.
+- All three material options are, in their own way, works in progress, but the
+  `--pbr-metallic-roughness` switch is at least compliant with the core spec;
+  unlike the others, it does not depend on an unratified extension. That option
+  will be chosen by default if you supply none of the others. Material switches
+  are documented further below.
 - If you supply any `-keep-attribute` option, you enable a mode wherein you must
   supply it repeatedly to list *all* the vertex attributes you wish to keep in
   the conversion process. This is a way to trim the size of the resulting glTF
