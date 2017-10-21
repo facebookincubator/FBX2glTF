@@ -170,13 +170,13 @@ There are three future enhancements we hope to see for animations:
 ### Materials
 
 With glTF 2.0, we leaped headlong into physically-based rendering (BPR), where
-canonical way of expressing what a mesh looks like is by describing its visible
-material in fundamental attributes like "how rough is this surface".
+the canonical way of expressing what a mesh looks like is by describing its
+visible material in fundamental attributes like "how rough is this surface".
 
 By contrast, FBX's material support remains in the older world of Lambert and
-Phong, with much simpler illumination and shading models. These are modes are
-largely incompatible (for example, textures in the old workflow often contain
-baked lighting that would arise naturally in a PBR environment).
+Phong, with simpler and more direct illumination and shading models. These modes
+are largely incompatible — for example, textures in the old workflow often
+contain baked lighting, which would arise naturally in a PBR environment.
 
 Some material settings remain well supported and transfer automatically:
  - Emissive constants and textures
@@ -194,14 +194,17 @@ and additionally, with Blinn/Phong:
 
 (All these can be either constants or textures.)
 
-Increasingly with PBR materials, those properties are just left at sensible zero
-or default values in the FBX. But when they're there, and they're how you want
-to define your materials, one option is to use the --khr-materials-common
-command line switch, which incurs a required dependency on the glTF extension
-`KHR_materials_common`. **Note that at the time of writing, this glTF extension
-is still undergoing the ratification process, and is furthermore likely to
-change names.**
+#### Exporting as Unlit/Lambert/Phong 
+Increasingly with PBR materials, these properties are just left at zero or
+default values in the FBX. But when they're there, and they're how you want the
+glTF materials generated, one option is to use the --khr-materials-common
+command line switch, with the awareness that this incurs a required dependency
+on the glTF extension `KHR_materials_common`.
 
+**Note that at the time of writing, this glTF extension is still undergoing the
+ratification process, and is furthermore likely to change names.**
+
+#### Exporting as Metallic-Roughness PBR
 Given the command line flag --pbr-metallic-roughness, we accept glTF 2.0's PBR
 mode, but we do so very partially, filling in a couple of reasonable constants
 for metalness and roughness and using the diffuse texture, if it exists, as the
@@ -211,6 +214,9 @@ More work is needed to harness the power of glTF's 2.0's materials. The biggest
 issue here is the lack of any obviously emerging standards to complement FBX
 itself. It's not clear what format an artist can export their PBR materials on,
 and when they can, how to communicate this information well to `FBX2glTF`.
+
+(*Stingray PBS* support is
+[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/12).)
 
 ## Draco Compression
 The tool will optionally apply [Draco](https://github.com/google/draco)
