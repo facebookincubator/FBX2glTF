@@ -123,8 +123,8 @@ versions of the IDE are unlikely to successfully build the tool.
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
-you will be choose one of the canonical build types — **Debug**,
-**Release**, **MinSizeRel**, and so on.
+you will be choose one of the canonical build types — *Debug*,
+*Release*, *MinSizeRel*, and so on.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends
