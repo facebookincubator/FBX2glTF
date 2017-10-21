@@ -117,14 +117,14 @@ checkout (choose a build directory distinct from the source).
 
 As part of this process, you will be asked to choose which generator
 to use. **At present, only Visual Studio 2017 is supported.** Older
-versions of the IDE are unlikely to successfully build the cool.
+versions of the IDE are unlikely to successfully build the tool.
 
 *(MinGW support may be plausible. Contributions welcome.)*
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
-entirely ignored here; the Visual Studio solution that's generated handles all
-the canonical build types -- Debug, Release, MinSizeRel, and so on. You will
-choose which one to build in the Visual Studio IDE.
+entirely ignored here; it is when you open the generated solution that
+you will be choose one of the canonical build types -- *Debug*,
+*Release*, *MinSizeRel*, and so on.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends
