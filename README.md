@@ -119,7 +119,7 @@ As part of this process, you will be asked to choose which generator
 to use. **At present, only Visual Studio 2017 is supported.** Older
 versions of the IDE are unlikely to successfully build the tool.
 
-*(MinGW support may be plausible. Contributions welcome.)*
+*(MinGW support is plausible. Contributions welcome.)*
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
@@ -132,29 +132,35 @@ with the generation of the descriptive `JSON` that forms the core of glTF, along
 with binary buffers that hold geometry and animations (and optionally also
 emedded resources such as textures.)
 
-In the process, each node and mesh in the FBX is ripped apart into a long list
-of surfaces and associated triangles, with a material assigned to each one. A
-similar process happens in reverse when we construct meshes and materials that
-conform to the expectations of the glTF format.
+In the process, each mesh is ripped apart into a long list of triangles and
+their associated vertices, with a material assigned to each one. A similar
+process happens in reverse when we construct meshes and materials that conform
+to the expectations of the glTF format.
 
 ### Animations
-Every animation in the FBX file becomes an animation in the glTF file. The
-method used is one of "baking": we step through the interval of time spanned by
-the animation, keyframe by keyframe, calculate the local transform of each node,
-and whenever we find any node that's rotated, translated or scaled, we record
-that fact in the output.
+Every skinned animation in the FBX file becomes an animation in the glTF file.
+The method used is one of "baking": we step through the interval of time spanned
+by the animation, keyframe by keyframe, calculate the local transform of each
+node,and whenever we find any node that's rotated, translated or scaled, we
+record that fact in the output.
 
-This method has the benefit of being simple and precise. It has the drawback of
-creating potentially very large files. The more complex the animation rig, the
-less avoidable this situation is.
+(*Blend Shapes* are not currently supported, but are
+[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/17).)
 
-There are two future enhancements we hope to see for animations:
+The baking method has the benefit of being simple and precise. It has the
+drawback of creating potentially very large files. The more complex the
+animation rig, the less avoidable this data explosion is.
+
+There are three future enhancements we hope to see for animations:
 - Version 2.0 of glTF brought us support for expressing quadratic animation
   curves, where previously we had only had linear. Not coincidentally, quadratic
   splines are one of the key ways animations are expressed inside the FBX. When
   we find such a curve, it would be more efficient to output it without baking
   it into a long sequence of linear approximations.
-- Perhaps more useful in practice is the idea of compressing animation curves
+- We do not yet ever generate
+  [sparse accessors](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#sparse-accessors),
+  but many animations would benefit from this storage optimisation.
+- Perhaps most useful in practice is the idea of compressing animation curves
   the same way we use Draco to compress meshes (see below). Like geometry,
   animations are highly redundant — each new value is highly predictable from
   preceding values. If Draco extends its support for animations (it's on their
