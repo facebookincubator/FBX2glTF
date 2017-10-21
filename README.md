@@ -5,7 +5,7 @@ venerable [FBX](https://www.autodesk.com/products/fbx/overview) format to
 [glTF 2.0](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0),
 a modern runtime asset delivery format.
 
-Precompiled binaries releases may be
+Precompiled binaries releases for Windows, Mac OS X and Linux may be
 found [here](https://github.com/facebookincubator/FBX2glTF/releases).
 
 ## Running
@@ -66,11 +66,11 @@ Some of these switches are not obvious:
   likely constructed with the assumption that `(0, 0)` is bottom left, whereas
   glTF has `(0, 0)` as top left. To produce spec-compliant glTF, you will want
   to pass `--flip-v`.
-- All three material options are, in their own way, works in progress. The
-  `--pbr-metallic-roughness` switch will be chosen by default if you supply
-  none of the others, and is the only one that produces glTF that does not
-  depend on an extension. It is documented further below, as is
-  `--khr-materials-common`.
+- All three material options are, in their own way, works in progress, but the
+  `--pbr-metallic-roughness` switch is at least compliant with the core spec;
+  unlike the others, it does not depend on an unratified extension. That option
+  will be chosen by default if you supply none of the others. Material switches
+  are documented further below.
 - If you supply any `-keep-attribute` option, you enable a mode wherein you must
   supply it repeatedly to list *all* the vertex attributes you wish to keep in
   the conversion process. This is a way to trim the size of the resulting glTF
@@ -92,11 +92,11 @@ and [fmt](https://github.com/fmtlib/fmt);
 all of which are automatically downloaded, configured and built.
 
 You must manually download and install the
-[Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) 2018.1.1 and
-accept its license agreement. Once installed, the build system will attempt to
-find the SDK in its default location for each system.
+[Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) and
+accept its license agreement.
 
-Once that's all done...
+**At present, only version 2018.1.1 of the FBX SDK is supported**. The
+build system will not successfully locate any other version.
 
 ### Linux and MacOS X
 Compilation on Unix machines should be as simple as:
@@ -113,46 +113,56 @@ If all goes well, you will end up with a statically linked executable.
 
 Windows users may [download](https://cmake.org/download) CMake for Windows,
 install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
-checkout (choose a build directory distinct from the source). As part of this
-process, you will be asked to choose which generator to use; it should be fine
-to pick any recent Visual Studio option relevant to your system.
+checkout (choose a build directory distinct from the source).
 
-Note that the CMAKE_BUILD_TYPE variable from the Unix Makefile system is
-entirely ignored here; the Visual Studio solution that's generated handles all
-the canonical build types -- Debug, Release, MinSizeRel, and so on. You will
-choose which one to build in the Visual Studio IDE.
+As part of this process, you will be asked to choose which generator
+to use. **At present, only Visual Studio 2017 is supported.** Older
+versions of the IDE are unlikely to successfully build the tool.
+
+*(MinGW support is plausible. Contributions welcome.)*
+
+Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
+entirely ignored here; it is when you open the generated solution that
+you will be choose one of the canonical build types — *Debug*,
+*Release*, *MinSizeRel*, and so on.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends
-with the generation of the core `JSON` description that forms the core of glTF,
-along with binary buffers that hold geometry and animations (and optionally also
+with the generation of the descriptive `JSON` that forms the core of glTF, along
+with binary buffers that hold geometry and animations (and optionally also
 emedded resources such as textures.)
 
-In the process, each node and mesh in the FBX is ripped apart into a long list
-of surfaces and associated triangles, with a material assigned to each one. A
-similar process happens in reverse when we construct meshes and materials that
-conform to the expectations of the glTF format.
+In the process, each mesh is ripped apart into a long list of triangles and
+their associated vertices, with a material assigned to each one. A similar
+process happens in reverse when we construct meshes and materials that conform
+to the expectations of the glTF format.
 
 ### Animations
-Every animation in the FBX file becomes an animation in the glTF file. The
-method used is one of "baking": we step through the interval of time spanned by
-the animation, keyframe by keyframe, calculate the local transform of each node,
-and whenever we find any node that's rotated, translated or scaled, we record
-that fact in the output.
+Every skinned animation in the FBX file becomes an animation in the glTF file.
+The method used is one of "baking": we step through the interval of time spanned
+by the animation, keyframe by keyframe, calculate the local transform of each
+node,and whenever we find any node that's rotated, translated or scaled, we
+record that fact in the output.
 
-This method has the benefit of being simple and precise. It has the drawback of
-creating potentially very large files. The more complex the animation rig, the
-less avoidable this situation is.
+(*Blend Shapes* are not currently supported, but are
+[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/17).)
 
-There are two future enhancements we hope to see for animations:
+The baking method has the benefit of being simple and precise. It has the
+drawback of creating potentially very large files. The more complex the
+animation rig, the less avoidable this data explosion is.
+
+There are three future enhancements we hope to see for animations:
 - Version 2.0 of glTF brought us support for expressing quadratic animation
   curves, where previously we had only had linear. Not coincidentally, quadratic
   splines are one of the key ways animations are expressed inside the FBX. When
   we find such a curve, it would be more efficient to output it without baking
   it into a long sequence of linear approximations.
-- Perhaps more useful in practice is the idea of compressing animation curves
+- We do not yet ever generate
+  [sparse accessors](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#sparse-accessors),
+  but many animations would benefit from this storage optimisation.
+- Perhaps most useful in practice is the idea of compressing animation curves
   the same way we use Draco to compress meshes (see below). Like geometry,
-  animations are highly redundant -- each new value is highly predictable from
+  animations are highly redundant — each new value is highly predictable from
   preceding values. If Draco extends its support for animations (it's on their
   roadmap), or if someone else develops a glTF extension for animation
   compression, we will likely add support in this tool.
@@ -160,13 +170,13 @@ There are two future enhancements we hope to see for animations:
 ### Materials
 
 With glTF 2.0, we leaped headlong into physically-based rendering (BPR), where
-canonical way of expressing what a mesh looks like is by describing its visible
-material in fundamental attributes like "how rough is this surface".
+the canonical way of expressing what a mesh looks like is by describing its
+visible material in fundamental attributes like "how rough is this surface".
 
 By contrast, FBX's material support remains in the older world of Lambert and
-Phong, with much simpler illumination and shading models. These are modes are
-largely incompatible (for example, textures in the old workflow often contain
-baked lighting that would arise naturally in a PBR environment).
+Phong, with simpler and more direct illumination and shading models. These modes
+are largely incompatible — for example, textures in the old workflow often
+contain baked lighting, which would arise naturally in a PBR environment.
 
 Some material settings remain well supported and transfer automatically:
  - Emissive constants and textures
@@ -174,24 +184,27 @@ Some material settings remain well supported and transfer automatically:
  - Normal maps
 
 This leaves the other traditional settings of Lambert:
- - Ambient -- this is anathema in the PBR world, where such effects should
+ - Ambient — this is anathema in the PBR world, where such effects should
    emerge naturally from the fundamental colour of the material and any ambient
    lighting present.
- - Diffuse -- the material's direction-agnostic, non-specular reflection,
+ - Diffuse — the material's direction-agnostic, non-specular reflection,
 and additionally, with Blinn/Phong:
- - Specular -- a more polished material's direction-sensitive reflection,
- - Shininess -- just how polished the material is,
+ - Specular — a more polished material's direction-sensitive reflection,
+ - Shininess — just how polished the material is,
 
 (All these can be either constants or textures.)
 
-Increasingly with PBR materials, those properties are just left at sensible zero
-or default values in the FBX. But when they're there, and they're how you want
-to define your materials, one option is to use the --khr-materials-common
-command line switch, which incurs a required dependency on the glTF extension
-`KHR_materials_common`. **Note that at the time of writing, this glTF extension
-is still undergoing the ratification process, and is furthermore likely to
-change names.**
+#### Exporting as Unlit/Lambert/Phong 
+Increasingly with PBR materials, these properties are just left at zero or
+default values in the FBX. But when they're there, and they're how you want the
+glTF materials generated, one option is to use the --khr-materials-common
+command line switch, with the awareness that this incurs a required dependency
+on the glTF extension `KHR_materials_common`.
 
+**Note that at the time of writing, this glTF extension is still undergoing the
+ratification process, and is furthermore likely to change names.**
+
+#### Exporting as Metallic-Roughness PBR
 Given the command line flag --pbr-metallic-roughness, we accept glTF 2.0's PBR
 mode, but we do so very partially, filling in a couple of reasonable constants
 for metalness and roughness and using the diffuse texture, if it exists, as the
@@ -201,6 +214,9 @@ More work is needed to harness the power of glTF's 2.0's materials. The biggest
 issue here is the lack of any obviously emerging standards to complement FBX
 itself. It's not clear what format an artist can export their PBR materials on,
 and when they can, how to communicate this information well to `FBX2glTF`.
+
+(*Stingray PBS* support is
+[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/12).)
 
 ## Draco Compression
 The tool will optionally apply [Draco](https://github.com/google/draco)
@@ -217,12 +233,15 @@ ratification process.**
 
 ## Future Improvements
 This tool is under continuous development. We do not have a development roadmap
-per se, but some aspirations have been noted above.
+per se, but some aspirations have been noted above. The canonical list of active
+TODO items can be found
+[on GitHub](https://github.com/facebookincubator/FBX2glTF/labels/enhancement).
+
 
 ## Authors
- - P�r Winzell
+ - Pär Winzell
  - J.M.P. van Waveren
  - Amanda Watson
 
 ## License
-`FBX2glTF` is BSD-licensed. We also provide an additional patent grant.
+FBX2glTF is BSD-licensed. We also provide an additional patent grant.
