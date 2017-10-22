@@ -17,8 +17,7 @@ The tool can be invoked like so:
 
 Or perhaps, as part of a more complex pipeline:
 ```
- > FBX2glTF --binary --draco --flip-v \
-          --khr-materials-common \
+ > FBX2glTF --binary --draco --khr-materials-common \
           --input ~/models/source/butterfly.fbx \
           --output ~/models/target/butterfly.glb
 ```
@@ -38,7 +37,10 @@ Usage:
   -b, --binary                  Output a single binary format .glb file.
   -d, --draco                   Apply Draco mesh compression to geometries.
       --flip-u                  Flip all U texture coordinates.
-      --flip-v                  Flip all V texture coordinates.
+      --flip-v                  Flip all V texture coordinates (default
+                                behaviour!)
+      --no-flip-v               Suppress the default flipping of V texture
+                                coordinates
       --khr-materials-common    (WIP) Use KHR_materials_common extensions to
                                 specify Unlit/Lambert/Blinn/Phong shaders.
       --pbr-metallic-roughness  (WIP) Try to glean glTF 2.0 native PBR
@@ -62,10 +64,13 @@ Some of these switches are not obvious:
   but it can be useful e.g. for loaders that don't understand the .glb format.
 - `--flip-u` and `--flip-v`, when enabled, will apply a `x -> (1.0 - x)`
   function to all `u` or `v` texture coordinates respectively. The `u` version
-  is perhaps not commonly used, but flipping `v` is recommended. Your FBX is
-  likely constructed with the assumption that `(0, 0)` is bottom left, whereas
-  glTF has `(0, 0)` as top left. To produce spec-compliant glTF, you will want
-  to pass `--flip-v`.
+  is perhaps not commonly used, but flipping `v` is **the default behaviour*.
+  Your FBX is likely constructed with the assumption that `(0, 0)` is bottom
+  left, whereas glTF has `(0, 0)` as top left. To produce spec-compliant glTF,
+  we must flip the texcoords. To request unflipped coordinates:
+- `--no-flip-v` will actively disable v coordinat flipping. This can be useful
+  if your textures are pre-flipped, or if for some other reason you were already
+  in a glTF-centric texture coordinate system.
 - All three material options are, in their own way, works in progress, but the
   `--pbr-metallic-roughness` switch is at least compliant with the core spec;
   unlike the others, it does not depend on an unratified extension. That option
