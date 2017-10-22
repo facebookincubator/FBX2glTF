@@ -70,7 +70,8 @@ int main(int argc, char *argv[])
                    "d,draco", "Apply Draco mesh compression to geometries.",
                    cxxopts::value<bool>(gltfOptions.useDraco))
                ("flip-u", "Flip all U texture coordinates.")
-               ("flip-v", "Flip all V texture coordinates.")
+               ("flip-v", "Flip all V texture coordinates (default behaviour!)")
+               ("no-flip-v", "Suppress the default flipping of V texture coordinates")
                (
                    "khr-materials-common", "(WIP) Use KHR_materials_common extensions to specify Unlit/Lambert/Blinn/Phong shaders.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatCom))
@@ -131,7 +132,12 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
     }
     if (options.count("flip-v") > 0) {
+        fmt::printf("Note: The --flip-v command switch is now default behaviour.\n");
+    }
+    if (options.count("no-flip-v") == 0) {
         texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
+    } else if (verboseOutput) {
+        fmt::printf("Suppressing --flip-v transformation of texture coordinates.\n");
     }
 
     if (options.count("keepAttribute")) {
