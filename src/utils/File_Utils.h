@@ -19,6 +19,8 @@ namespace FileUtils {
     std::vector<std::string> ListFolderFiles(const char *folder, const char *matchExtensions);
 
     bool CreatePath(const char *path);
+
+    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename);
 }
 
 #endif // !__FILE_UTILS_H__

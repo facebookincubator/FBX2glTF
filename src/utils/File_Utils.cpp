@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -173,5 +174,30 @@ namespace FileUtils {
             build[i] = clean[i];
         }
         return true;
+    }
+
+    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename) {
+        std::ifstream srcFile(srcFilename, std::ios::binary);
+        if (!srcFile) {
+            fmt::printf("Warning: Couldn't open file %s for reading.\n", srcFilename);
+            return false;
+        }
+        // find source file length
+        srcFile.seekg(0, std::ios::end);
+        std::streamsize srcSize = srcFile.tellg();
+        srcFile.seekg(0, std::ios::beg);
+
+        std::ofstream dstFile(dstFilename, std::ios::binary | std::ios::trunc);
+        if (!dstFile) {
+            fmt::printf("Warning: Couldn't open file %s for writing.\n", srcFilename);
+            return false;
+        }
+        dstFile << srcFile.rdbuf();
+        std::streamsize dstSize = dstFile.tellp();
+        if (srcSize == dstSize) {
+            return true;
+        }
+        fmt::printf("Warning: Only copied %lu bytes to %s, when %s is %lu bytes long.\n", dstSize, dstFilename, srcFilename, srcSize);
+        return false;
     }
 }

@@ -197,6 +197,7 @@ struct ModelData
 
 ModelData *Raw2Gltf(
     std::ofstream &gltfOutStream,
+    const std::string &outputFolder,
     const RawModel &raw,
     const GltfOptions &options
 );
