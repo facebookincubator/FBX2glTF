@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
                    cxxopts::value<bool>(gltfOptions.usePBRSpecGloss))
                (
                    "k,keep-attribute", "Used repeatedly to build a limiting set of vertex attributes to keep.",
-                   cxxopts::value<std::string>())
+                   cxxopts::value<std::vector<std::string>>())
                ("v,verbose", "Enable verbose output.")
                ("h,help", "Show this help.")
                ("V,version", "Display the current program version.");
@@ -140,9 +140,9 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         fmt::printf("Suppressing --flip-v transformation of texture coordinates.\n");
     }
 
-    if (options.count("keepAttribute")) {
+    if (options.count("keep-attribute") > 0) {
         gltfOptions.keepAttribs = RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
-        for (const auto &attribute : options["keepAttribute"].as<std::vector<std::string>>()) {
+        for (const auto &attribute : options["keep-attribute"].as<std::vector<std::string>>()) {
             if (attribute == "position") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION; }
             else if (attribute == "normal") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_NORMAL; }
             else if (attribute == "tangent") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_TANGENT; }
@@ -152,7 +152,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
             else if (attribute == "uv1") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_UV1; }
             else if (attribute == "auto") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_AUTO; }
             else {
-                fmt::printf("Unknown --keepAttribute: %s\n", attribute);
+                fmt::printf("Unknown --keep-attribute: %s\n", attribute);
                 fmt::printf("Valid choices are: position, normal, tangent, binormial, color, uv0, uv1, auto,\n");
                 return 1;
             }
