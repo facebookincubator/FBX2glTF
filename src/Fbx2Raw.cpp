@@ -797,16 +797,16 @@ static void ReadNodeHierarchy(
     if (lInheritType == FbxTransform::eInheritRSrs) {
         if (++warnRSrsCount == 1) {
             fmt::printf("Warning: node %s uses unsupported transform inheritance type 'eInheritRSrs'.\n", newPath);
-            fmt::printf("Further warnings of this type squelched.\n");
+            fmt::printf("         (Further warnings of this type squelched.)\n");
         }
 
     } else if (lInheritType == FbxTransform::eInheritRrs) {
         if (++warnRrsCount == 1) {
             fmt::printf(
                 "Warning: node %s uses unsupported transform inheritance type 'eInheritRrs'\n"
-                    "This tool will attempt to partially compensate, but glTF cannot truly express this mode.\n"
-                    "If this was a Maya export, consider turning off 'Segment Scale Compensate' on all joints.\n"
-                    "Further warnings of this type squelched.\n",
+                    "     This tool will attempt to partially compensate, but glTF cannot truly express this mode.\n"
+                    "     If this was a Maya export, consider turning off 'Segment Scale Compensate' on all joints.\n"
+                    "     (Further warnings of this type squelched.)\n",
                 newPath);
         }
     }
