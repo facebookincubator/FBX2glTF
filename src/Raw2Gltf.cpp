@@ -112,10 +112,10 @@ struct GLTFData
             if (file.read(fileBuffer.data(), size)) {
                 result = AddRawBufferView(buffer, fileBuffer.data(), size);
             } else {
-                fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping\n", size, filename);
+                fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping file.\n", size, filename);
             }
         } else {
-            fmt::printf("Warning: Couldn't open texture file %s, skipping\n", filename);
+            fmt::printf("Warning: Couldn't open file %s, skipping file.\n", filename);
         }
         // note that we persist here not only success, but also failure, as nullptr
         filenameToBufferView[filename] = result;
