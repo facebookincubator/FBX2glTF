@@ -172,6 +172,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
     if (gltfOptions.outputBinary) {
         // in binary mode, we write precisely where we're asked
         modelPath = outputPath + ".glb";
+
     } else {
         // in gltf mode, we create a folder and write into that
         outputFolder = outputPath + "_out/";
@@ -206,7 +207,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         fmt::fprintf(stderr, "ERROR:: Couldn't open file for writing: %s\n", modelPath.c_str());
         return 1;
     }
-    data_render_model = Raw2Gltf(outStream, raw, gltfOptions);
+    data_render_model = Raw2Gltf(outStream, outputFolder, raw, gltfOptions);
 
     if (gltfOptions.outputBinary) {
         fmt::printf(

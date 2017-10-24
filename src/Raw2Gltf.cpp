@@ -15,6 +15,7 @@
 #include "FBX2glTF.h"
 #include "utils/String_Utils.h"
 #include "utils/Image_Utils.h"
+#include <utils/File_Utils.h>
 #include "RawModel.h"
 #include "Raw2Gltf.h"
 
@@ -249,6 +250,7 @@ static const std::string materialHash(const RawMaterial &m) {
 
 ModelData *Raw2Gltf(
     std::ofstream &gltfOutStream,
+    const std::string &outputFolder,
     const RawModel &raw,
     const GltfOptions &options
 )
@@ -373,8 +375,18 @@ ModelData *Raw2Gltf(
                     source = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
                 }
 
-            } else {
+            } else if (!relativeFilename.empty()) {
                 source = new ImageData(relativeFilename, relativeFilename);
+                std::string outputPath = outputFolder + relativeFilename;
+                if (FileUtils::CopyFile(texture.fileLocation, outputPath)) {
+                    if (verboseOutput) {
+                        fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
+                    }
+                } else {
+                    // no point commenting further on read/write error; CopyFile() does enough of that, and we
+                    // certainly want to to add an image struct to the glTF JSON, with the correct relative path
+                    // reference, even if the copy failed.
+                }
             }
             if (!source) {
                 // fallback is tiny transparent gif
