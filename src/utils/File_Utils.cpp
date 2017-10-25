@@ -102,7 +102,7 @@ namespace FileUtils {
     {
         std::vector<std::string> fileList;
 #if defined( __unix__ ) || defined( __APPLE__ )
-        DIR *dir = opendir(folder);
+        DIR *dir = opendir(strlen(folder) > 0 ? folder : ".");
         if (dir != nullptr) {
             for (;;) {
                 struct dirent *dp = readdir(dir);
