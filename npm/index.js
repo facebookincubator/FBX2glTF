@@ -19,7 +19,7 @@ const binaries = {
  * @return Promise<string> a promise that yields the full path to the converted
  * file, an error on conversion failure.
  */
-function convert(srcFile, destFile, opts) {
+function convert(srcFile, destFile, opts = []) {
   return new Promise((resolve, reject) => {
     try {
       let tool = path.join(__dirname, 'bin', os.type(), 'FBX2glTF');
