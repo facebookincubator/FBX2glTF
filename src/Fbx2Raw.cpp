@@ -265,6 +265,9 @@ public:
 
         for (int ii = 0; ii < indices->GetCount(); ii++) {
             int materialNum = indices->GetAt(ii);
+            if (materialNum < 0) {
+                continue;
+            }
             if (materialNum >= summaries.size()) {
                 summaries.resize(materialNum + 1);
             }
@@ -280,9 +283,11 @@ public:
     const std::shared_ptr<FbxMaterialAccess> GetMaterial(const int polygonIndex) const
     {
         if (mappingMode != FbxGeometryElement::eNone) {
-            const auto materialNum = static_cast<unsigned int>(indices->GetAt(
-                (mappingMode == FbxGeometryElement::eByPolygon) ? polygonIndex : 0));
-            return summaries.at(materialNum);
+            const int materialNum = indices->GetAt((mappingMode == FbxGeometryElement::eByPolygon) ? polygonIndex : 0);
+            if (materialNum < 0) {
+                return nullptr;
+            }
+            return summaries.at((unsigned long) materialNum);
         }
         return nullptr;
     }
