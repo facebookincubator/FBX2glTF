@@ -167,7 +167,6 @@ struct RawSurface
     std::vector<Vec3f>       jointGeometryMaxs;
     std::vector<Mat4f>       inverseBindMatrices;
     bool                     discrete;
-    bool                     skinRigid;
 };
 
 struct RawChannel

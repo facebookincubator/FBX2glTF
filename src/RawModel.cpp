@@ -196,7 +196,6 @@ int RawModel::AddSurface(const char *name, const char *nodeName)
     surface.nodeName = nodeName;
     surface.bounds.Clear();
     surface.discrete  = false;
-    surface.skinRigid = false;
 
     surfaces.emplace_back(surface);
     return (int) (surfaces.size() - 1);
