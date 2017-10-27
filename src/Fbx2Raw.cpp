@@ -797,11 +797,11 @@ static void ReadNodeHierarchy(
         fmt::printf("node %d: %s\n", nodeIndex, newPath.c_str());
     }
 
-    static int warnRSrsCount = 0;
+    static int warnRrSsCount = 0;
     static int warnRrsCount  = 0;
-    if (lInheritType == FbxTransform::eInheritRSrs) {
-        if (++warnRSrsCount == 1) {
-            fmt::printf("Warning: node %s uses unsupported transform inheritance type 'eInheritRSrs'.\n", newPath);
+    if (lInheritType == FbxTransform::eInheritRrSs && !parentName.empty()) {
+        if (++warnRrSsCount == 1) {
+            fmt::printf("Warning: node %s uses unsupported transform inheritance type 'eInheritRrSs'.\n", newPath);
             fmt::printf("         (Further warnings of this type squelched.)\n");
         }
 
