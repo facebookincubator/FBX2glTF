@@ -63,7 +63,7 @@ function convert(srcFile, destFile, opts = []) {
 
         // non-zero exit code is failure
         if (code != 0) {
-          reject(new Error(`Script ${script} output:\n` +
+          reject(new Error(`Converter output:\n` +
                            (output.length ? output : "<none>")));
         } else {
           resolve(destPath + destExt);
