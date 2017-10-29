@@ -320,7 +320,7 @@ ModelData *Raw2Gltf(
             const RawAnimation &animation = raw.GetAnimation(i);
 
             if (animation.channels.size() == 0) {
-                fmt::printf("Warning: animation '%s has zero channels. Skipping.\n", animation.name.c_str());
+                fmt::printf("Warning: animation '%s' has zero channels. Skipping.\n", animation.name.c_str());
                 continue;
             }
 
