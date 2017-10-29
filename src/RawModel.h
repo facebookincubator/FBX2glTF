@@ -46,6 +46,8 @@ struct RawVertex
     Vec4i jointIndices { 0, 0, 0, 0 };
     Vec4f jointWeights { 0.0f };
 
+    std::vector<Vec3f> shapePositions { };
+
     bool polarityUv0;
     bool pad1;
     bool pad2;
@@ -166,6 +168,7 @@ struct RawSurface
     std::vector<Vec3f>       jointGeometryMins;
     std::vector<Vec3f>       jointGeometryMaxs;
     std::vector<Mat4f>       inverseBindMatrices;
+    std::vector<float>       defaultShapeDeforms;
     bool                     discrete;
     bool                     skinRigid;
 };
@@ -176,6 +179,7 @@ struct RawChannel
     std::vector<Vec3f> translations;
     std::vector<Quatf> rotations;
     std::vector<Vec3f> scales;
+    std::vector<float> weights;
 };
 
 struct RawAnimation

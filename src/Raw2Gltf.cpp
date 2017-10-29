@@ -333,15 +333,15 @@ ModelData *Raw2Gltf(
                 fmt::printf("Animation '%s' has %lu channels:\n", animation.name.c_str(), animation.channels.size());
             }
 
-            for (size_t j = 0; j < animation.channels.size(); j++) {
-                const RawChannel &channel = animation.channels[j];
+            for (size_t channelIx = 0; channelIx < animation.channels.size(); channelIx++) {
+                const RawChannel &channel = animation.channels[channelIx];
                 const RawNode    &node    = raw.GetNode(channel.nodeIndex);
 
                 if (verboseOutput) {
                     fmt::printf(
-                        "  Channel %lu (%s) has translations/rotations/scales: [%lu, %lu, %lu]\n",
-                        j, node.name.c_str(), channel.translations.size(),
-                        channel.rotations.size(), channel.scales.size());
+                        "  Channel %lu (%s) has translations/rotations/scales/weights: [%lu, %lu, %lu, %lu]\n",
+                        channelIx, node.name.c_str(), channel.translations.size(), channel.rotations.size(),
+                        channel.scales.size(), channel.weights.size());
                 }
 
                 NodeData &nDat = require(nodesByName, node.name);
@@ -353,6 +353,9 @@ ModelData *Raw2Gltf(
                 }
                 if (!channel.scales.empty()) {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.scales), "scale");
+                }
+                if (!channel.weights.empty()) {
+                    aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, {CT_FLOAT, 1, "SCALAR"}, channel.weights), "weights");
                 }
             }
         }
@@ -496,7 +499,7 @@ ModelData *Raw2Gltf(
                 mesh = meshIter->second.get();
 
             } else {
-                auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name));
+                auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name, rawSurface.defaultShapeDeforms));
                 meshByNodeName[nodeName] = meshPtr;
                 meshNode.SetMesh(meshPtr->ix);
                 mesh = meshPtr.get();
@@ -565,6 +568,21 @@ ModelData *Raw2Gltf(
 
                     accessor->min = toStdVec(rawSurface.bounds.min);
                     accessor->max = toStdVec(rawSurface.bounds.max);
+
+                    for (int ii = 0; ii < rawSurface.defaultShapeDeforms.size(); ii ++) {
+                        auto bufferView = gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
+                        std::vector<Vec3f> result;
+                        Bounds<float, 3> shapeBounds;
+                        for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj ++) {
+                            const Vec3f &position = surfaceModel.GetVertex(jj).shapePositions[ii];
+                            shapeBounds.AddPoint(position);
+                            result.push_back(position);
+                        }
+                        accessor = gltf->AddAccessorWithView(*bufferView, GLT_VEC3F, result);
+                        accessor->min = toStdVec(shapeBounds.min);
+                        accessor->max = toStdVec(shapeBounds.max);
+                        primitive->AddTarget(*accessor);
+                    }
                 }
                 if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
                     const AttributeDefinition<Vec3f> ATTR_NORMAL("NORMAL", &RawVertex::normal,

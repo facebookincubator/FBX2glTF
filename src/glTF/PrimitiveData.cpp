@@ -39,6 +39,11 @@ void PrimitiveData::NoteDracoBuffer(const BufferViewData &data)
     dracoBufferView = data.ix;
 }
 
+void PrimitiveData::AddTarget(const AccessorData &positions)
+{
+    targetPositionAccessors.push_back(positions.ix);
+}
+
 void to_json(json &j, const PrimitiveData &d) {
     j = {
         { "material", d.material },
@@ -48,7 +53,15 @@ void to_json(json &j, const PrimitiveData &d) {
     if (d.indices >= 0) {
         j["indices"] = d.indices;
     }
-
+    if (!d.targetPositionAccessors.empty()) {
+        json targets {};
+        for (int ii = 0; ii < d.targetPositionAccessors.size(); ii ++) {
+            targets.push_back({
+                { "POSITION", d.targetPositionAccessors[ii] }
+            });
+        }
+        j["targets"] = targets;
+    }
     if (!d.dracoAttributes.empty()) {
         j["extensions"] = {
             { KHR_DRACO_MESH_COMPRESSION, {

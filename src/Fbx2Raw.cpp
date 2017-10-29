@@ -449,6 +449,91 @@ private:
     std::vector<Vec4f>       vertexJointWeights;
 };
 
+class FbxBlendShapesAccess
+{
+public:
+    struct Shape {
+        explicit Shape(const std::vector<FbxVector4> &offsets, FbxFloat defaultDeform, const std::vector<FbxAnimCurve *>animations) :
+            offsets(offsets),
+            defaultDeform(defaultDeform),
+            animations(animations)
+        {}
+        const std::vector<FbxVector4>     offsets;
+        const FbxDouble                   defaultDeform;
+        const std::vector<FbxAnimCurve *> animations;
+    };
+
+    explicit FbxBlendShapesAccess(const FbxScene *scene, FbxMesh *mesh) :
+        shapes(extractShapes(scene, mesh))
+    { }
+
+    size_t GetShapeCount() const { return shapes.size(); }
+    FbxDouble GetDefaultDeform(size_t shapeIx) const {
+        return shapes.at(shapeIx).defaultDeform;
+    }
+    FbxVector4 GetPosition(size_t shapeIx, size_t vertexIx) const {
+        return shapes.at(shapeIx).offsets[vertexIx];
+    }
+    size_t GetAnimCount(size_t shapeIx) const { return shapes.at(shapeIx).animations.size(); }
+    FbxAnimCurve * GetAnimation(size_t shapeIx, size_t animIx) const {
+        return shapes.at(shapeIx).animations[animIx];
+    }
+
+private:
+    std::vector<Shape> extractShapes(const FbxScene *scene, FbxMesh *mesh) const {
+        std::vector<Shape> results;
+        // acquire the regular control points from the mesh
+        const FbxVector4 *meshPoints = mesh->GetControlPoints();
+        for (int shapeIx = 0; shapeIx < mesh->GetDeformerCount(FbxDeformer::eBlendShape); shapeIx++) {
+            auto *blendShape = dynamic_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
+            if (blendShape == nullptr) {
+                continue;
+            }
+            for (int channelIx = 0; channelIx < blendShape->GetBlendShapeChannelCount(); ++channelIx) {
+                FbxBlendShapeChannel *channel = blendShape->GetBlendShapeChannel(channelIx);
+
+                if (channel->GetTargetShapeCount() != 1) {
+                    if (channel->GetTargetShapeCount() > 1) {
+                        fmt::print("Warning: Blend Shape %s is a progressive morph; this is not supported.\n", channel->GetName());
+                    }
+                    continue;
+                }
+                FbxShape *fbxShape = channel->GetTargetShape(0);
+                assert(fbxShape->GetControlPointsCount() == mesh->GetControlPointsCount());
+
+                // glTF morph target positions are *mutation vectors* to be added (by weight) to the regular mesh positions.
+                // FBX blend shape control points, on the other hand are final positions.
+                // So we must do a little subtracting.
+                std::vector<FbxVector4> offsets;
+                auto shapePoints = fbxShape->GetControlPoints();
+                for (int pointIx = 0; pointIx < mesh->GetControlPointsCount(); pointIx ++) {
+                    offsets.push_back(shapePoints[pointIx] - meshPoints[pointIx]);
+                }
+
+                size_t animationCount = static_cast<size_t>(scene->GetSrcObjectCount<FbxAnimStack>());
+                std::vector<FbxAnimCurve *>animations(animationCount);
+                for (int j = 0; j < animationCount; j++) {
+                    auto *pAnimStack = scene->GetSrcObject<FbxAnimStack>(j);
+                    auto *layer = pAnimStack->GetMember<FbxAnimLayer>(0);
+                    if (pAnimStack->GetMemberCount() > 1) {
+                        fmt::print("Warning: ignoring animation layers 1+ in stack %s", pAnimStack->GetName());
+                    }
+
+                    FbxAnimCurve *curve = mesh->GetShapeChannel(shapeIx, channelIx, layer, true);
+                    // note that curve can be null here, which is fine
+                    animations[j] = curve;
+                }
+
+                results.push_back(Shape(offsets, channel->DeformPercent * 0.01f, animations));
+            }
+        }
+        return results;
+    }
+
+
+    const std::vector<Shape> shapes;
+};
+
 static bool TriangleTexturePolarity(const Vec2f &uv0, const Vec2f &uv1, const Vec2f &uv2)
 {
     const Vec2f d0 = uv1 - uv0;
@@ -482,7 +567,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 {
     FbxGeometryConverter meshConverter(pScene->GetFbxManager());
     meshConverter.Triangulate(pNode->GetNodeAttribute(), true);
-    const FbxMesh *pMesh = pNode->GetMesh();
+    FbxMesh *pMesh = pNode->GetMesh();
 
     const char *meshName = (pNode->GetName()[0] != '\0') ? pNode->GetName() : pMesh->GetName();
     const int rawSurfaceIndex = raw.AddSurface(meshName, pNode->GetName());
@@ -496,6 +581,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const FbxLayerElementAccess<FbxVector2> uvLayer1(pMesh->GetElementUV(1), pMesh->GetElementUVCount());
     const FbxSkinningAccess                 skinning(pMesh, pScene, pNode);
     const FbxMaterialsAccess                materials(pMesh, textureLocations);
+    const FbxBlendShapesAccess              blendShapes(pScene, pMesh);
 
     if (verboseOutput) {
         fmt::printf(
@@ -539,6 +625,11 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         rawSurface.inverseBindMatrices.push_back(toMat4f(skinning.GetInverseBindMatrix(jointIndex)));
         rawSurface.jointGeometryMins.emplace_back(FLT_MAX, FLT_MAX, FLT_MAX);
         rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    }
+
+    rawSurface.defaultShapeDeforms.clear();
+    for (int shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+        rawSurface.defaultShapeDeforms.push_back(blendShapes.GetDefaultDeform(shapeIx));
     }
 
     int polygonVertexIndex = 0;
@@ -640,6 +731,12 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
             vertex.polarityUv0  = false;
 
             rawSurface.bounds.AddPoint(vertex.position);
+
+            for (int shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+                // extract this vertex' position in this blend shape, transform it as per above, and add it to the vector
+                const Vec3f rawPos = toVec3(transform.MultNormalize(blendShapes.GetPosition(shapeIx, controlPointIndex)));
+                vertex.shapePositions.push_back(rawPos);
+            }
 
             if (skinning.IsSkinned()) {
                 const int jointIndices[FbxSkinningAccess::MAX_WEIGHTS] = {
@@ -846,12 +943,12 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 {
     FbxTime::EMode eMode = FbxTime::eFrames24;
     const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
-    for (int i = 0; i < animationCount; i++) {
-        FbxAnimStack *pAnimStack = pScene->GetSrcObject<FbxAnimStack>(i);
+    for (int animIx = 0; animIx < animationCount; animIx++) {
+        FbxAnimStack *pAnimStack = pScene->GetSrcObject<FbxAnimStack>(animIx);
         FbxString animStackName = pAnimStack->GetName();
 
         if (verboseOutput) {
-            fmt::printf("animation %d: %s (%d%%)", i, (const char *) animStackName, 0);
+            fmt::printf("animation %d: %s (%d%%)", animIx, (const char *) animStackName, 0);
         }
 
         pScene->SetCurrentAnimationStack(pAnimStack);
@@ -884,10 +981,20 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
             bool hasTranslation = false;
             bool hasRotation    = false;
             bool hasScale       = false;
+            bool hasMorphs      = false;
 
             RawChannel channel;
             channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
 
+            std::vector<FbxAnimCurve *> shapeAnimCurves;
+            FbxNodeAttribute *nodeAttr = pNode->GetNodeAttribute();
+            if (nodeAttr != nullptr && nodeAttr->GetAttributeType() == FbxNodeAttribute::EType::eMesh) {
+                // it's inelegant to recreate this same access class multiple times, but it's also dirt cheap...
+                FbxBlendShapesAccess blendShapes(pScene, dynamic_cast<FbxMesh *>(nodeAttr));
+                for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+                    shapeAnimCurves.push_back(blendShapes.GetAnimation(shapeIx, animIx));
+                }
+            }
             for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
                 FbxTime pTime;
                 pTime.SetFrame(frameIndex, eMode);
@@ -915,9 +1022,15 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                 channel.translations.push_back(toVec3f(localTranslation));
                 channel.rotations.push_back(toQuatf(localRotation));
                 channel.scales.push_back(toVec3f(localScale));
+
+                for (auto curve : shapeAnimCurves) {
+                    float weight = curve->Evaluate(pTime) * 0.01; // [0, 100] in FBX, [0, 1] in glTF
+                    hasMorphs |= (fabs(weight) > epsilon);
+                    channel.weights.push_back(weight);
+                }
             }
 
-            if (hasTranslation || hasRotation || hasScale) {
+            if (hasTranslation || hasRotation || hasScale || hasMorphs) {
                 if (!hasTranslation) {
                     channel.translations.clear();
                 }
@@ -927,16 +1040,20 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                 if (!hasScale) {
                     channel.scales.clear();
                 }
+                if (!hasMorphs) {
+                    channel.weights.clear();
+                }
 
                 animation.channels.emplace_back(channel);
 
                 totalSizeInBytes += channel.translations.size() * sizeof(channel.translations[0]) +
                                     channel.rotations.size() * sizeof(channel.rotations[0]) +
-                                    channel.scales.size() * sizeof(channel.scales[0]);
+                                    channel.scales.size() * sizeof(channel.scales[0]) +
+                                    channel.weights.size() * sizeof(channel.weights[0]);
             }
 
             if (verboseOutput) {
-                fmt::printf("\ranimation %d: %s (%d%%)", i, (const char *) animStackName, nodeIndex * 100 / nodeCount);
+                fmt::printf("\ranimation %d: %s (%d%%)", animIx, (const char *) animStackName, nodeIndex * 100 / nodeCount);
             }
         }
 
@@ -944,7 +1061,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 
         if (verboseOutput) {
             fmt::printf(
-                "\ranimation %d: %s (%d channels, %3.1f MB)\n", i, (const char *) animStackName,
+                "\ranimation %d: %s (%d channels, %3.1f MB)\n", animIx, (const char *) animStackName,
                 (int) animation.channels.size(), (float) totalSizeInBytes * 1e-6f);
         }
     }
