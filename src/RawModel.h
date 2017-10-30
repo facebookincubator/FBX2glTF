@@ -28,6 +28,19 @@ enum RawVertexAttribute
     RAW_VERTEX_ATTRIBUTE_AUTO = 1 << 31
 };
 
+struct RawBlendVertex
+{
+    Vec3f position {};
+    Vec3f normal {};
+    Vec4f tangent {};
+
+    bool operator==(const RawBlendVertex &other) const {
+        return position == other.position &&
+               normal == other.normal &&
+               tangent == other.tangent;
+    }
+};
+
 struct RawVertex
 {
     RawVertex() :
@@ -46,7 +59,9 @@ struct RawVertex
     Vec4i jointIndices { 0, 0, 0, 0 };
     Vec4f jointWeights { 0.0f };
 
-    std::vector<Vec3f> shapePositions { };
+    // each vertex can have many alternate positions, normals and tangents -- one set per blend shape target.
+    // the size of this vector is always identical to the size of RawSurface.blendChannels
+    std::vector<RawBlendVertex> blends { };
 
     bool polarityUv0;
     bool pad1;
@@ -158,24 +173,30 @@ struct RawMaterial
     int             textures[RAW_TEXTURE_USAGE_MAX];
 };
 
+struct RawBlendChannel
+{
+    float defaultDeform;
+    bool hasNormals;
+    bool hasTangents;
+};
+
 struct RawSurface
 {
-    std::string              name;                            // The name of this surface
-    std::string              nodeName;                        // The node that links to this surface.
-    std::string              skeletonRootName;                // The name of the root of the skeleton.
-    Bounds<float, 3>         bounds;
-    std::vector<std::string> jointNames;
-    std::vector<Vec3f>       jointGeometryMins;
-    std::vector<Vec3f>       jointGeometryMaxs;
-    std::vector<Mat4f>       inverseBindMatrices;
-    std::vector<float>       defaultShapeDeforms;
-    bool                     discrete;
-    bool                     skinRigid;
+    std::string                  name;                            // The name of this surface
+    std::string                  nodeName;                        // The node that links to this surface.
+    std::string                  skeletonRootName;                // The name of the root of the skeleton.
+    Bounds<float, 3>             bounds;
+    std::vector<std::string>     jointNames;
+    std::vector<Vec3f>           jointGeometryMins;
+    std::vector<Vec3f>           jointGeometryMaxs;
+    std::vector<Mat4f>           inverseBindMatrices;
+    std::vector<RawBlendChannel> blendChannels;
+    bool                         discrete;
 };
 
 struct RawChannel
 {
-    int nodeIndex;
+    int                nodeIndex;
     std::vector<Vec3f> translations;
     std::vector<Quatf> rotations;
     std::vector<Vec3f> scales;

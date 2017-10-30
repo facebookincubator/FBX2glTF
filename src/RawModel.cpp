@@ -38,7 +38,7 @@ bool RawVertex::operator==(const RawVertex &other) const
            (jointIndices == other.jointIndices) &&
            (jointWeights == other.jointWeights) &&
            (polarityUv0 == other.polarityUv0) &&
-           (shapePositions == other.shapePositions);
+           (blends == other.blends);
 }
 
 size_t RawVertex::Difference(const RawVertex &other) const

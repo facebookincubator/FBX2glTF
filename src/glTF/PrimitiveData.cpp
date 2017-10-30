@@ -39,9 +39,13 @@ void PrimitiveData::NoteDracoBuffer(const BufferViewData &data)
     dracoBufferView = data.ix;
 }
 
-void PrimitiveData::AddTarget(const AccessorData &positions)
+void PrimitiveData::AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents)
 {
-    targetPositionAccessors.push_back(positions.ix);
+    targetAccessors.push_back({
+        positions->ix,
+        normals ? normals->ix : -1,
+        tangents ? tangents ->ix : -1
+    });
 }
 
 void to_json(json &j, const PrimitiveData &d) {
@@ -53,12 +57,14 @@ void to_json(json &j, const PrimitiveData &d) {
     if (d.indices >= 0) {
         j["indices"] = d.indices;
     }
-    if (!d.targetPositionAccessors.empty()) {
+    if (!d.targetAccessors.empty()) {
         json targets {};
-        for (int ii = 0; ii < d.targetPositionAccessors.size(); ii ++) {
-            targets.push_back({
-                { "POSITION", d.targetPositionAccessors[ii] }
-            });
+        int pIx, nIx, tIx;
+        for (auto accessor : d.targetAccessors) {
+            std::tie(pIx, nIx, tIx) = accessor;
+            if (pIx >= 0) { targets.push_back({{ "POSITION", pIx }}); }
+            if (nIx >= 0) { targets.push_back({{ "NORMAL", nIx }}); }
+            if (tIx >= 0) { targets.push_back({{ "TANGENT", tIx }}); }
         }
         j["targets"] = targets;
     }

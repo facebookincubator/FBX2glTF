@@ -449,89 +449,172 @@ private:
     std::vector<Vec4f>       vertexJointWeights;
 };
 
+/**
+ * At the FBX level, each Mesh can have a set of FbxBlendShape deformers; organisational units that contain no data
+ * of their own. The actual deformation is determined by one or more FbxBlendShapeChannels, whose influences are all
+ * additively applied to the mesh. In a simpler world, each such channel would extend each base vertex with alternate
+ * position, and optionally normal and tangent.
+ *
+ * It's not quite so simple, though. We also have progressive morphing, where one logical morph actually consists of
+ * several concrete ones, each applied in sequence. For us, this means each channel contains a sequence of FbxShapes
+ * (aka target shape); these are the actual data-holding entities that provide the alternate vertex attributes. As such
+ * a channel is given more weight, it moves from one target shape to another.
+ *
+ * The total number of alternate sets of attributes, then, is the total number of target shapes across all the channels
+ * of all the blend shapes of the mesh.
+ *
+ * Each animation in the scene stack can yield one or zero FbxAnimCurves per channel (not target shape). We evaluate
+ * these curves to get the weight of the channel: this weight is further introspected on to figure out which target
+ * shapes we're currently interpolation between.
+ */
 class FbxBlendShapesAccess
 {
 public:
-    struct Shape {
-        explicit Shape(const std::vector<FbxVector4> &offsets, FbxFloat defaultDeform, const std::vector<FbxAnimCurve *>animations) :
-            offsets(offsets),
-            defaultDeform(defaultDeform),
-            animations(animations)
+    struct BlendChannel {
+        explicit BlendChannel(FbxDouble defaultDeform) :
+            defaultDeform(defaultDeform)
         {}
-        const std::vector<FbxVector4>     offsets;
-        const FbxDouble                   defaultDeform;
-        const std::vector<FbxAnimCurve *> animations;
+        struct TargetShape {
+            TargetShape(
+                double fullWeight,
+                const std::vector<FbxVector4> &positions,
+                const std::vector<FbxVector4> &normals,
+                const std::vector<FbxVector4> &tangents
+            ) : fullWeight(fullWeight),
+                positions(positions),
+                normals(normals),
+                tangents(tangents)
+            {}
+
+            const double                  fullWeight;
+            const std::vector<FbxVector4> positions;
+            const std::vector<FbxVector4> normals;
+            const std::vector<FbxVector4> tangents;
+        };
+
+        const FbxDouble defaultDeform;
+
+        // one for each FbxShape
+        std::vector<const TargetShape> targetShapes {};
+
+        // always the size of the scene's animation stack; can and will contain nulls
+        std::vector<FbxAnimCurve *> animations {};
     };
 
     explicit FbxBlendShapesAccess(const FbxScene *scene, FbxMesh *mesh) :
-        shapes(extractShapes(scene, mesh))
+        channels(extractChannels(scene, mesh))
     { }
 
-    size_t GetShapeCount() const { return shapes.size(); }
-    FbxDouble GetDefaultDeform(size_t shapeIx) const {
-        return shapes.at(shapeIx).defaultDeform;
+    size_t GetShapeCount() const { return channels.size(); }
+    FbxDouble GetDefaultDeform(size_t channelIx) const {
+        return channels.at(channelIx).defaultDeform;
     }
-    FbxVector4 GetPosition(size_t shapeIx, size_t vertexIx) const {
-        return shapes.at(shapeIx).offsets[vertexIx];
+    size_t GetTargetShapeCount(size_t channelIx) const { return channels[channelIx].targetShapes.size(); }
+    const BlendChannel::TargetShape &GetTargetShape(size_t channelIx, size_t targetShapeIx) const {
+        return channels.at(channelIx).targetShapes[targetShapeIx];
     }
-    size_t GetAnimCount(size_t shapeIx) const { return shapes.at(shapeIx).animations.size(); }
-    FbxAnimCurve * GetAnimation(size_t shapeIx, size_t animIx) const {
-        return shapes.at(shapeIx).animations[animIx];
+    size_t GetAnimCount(size_t channelIx) const { return channels.at(channelIx).animations.size(); }
+    FbxAnimCurve *GetAnimation(size_t channelIx, size_t animIx) const {
+        return channels.at(channelIx).animations[animIx];
     }
 
 private:
-    std::vector<Shape> extractShapes(const FbxScene *scene, FbxMesh *mesh) const {
-        std::vector<Shape> results;
+    std::vector<BlendChannel> extractChannels(const FbxScene *scene, FbxMesh *mesh) const {
         // acquire the regular control points from the mesh
+        const int controlPointsCount = mesh->GetControlPointsCount();
         const FbxVector4 *meshPoints = mesh->GetControlPoints();
+
+        // acquire the normals, if they're present & make sure they're well-formed
+        FbxLayerElementArrayTemplate<FbxVector4>* meshNormals = nullptr;
+        if (!mesh->GetNormals(&meshNormals) || meshNormals->GetCount() != controlPointsCount) {
+            meshNormals = nullptr;
+        }
+
+        // same, but tangents
+        FbxLayerElementArrayTemplate<FbxVector4>* meshTangents = nullptr;
+        if (!mesh->GetTangents(&meshTangents) || meshTangents->GetCount() != controlPointsCount) {
+            meshTangents = nullptr;
+        }
+
+        std::vector<BlendChannel> results;
         for (int shapeIx = 0; shapeIx < mesh->GetDeformerCount(FbxDeformer::eBlendShape); shapeIx++) {
-            auto *blendShape = dynamic_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
-            if (blendShape == nullptr) {
+            auto *fbxBlendShape = dynamic_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
+            if (fbxBlendShape == nullptr) {
                 continue;
             }
-            for (int channelIx = 0; channelIx < blendShape->GetBlendShapeChannelCount(); ++channelIx) {
-                FbxBlendShapeChannel *channel = blendShape->GetBlendShapeChannel(channelIx);
-
-                if (channel->GetTargetShapeCount() != 1) {
-                    if (channel->GetTargetShapeCount() > 1) {
-                        fmt::print("Warning: Blend Shape %s is a progressive morph; this is not supported.\n", channel->GetName());
-                    }
+            for (int channelIx = 0; channelIx < fbxBlendShape->GetBlendShapeChannelCount(); ++channelIx) {
+                FbxBlendShapeChannel *channel = fbxBlendShape->GetBlendShapeChannel(channelIx);
+                unsigned int targetShapeCount = static_cast<unsigned int>(channel->GetTargetShapeCount());
+                if (targetShapeCount < 1) {
                     continue;
                 }
-                FbxShape *fbxShape = channel->GetTargetShape(0);
-                assert(fbxShape->GetControlPointsCount() == mesh->GetControlPointsCount());
+                BlendChannel shape(channel->DeformPercent * 0.01f);
 
-                // glTF morph target positions are *mutation vectors* to be added (by weight) to the regular mesh positions.
-                // FBX blend shape control points, on the other hand are final positions.
-                // So we must do a little subtracting.
-                std::vector<FbxVector4> offsets;
-                auto shapePoints = fbxShape->GetControlPoints();
-                for (int pointIx = 0; pointIx < mesh->GetControlPointsCount(); pointIx ++) {
-                    offsets.push_back(shapePoints[pointIx] - meshPoints[pointIx]);
+                std::vector<std::pair<double, FbxShape *>> targetShapes (targetShapeCount);
+                double *fullWeights = channel->GetTargetShapeFullWeights();
+                for (int targetShapeIx = 0; targetShapeIx < targetShapes.size(); targetShapeIx++) {
+                    FbxShape *fbxShape = channel->GetTargetShape(targetShapeIx);
+                    assert(fbxShape->GetControlPointsCount() == controlPointsCount);
+
+                    // glTF morph target positions are *mutation vectors* to be added (by weight) to the regular mesh positions.
+                    // FBX blend shape control points, on the other hand are final positions.
+                    // So we must do a little subtracting.
+                    std::vector<FbxVector4> positions, normals, tangents;
+                    // fetch positions
+                    const FbxVector4 *shapePoints = fbxShape->GetControlPoints();
+                    for (int pointIx = 0; pointIx < controlPointsCount; pointIx ++) {
+                        positions.push_back(shapePoints[pointIx] - meshPoints[pointIx]);
+                    }
+
+                    // maybe fetch normals
+                    if (meshNormals) {
+                        FbxLayerElementArrayTemplate<FbxVector4>* fbxNormals = nullptr;
+                        if (fbxShape->GetNormals(&fbxNormals)) {
+                            for (int pointIx = 0; pointIx < controlPointsCount; pointIx ++) {
+                                normals.push_back(fbxNormals->GetAt(pointIx) - meshNormals->GetAt(pointIx));
+                            }
+                        }
+                    }
+
+                    // maybe fetch tangents
+                    if (meshTangents) {
+                        FbxLayerElementArrayTemplate<FbxVector4>* fbxTangents = nullptr;
+                        if (fbxShape->GetTangents(&fbxTangents)) {
+                            for (int pointIx = 0; pointIx < controlPointsCount; pointIx ++) {
+                                tangents.push_back(fbxTangents->GetAt(pointIx) - meshTangents->GetAt(pointIx));
+                            }
+                        }
+                    }
+
+                    // finally combine all this into a TargetShape and add it to our work-in-progress BlendChannel
+                    shape.targetShapes.push_back(
+                        BlendChannel::TargetShape(fullWeights[targetShapeIx], positions, normals, tangents)
+                    );
                 }
 
+                // go through all the animations in the scene and figure out their relevance to this mesh
                 size_t animationCount = static_cast<size_t>(scene->GetSrcObjectCount<FbxAnimStack>());
                 std::vector<FbxAnimCurve *>animations(animationCount);
-                for (int j = 0; j < animationCount; j++) {
-                    auto *pAnimStack = scene->GetSrcObject<FbxAnimStack>(j);
+                for (int animIx = 0; animIx < animationCount; animIx++) {
+                    auto *pAnimStack = scene->GetSrcObject<FbxAnimStack>(animIx);
                     auto *layer = pAnimStack->GetMember<FbxAnimLayer>(0);
                     if (pAnimStack->GetMemberCount() > 1) {
                         fmt::print("Warning: ignoring animation layers 1+ in stack %s", pAnimStack->GetName());
                     }
 
-                    FbxAnimCurve *curve = mesh->GetShapeChannel(shapeIx, channelIx, layer, true);
-                    // note that curve can be null here, which is fine
-                    animations[j] = curve;
+                    // note that some of these will be null here, which is fine; the critical part is that the
+                    // indices maintain parity with the scene-wide animation stack
+                    shape.animations.push_back(mesh->GetShapeChannel(shapeIx, channelIx, layer, true));
                 }
 
-                results.push_back(Shape(offsets, channel->DeformPercent * 0.01f, animations));
+                results.push_back(shape);
             }
         }
         return results;
     }
 
 
-    const std::vector<Shape> shapes;
+    const std::vector<BlendChannel> channels;
 };
 
 static bool TriangleTexturePolarity(const Vec2f &uv0, const Vec2f &uv1, const Vec2f &uv2)
@@ -627,9 +710,17 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
     }
 
-    rawSurface.defaultShapeDeforms.clear();
-    for (int shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
-        rawSurface.defaultShapeDeforms.push_back(blendShapes.GetDefaultDeform(shapeIx));
+    rawSurface.blendChannels.clear();
+    for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+        for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
+            const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
+            float defaultDeform = static_cast<float>(blendShapes.GetDefaultDeform(shapeIx));
+            rawSurface.blendChannels.push_back(RawBlendChannel {
+                defaultDeform,
+                !shape.normals.empty(),
+                !shape.tangents.empty()
+            });
+        }
     }
 
     int polygonVertexIndex = 0;
@@ -732,10 +823,21 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
             rawSurface.bounds.AddPoint(vertex.position);
 
-            for (int shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
-                // extract this vertex' position in this blend shape, transform it as per above, and add it to the vector
-                const Vec3f rawPos = toVec3(transform.MultNormalize(blendShapes.GetPosition(shapeIx, controlPointIndex)));
-                vertex.shapePositions.push_back(rawPos);
+            for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+                for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
+                    const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
+
+                    RawBlendVertex blendVertex;
+                    // the morph target positions must be transformed just as with the vertex positions above
+                    blendVertex.position = toVec3(transform.MultNormalize(shape.positions[controlPointIndex]));
+                    if (!shape.normals.empty()) {
+                        blendVertex.normal = toVec3(shape.normals[controlPointIndex]);
+                    }
+                    if (!shape.tangents.empty()) {
+                        blendVertex.tangent = toVec4(shape.tangents[controlPointIndex]);
+                    }
+                    vertex.blends.push_back(blendVertex);
+                }
             }
 
             if (skinning.IsSkinned()) {
@@ -943,12 +1045,12 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 {
     FbxTime::EMode eMode = FbxTime::eFrames24;
     const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
-    for (int animIx = 0; animIx < animationCount; animIx++) {
+    for (size_t animIx = 0; animIx < animationCount; animIx++) {
         FbxAnimStack *pAnimStack = pScene->GetSrcObject<FbxAnimStack>(animIx);
         FbxString animStackName = pAnimStack->GetName();
 
         if (verboseOutput) {
-            fmt::printf("animation %d: %s (%d%%)", animIx, (const char *) animStackName, 0);
+            fmt::printf("animation %zu: %s (%d%%)", animIx, (const char *) animStackName, 0);
         }
 
         pScene->SetCurrentAnimationStack(pAnimStack);
@@ -991,8 +1093,8 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
             if (nodeAttr != nullptr && nodeAttr->GetAttributeType() == FbxNodeAttribute::EType::eMesh) {
                 // it's inelegant to recreate this same access class multiple times, but it's also dirt cheap...
                 FbxBlendShapesAccess blendShapes(pScene, dynamic_cast<FbxMesh *>(nodeAttr));
-                for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
-                    shapeAnimCurves.push_back(blendShapes.GetAnimation(shapeIx, animIx));
+                for (size_t channelIx = 0; channelIx < blendShapes.GetShapeCount(); channelIx ++) {
+                    shapeAnimCurves.push_back(blendShapes.GetAnimation(channelIx, animIx));
                 }
             }
             for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
@@ -1024,8 +1126,11 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                 channel.scales.push_back(toVec3f(localScale));
 
                 for (auto curve : shapeAnimCurves) {
-                    float weight = curve->Evaluate(pTime) * 0.01; // [0, 100] in FBX, [0, 1] in glTF
-                    hasMorphs |= (fabs(weight) > epsilon);
+                    float weight = 0f;
+                    if (curve) {
+                        weight = curve->Evaluate(pTime) * 0.01f; // [0, 100] in FBX, [0, 1] in glTF
+                        hasMorphs |= (fabs(weight) > epsilon);
+                    }
                     channel.weights.push_back(weight);
                 }
             }
