@@ -1131,7 +1131,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 
                     for (size_t channelIx = 0; channelIx < blendShapes.GetChannelCount(); channelIx++) {
                         auto curve = blendShapes.GetAnimation(channelIx, animIx);
-                        float influence = curve->Evaluate(pTime); // 0-100
+                        float influence = (curve != nullptr) ? curve->Evaluate(pTime) : 0; // 0-100
 
                         int targetCount = static_cast<int>(blendShapes.GetTargetShapeCount(channelIx));
 
@@ -1164,7 +1164,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                                     hasMorphs = true;
                                     continue;
                                 }
-                                if (targetIx > 0) {
+                                if (targetIx != targetCount-1) {
                                     result = findInInterval(influence, targetIx);
                                     if (!isnan(result)) {
                                         // we're transitioning AWAY from targetIx
