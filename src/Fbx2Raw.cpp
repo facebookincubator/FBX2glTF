@@ -566,6 +566,7 @@ private:
                         positions.push_back(shapePoints[pointIx] - meshPoints[pointIx]);
                     }
 
+#if 0 // I've never seen anything but zero normals and tangents come out of this. Revisit later.
                     // maybe fetch normals
                     if (meshNormals) {
                         FbxLayerElementArrayTemplate<FbxVector4>* fbxNormals = nullptr;
@@ -585,7 +586,7 @@ private:
                             }
                         }
                     }
-
+#endif
                     // finally combine all this into a TargetShape and add it to our work-in-progress BlendChannel
                     shape.targetShapes.push_back(
                         BlendChannel::TargetShape(fullWeights[targetShapeIx], positions, normals, tangents)
