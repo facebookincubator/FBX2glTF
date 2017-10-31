@@ -62,9 +62,11 @@ void to_json(json &j, const PrimitiveData &d) {
         int pIx, nIx, tIx;
         for (auto accessor : d.targetAccessors) {
             std::tie(pIx, nIx, tIx) = accessor;
-            if (pIx >= 0) { targets.push_back({{ "POSITION", pIx }}); }
-            if (nIx >= 0) { targets.push_back({{ "NORMAL", nIx }}); }
-            if (tIx >= 0) { targets.push_back({{ "TANGENT", tIx }}); }
+            json target {};
+            if (pIx >= 0) { target["POSITION"] = pIx; }
+            if (nIx >= 0) { target["NORMAL"] = nIx; }
+            if (tIx >= 0) { target["TANGENT"] = tIx; }
+            targets.push_back(target);
         }
         j["targets"] = targets;
     }

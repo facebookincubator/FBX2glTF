@@ -505,7 +505,7 @@ public:
         channels(extractChannels(scene, mesh))
     { }
 
-    size_t GetShapeCount() const { return channels.size(); }
+    size_t GetChannelCount() const { return channels.size(); }
     FbxDouble GetDefaultDeform(size_t channelIx) const {
         return channels.at(channelIx).defaultDeform;
     }
@@ -711,7 +711,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     }
 
     rawSurface.blendChannels.clear();
-    for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+    for (size_t shapeIx = 0; shapeIx < blendShapes.GetChannelCount(); shapeIx ++) {
         for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
             const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
             float defaultDeform = static_cast<float>(blendShapes.GetDefaultDeform(shapeIx));
@@ -823,7 +823,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
             rawSurface.bounds.AddPoint(vertex.position);
 
-            for (size_t shapeIx = 0; shapeIx < blendShapes.GetShapeCount(); shapeIx ++) {
+            for (size_t shapeIx = 0; shapeIx < blendShapes.GetChannelCount(); shapeIx ++) {
                 for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
                     const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
 
@@ -1044,6 +1044,8 @@ static void ReadNodeHierarchy(
 static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 {
     FbxTime::EMode eMode = FbxTime::eFrames24;
+    const double epsilon = 1e-5f;
+
     const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
     for (size_t animIx = 0; animIx < animationCount; animIx++) {
         FbxAnimStack *pAnimStack = pScene->GetSrcObject<FbxAnimStack>(animIx);
@@ -1088,15 +1090,6 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
             RawChannel channel;
             channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
 
-            std::vector<FbxAnimCurve *> shapeAnimCurves;
-            FbxNodeAttribute *nodeAttr = pNode->GetNodeAttribute();
-            if (nodeAttr != nullptr && nodeAttr->GetAttributeType() == FbxNodeAttribute::EType::eMesh) {
-                // it's inelegant to recreate this same access class multiple times, but it's also dirt cheap...
-                FbxBlendShapesAccess blendShapes(pScene, dynamic_cast<FbxMesh *>(nodeAttr));
-                for (size_t channelIx = 0; channelIx < blendShapes.GetShapeCount(); channelIx ++) {
-                    shapeAnimCurves.push_back(blendShapes.GetAnimation(channelIx, animIx));
-                }
-            }
             for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
                 FbxTime pTime;
                 pTime.SetFrame(frameIndex, eMode);
@@ -1106,7 +1099,6 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                 const FbxQuaternion localRotation    = localTransform.GetQ();
                 const FbxVector4    localScale       = computeLocalScale(pNode, pTime);
 
-                const double epsilon = 1e-5f;
                 hasTranslation |= (
                     fabs(localTranslation[0] - baseTranslation[0]) > epsilon ||
                     fabs(localTranslation[1] - baseTranslation[1]) > epsilon ||
@@ -1124,14 +1116,69 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                 channel.translations.push_back(toVec3f(localTranslation));
                 channel.rotations.push_back(toQuatf(localRotation));
                 channel.scales.push_back(toVec3f(localScale));
+            }
 
-                for (auto curve : shapeAnimCurves) {
-                    float weight = 0f;
-                    if (curve) {
-                        weight = curve->Evaluate(pTime) * 0.01f; // [0, 100] in FBX, [0, 1] in glTF
-                        hasMorphs |= (fabs(weight) > epsilon);
+            std::vector<FbxAnimCurve *> shapeAnimCurves;
+            FbxNodeAttribute *nodeAttr = pNode->GetNodeAttribute();
+            if (nodeAttr != nullptr && nodeAttr->GetAttributeType() == FbxNodeAttribute::EType::eMesh) {
+                // it's inelegant to recreate this same access class multiple times, but it's also dirt cheap...
+                FbxBlendShapesAccess blendShapes(pScene, dynamic_cast<FbxMesh *>(nodeAttr));
+
+                for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
+                    FbxTime pTime;
+                    pTime.SetFrame(frameIndex, eMode);
+
+                    for (size_t channelIx = 0; channelIx < blendShapes.GetChannelCount(); channelIx++) {
+                        auto curve = blendShapes.GetAnimation(channelIx, animIx);
+                        float influence = curve->Evaluate(pTime); // 0-100
+
+                        int targetCount = static_cast<int>(blendShapes.GetTargetShapeCount(channelIx));
+
+                        // the target shape 'fullWeight' values are a strictly ascending list of floats (between
+                        // 0 and 100), forming a sequence of intervals -- this convenience function figures out if
+                        // 'p' lays between some certain target fullWeights, and if so where (from 0 to 1).
+                        auto findInInterval = [&](double p, int n) {
+                            if (n >= targetCount) {
+                                // p is certainly completely left of this interval
+                                return NAN;
+                            }
+                            double leftWeight = (n >= 0) ? blendShapes.GetTargetShape(channelIx, n).fullWeight : 0;
+                            if (p < leftWeight) {
+                                return NAN;
+                            }
+                            double rightWeight = (n < targetCount-1) ? blendShapes.GetTargetShape(channelIx, n+1).fullWeight : 100;
+                            if (p > rightWeight) {
+                                return NAN;
+                            }
+                            // at this point leftWeight <= p <= rightWeight, return [0, 1]
+                            return static_cast<float>((p - leftWeight) / (rightWeight - leftWeight));
+                        };
+
+                        for (int targetIx = 0; targetIx < targetCount; targetIx++) {
+                            if (curve) {
+                                float result = findInInterval(influence, targetIx-1);
+                                if (!isnan(result)) {
+                                    // we're transitioning into targetIx
+                                    channel.weights.push_back(result);
+                                    hasMorphs = true;
+                                    continue;
+                                }
+                                if (targetIx > 0) {
+                                    result = findInInterval(influence, targetIx);
+                                    if (!isnan(result)) {
+                                        // we're transitioning AWAY from targetIx
+                                        channel.weights.push_back(1.0f - result);
+                                        hasMorphs = true;
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            // this is here because we have to fill in a weight for every channelIx/targetIx permutation,
+                            // regardless of whether or not they participate in this animation.
+                            channel.weights.push_back(0.0f);
+                        }
                     }
-                    channel.weights.push_back(weight);
                 }
             }
 
