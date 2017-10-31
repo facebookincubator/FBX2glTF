@@ -22,7 +22,8 @@ const binaries = {
 function convert(srcFile, destFile, opts = []) {
   return new Promise((resolve, reject) => {
     try {
-      let tool = path.join(__dirname, 'bin', os.type(), 'FBX2glTF');
+      let binExt = os.type() === 'Windows_NT' ? '.exe' : '';
+      let tool = path.join(__dirname, 'bin', os.type(), 'FBX2glTF' + binExt);
       if (!fs.existsSync(tool)) {
         throw new Error(`Unsupported OS: ${os.type()}`);
       }
