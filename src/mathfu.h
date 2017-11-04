@@ -75,6 +75,10 @@ static inline Vec3f toVec3f(const FbxVector4 &v) {
     return Vec3f((float) v[0], (float) v[1], (float) v[2]);
 }
 
+static inline Vec4f toVec4f(const FbxVector4 &v) {
+    return Vec4f((float) v[0], (float) v[1], (float) v[2], (float) v[3]);
+}
+
 static inline Mat4f toMat4f(const FbxAMatrix &m) {
     auto result = Mat4f();
     for (int row = 0; row < 4; row ++) {
