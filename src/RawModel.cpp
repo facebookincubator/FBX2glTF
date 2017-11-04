@@ -38,6 +38,7 @@ bool RawVertex::operator==(const RawVertex &other) const
            (jointIndices == other.jointIndices) &&
            (jointWeights == other.jointWeights) &&
            (polarityUv0 == other.polarityUv0) &&
+           (blendSurfaceIx == other.blendSurfaceIx) &&
            (blends == other.blends);
 }
 

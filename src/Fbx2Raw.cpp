@@ -470,28 +470,28 @@ private:
 class FbxBlendShapesAccess
 {
 public:
+    struct TargetShape
+    {
+        TargetShape(
+            double fullWeight,
+            const std::vector<FbxVector4> &positions,
+            const std::vector<FbxVector4> &normals,
+            const std::vector<FbxVector4> &tangents
+        ) : fullWeight(fullWeight),
+            positions(positions),
+            normals(normals),
+            tangents(tangents) {}
+
+        const double                  fullWeight;
+        const std::vector<FbxVector4> positions;
+        const std::vector<FbxVector4> normals;
+        const std::vector<FbxVector4> tangents;
+    };
+
     struct BlendChannel {
         explicit BlendChannel(FbxDouble defaultDeform) :
             defaultDeform(defaultDeform)
         {}
-        struct TargetShape {
-            TargetShape(
-                double fullWeight,
-                const std::vector<FbxVector4> &positions,
-                const std::vector<FbxVector4> &normals,
-                const std::vector<FbxVector4> &tangents
-            ) : fullWeight(fullWeight),
-                positions(positions),
-                normals(normals),
-                tangents(tangents)
-            {}
-
-            const double                  fullWeight;
-            const std::vector<FbxVector4> positions;
-            const std::vector<FbxVector4> normals;
-            const std::vector<FbxVector4> tangents;
-        };
-
         const FbxDouble defaultDeform;
 
         // one for each FbxShape
@@ -510,7 +510,7 @@ public:
         return channels.at(channelIx).defaultDeform;
     }
     size_t GetTargetShapeCount(size_t channelIx) const { return channels[channelIx].targetShapes.size(); }
-    const BlendChannel::TargetShape &GetTargetShape(size_t channelIx, size_t targetShapeIx) const {
+    const TargetShape &GetTargetShape(size_t channelIx, size_t targetShapeIx) const {
         return channels.at(channelIx).targetShapes[targetShapeIx];
     }
     size_t GetAnimCount(size_t channelIx) const { return channels.at(channelIx).animations.size(); }
@@ -589,7 +589,7 @@ private:
 #endif
                     // finally combine all this into a TargetShape and add it to our work-in-progress BlendChannel
                     shape.targetShapes.push_back(
-                        BlendChannel::TargetShape(fullWeights[targetShapeIx], positions, normals, tangents)
+                        TargetShape(fullWeights[targetShapeIx], positions, normals, tangents)
                     );
                 }
 
@@ -712,12 +712,14 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     }
 
     rawSurface.blendChannels.clear();
+    std::vector<const FbxBlendShapesAccess::TargetShape *> targetShapes;
     for (size_t shapeIx = 0; shapeIx < blendShapes.GetChannelCount(); shapeIx ++) {
         for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
-            const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
-            float defaultDeform = static_cast<float>(blendShapes.GetDefaultDeform(shapeIx));
+            const FbxBlendShapesAccess::TargetShape &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
+            targetShapes.push_back(&shape);
+
             rawSurface.blendChannels.push_back(RawBlendChannel {
-                defaultDeform,
+                static_cast<float>(blendShapes.GetDefaultDeform(shapeIx)),
                 !shape.normals.empty(),
                 !shape.tangents.empty()
             });
@@ -824,21 +826,22 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
             rawSurface.bounds.AddPoint(vertex.position);
 
-            for (size_t shapeIx = 0; shapeIx < blendShapes.GetChannelCount(); shapeIx ++) {
-                for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(shapeIx); targetIx ++) {
-                    const auto &shape = blendShapes.GetTargetShape(shapeIx, targetIx);
-
+            if (!targetShapes.empty()) {
+                vertex.blendSurfaceIx = rawSurfaceIndex;
+                for (const auto *targetShape : targetShapes) {
                     RawBlendVertex blendVertex;
                     // the morph target positions must be transformed just as with the vertex positions above
-                    blendVertex.position = toVec3(transform.MultNormalize(shape.positions[controlPointIndex]));
-                    if (!shape.normals.empty()) {
-                        blendVertex.normal = toVec3(shape.normals[controlPointIndex]);
+                    blendVertex.position = toVec3f(transform.MultNormalize(targetShape->positions[controlPointIndex]));
+                    if (!targetShape->normals.empty()) {
+                        blendVertex.normal = toVec3f(targetShape->normals[controlPointIndex]);
                     }
-                    if (!shape.tangents.empty()) {
-                        blendVertex.tangent = toVec4(shape.tangents[controlPointIndex]);
+                    if (!targetShape->tangents.empty()) {
+                        blendVertex.tangent = toVec4f(targetShape->tangents[controlPointIndex]);
                     }
                     vertex.blends.push_back(blendVertex);
                 }
+            } else {
+                vertex.blendSurfaceIx = -1;
             }
 
             if (skinning.IsSkinned()) {
@@ -1138,20 +1141,25 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                         // the target shape 'fullWeight' values are a strictly ascending list of floats (between
                         // 0 and 100), forming a sequence of intervals -- this convenience function figures out if
                         // 'p' lays between some certain target fullWeights, and if so where (from 0 to 1).
-                        auto findInInterval = [&](double p, int n) {
+                        auto findInInterval = [&](const double p, const int n) {
                             if (n >= targetCount) {
                                 // p is certainly completely left of this interval
                                 return NAN;
                             }
-                            double leftWeight = (n >= 0) ? blendShapes.GetTargetShape(channelIx, n).fullWeight : 0;
-                            if (p < leftWeight) {
-                                return NAN;
+                            double leftWeight = 0;
+                            if (n >= 0) {
+                                leftWeight = blendShapes.GetTargetShape(channelIx, n).fullWeight;
+                                if (p < leftWeight) {
+                                    return NAN;
+                                }
+                                // the first interval implicitly includes all lesser influence values
                             }
-                            double rightWeight = (n < targetCount-1) ? blendShapes.GetTargetShape(channelIx, n+1).fullWeight : 100;
-                            if (p > rightWeight) {
+                            double rightWeight = blendShapes.GetTargetShape(channelIx, n+1).fullWeight;
+                            if (p > rightWeight && n+1 < targetCount-1) {
                                 return NAN;
+                                // the last interval implicitly includes all greater influence values
                             }
-                            // at this point leftWeight <= p <= rightWeight, return [0, 1]
+                            // transform p linearly such that [leftWeight, rightWeight] => [0, 1]
                             return static_cast<float>((p - leftWeight) / (rightWeight - leftWeight));
                         };
 

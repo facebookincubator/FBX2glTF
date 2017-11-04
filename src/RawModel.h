@@ -58,9 +58,11 @@ struct RawVertex
     Vec2f uv1 { 0.0f };
     Vec4i jointIndices { 0, 0, 0, 0 };
     Vec4f jointWeights { 0.0f };
+    // end of members that directly correspond to vertex attributes
 
-    // each vertex can have many alternate positions, normals and tangents -- one set per blend shape target.
-    // the size of this vector is always identical to the size of RawSurface.blendChannels
+    // if this vertex participates in a blend shape setup, the surfaceIx of its dedicated mesh; otherwise, -1
+    int blendSurfaceIx = -1;
+    // the size of this vector is always identical to the size of the corresponding RawSurface.blendChannels
     std::vector<RawBlendVertex> blends { };
 
     bool polarityUv0;
