@@ -20,7 +20,7 @@
 
 struct MeshData : Holdable
 {
-    explicit MeshData(std::string name);
+    MeshData(const std::string &name, const std::vector<float> &weights);
 
     void AddPrimitive(std::shared_ptr<PrimitiveData> primitive)
     {
@@ -30,6 +30,7 @@ struct MeshData : Holdable
     json serialize() const override;
 
     const std::string                           name;
+    const std::vector<float>                    weights;
     std::vector<std::shared_ptr<PrimitiveData>> primitives;
 };
 

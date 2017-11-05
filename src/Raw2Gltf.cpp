@@ -333,15 +333,15 @@ ModelData *Raw2Gltf(
                 fmt::printf("Animation '%s' has %lu channels:\n", animation.name.c_str(), animation.channels.size());
             }
 
-            for (size_t j = 0; j < animation.channels.size(); j++) {
-                const RawChannel &channel = animation.channels[j];
+            for (size_t channelIx = 0; channelIx < animation.channels.size(); channelIx++) {
+                const RawChannel &channel = animation.channels[channelIx];
                 const RawNode    &node    = raw.GetNode(channel.nodeIndex);
 
                 if (verboseOutput) {
                     fmt::printf(
-                        "  Channel %lu (%s) has translations/rotations/scales: [%lu, %lu, %lu]\n",
-                        j, node.name.c_str(), channel.translations.size(),
-                        channel.rotations.size(), channel.scales.size());
+                        "  Channel %lu (%s) has translations/rotations/scales/weights: [%lu, %lu, %lu, %lu]\n",
+                        channelIx, node.name.c_str(), channel.translations.size(), channel.rotations.size(),
+                        channel.scales.size(), channel.weights.size());
                 }
 
                 NodeData &nDat = require(nodesByName, node.name);
@@ -353,6 +353,9 @@ ModelData *Raw2Gltf(
                 }
                 if (!channel.scales.empty()) {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.scales), "scale");
+                }
+                if (!channel.weights.empty()) {
+                    aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, {CT_FLOAT, 1, "SCALAR"}, channel.weights), "weights");
                 }
             }
         }
@@ -494,7 +497,11 @@ ModelData *Raw2Gltf(
                 mesh = meshIter->second.get();
 
             } else {
-                auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name));
+                std::vector<float> defaultDeforms;
+                for (const auto &channel : rawSurface.blendChannels) {
+                    defaultDeforms.push_back(channel.defaultDeform);
+                }
+                auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name, defaultDeforms));
                 meshByNodeName[nodeName] = meshPtr;
                 meshNode.SetMesh(meshPtr->ix);
                 mesh = meshPtr.get();
@@ -597,6 +604,49 @@ ModelData *Raw2Gltf(
                     const AttributeDefinition<Vec4f> ATTR_WEIGHTS("WEIGHTS_0", &RawVertex::jointWeights,
                         GLT_VEC4F, draco::GeometryAttribute::GENERIC, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+                }
+
+                // each channel present in the mesh always ends up a target in the primitive
+                for (int channelIx = 0; channelIx < rawSurface.blendChannels.size(); channelIx ++) {
+                    const auto &channel = rawSurface.blendChannels[channelIx];
+
+                    // track the bounds of each shape channel
+                    Bounds<float, 3> shapeBounds;
+
+                    std::vector<Vec3f> positions, normals;
+                    std::vector<Vec4f> tangents;
+                    for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj ++) {
+                        auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
+                        shapeBounds.AddPoint(blendVertex.position);
+                        positions.push_back(blendVertex.position);
+                        if (channel.hasNormals) {
+                            normals.push_back(blendVertex.normal);
+                        }
+                        if (channel.hasTangents) {
+                            tangents.push_back(blendVertex.tangent);
+                        }
+                    }
+                    std::shared_ptr<AccessorData> pAcc = gltf->AddAccessorWithView(
+                        *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
+                        GLT_VEC3F, positions);
+                    pAcc->min = toStdVec(shapeBounds.min);
+                    pAcc->max = toStdVec(shapeBounds.max);
+
+                    std::shared_ptr<AccessorData> nAcc;
+                    if (channel.hasNormals) {
+                        nAcc = gltf->AddAccessorWithView(
+                            *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
+                            GLT_VEC3F, normals);
+                    }
+
+                    std::shared_ptr<AccessorData> tAcc;
+                    if (channel.hasTangents) {
+                        nAcc = gltf->AddAccessorWithView(
+                            *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
+                            GLT_VEC4F, tangents);
+                    }
+
+                    primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
                 }
             }
             if (options.useDraco) {

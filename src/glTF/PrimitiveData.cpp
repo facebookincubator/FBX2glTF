@@ -39,6 +39,15 @@ void PrimitiveData::NoteDracoBuffer(const BufferViewData &data)
     dracoBufferView = data.ix;
 }
 
+void PrimitiveData::AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents)
+{
+    targetAccessors.push_back({
+        positions->ix,
+        normals ? normals->ix : -1,
+        tangents ? tangents ->ix : -1
+    });
+}
+
 void to_json(json &j, const PrimitiveData &d) {
     j = {
         { "material", d.material },
@@ -48,7 +57,19 @@ void to_json(json &j, const PrimitiveData &d) {
     if (d.indices >= 0) {
         j["indices"] = d.indices;
     }
-
+    if (!d.targetAccessors.empty()) {
+        json targets {};
+        int pIx, nIx, tIx;
+        for (auto accessor : d.targetAccessors) {
+            std::tie(pIx, nIx, tIx) = accessor;
+            json target {};
+            if (pIx >= 0) { target["POSITION"] = pIx; }
+            if (nIx >= 0) { target["NORMAL"] = nIx; }
+            if (tIx >= 0) { target["TANGENT"] = tIx; }
+            targets.push_back(target);
+        }
+        j["targets"] = targets;
+    }
     if (!d.dracoAttributes.empty()) {
         j["extensions"] = {
             { KHR_DRACO_MESH_COMPRESSION, {

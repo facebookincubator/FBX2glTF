@@ -10,9 +10,10 @@
 #include "MeshData.h"
 #include "PrimitiveData.h"
 
-MeshData::MeshData(std::string name)
+MeshData::MeshData(const std::string &name, const std::vector<float> &weights)
     : Holdable(),
-      name(std::move(name))
+      name(name),
+      weights(weights)
 {
 }
 
@@ -22,8 +23,12 @@ json MeshData::serialize() const
     for (const auto &primitive : primitives) {
         jsonPrimitivesArray.push_back(*primitive);
     }
-    return {
+    json result = {
         { "name", name },
         { "primitives", jsonPrimitivesArray }
     };
+    if (!weights.empty()) {
+        result["weights"] = weights;
+    }
+    return result;
 }

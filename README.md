@@ -143,14 +143,15 @@ process happens in reverse when we construct meshes and materials that conform
 to the expectations of the glTF format.
 
 ### Animations
-Every skinned animation in the FBX file becomes an animation in the glTF file.
-The method used is one of "baking": we step through the interval of time spanned
-by the animation, keyframe by keyframe, calculate the local transform of each
-node,and whenever we find any node that's rotated, translated or scaled, we
+Every animation in the FBX file becomes an animation in the glTF file. The
+method used is one of "baking": we step through the interval of time spanned by
+the animation, keyframe by keyframe, calculate the local transform of each
+node, and whenever we find any node that's rotated, translated or scaled, we
 record that fact in the output.
 
-(*Blend Shapes* are not currently supported, but are
-[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/17).)
+Beyond skeleton-based animation, *Blend Shapes* are also supported; they are
+read from the FBX file on a per-mesh basis, and animations can them by varying
+the weights associated with each one.
 
 The baking method has the benefit of being simple and precise. It has the
 drawback of creating potentially very large files. The more complex the
