@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <cmath>
 #include <map>
 
 #if defined( __unix__ )
@@ -20,11 +21,6 @@
 #include "utils/String_Utils.h"
 #include "utils/Image_Utils.h"
 #include "RawModel.h"
-
-static float Log2f(float f)
-{
-    return logf(f) * 1.442695041f;
-}
 
 bool RawVertex::operator==(const RawVertex &other) const
 {
@@ -103,7 +99,7 @@ int RawModel::AddTexture(const std::string &name, const std::string &fileName, c
     texture.name         = name;
     texture.width        = properties.width;
     texture.height       = properties.height;
-    texture.mipLevels    = (int) ceilf(Log2f(std::max((float) properties.width, (float) properties.height)));
+    texture.mipLevels    = (int) ceilf(log2f(std::max((float) properties.width, (float) properties.height)));
     texture.usage        = usage;
     texture.occlusion    = (properties.occlusion == IMAGE_TRANSPARENT) ?
                            RAW_TEXTURE_OCCLUSION_TRANSPARENT : RAW_TEXTURE_OCCLUSION_OPAQUE;
@@ -198,7 +194,6 @@ int RawModel::AddSurface(const char *name, const char *nodeName)
     surface.nodeName = nodeName;
     surface.bounds.Clear();
     surface.discrete  = false;
-    surface.skinRigid = false;
 
     surfaces.emplace_back(surface);
     return (int) (surfaces.size() - 1);

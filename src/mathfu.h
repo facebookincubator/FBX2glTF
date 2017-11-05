@@ -33,7 +33,7 @@ struct Bounds
         initialized = false;
     }
 
-    void AddPoint(mathfu::Vector<T, d> p) {
+    void AddPoint(const mathfu::Vector<T, d> &p) {
         if (initialized) {
             for (int ii = 0; ii < d; ii ++) {
                 min(ii) = std::min(min(ii), p(ii));
@@ -58,7 +58,7 @@ typedef mathfu::Matrix<float, 4>    Mat4f;
 typedef mathfu::Quaternion<float>   Quatf;
 typedef Bounds<float, 3>            Boundsf;
 
-template<class T, int d> static inline std::vector<T> toStdVec(mathfu::Vector <T, d> vec)
+template<class T, int d> static inline std::vector<T> toStdVec(const mathfu::Vector <T, d> &vec)
 {
     std::vector<T> result(d);
     for (int ii = 0; ii < d; ii ++) {
@@ -67,12 +67,16 @@ template<class T, int d> static inline std::vector<T> toStdVec(mathfu::Vector <T
     return result;
 }
 
-template<class T> std::vector<T> toStdVec(mathfu::Quaternion<T> quat) {
+template<class T> std::vector<T> toStdVec(const mathfu::Quaternion<T> &quat) {
     return std::vector<T> { quat.vector()[0], quat.vector()[1], quat.vector()[2], quat.scalar() };
 }
 
 static inline Vec3f toVec3f(const FbxVector4 &v) {
     return Vec3f((float) v[0], (float) v[1], (float) v[2]);
+}
+
+static inline Vec4f toVec4f(const FbxVector4 &v) {
+    return Vec4f((float) v[0], (float) v[1], (float) v[2], (float) v[3]);
 }
 
 static inline Mat4f toMat4f(const FbxAMatrix &m) {
