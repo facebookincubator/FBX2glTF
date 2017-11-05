@@ -458,10 +458,11 @@ static bool TriangleTexturePolarity(const Vec2f &uv0, const Vec2f &uv1, const Ve
 }
 
 static RawMaterialType
-GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], const bool skinned)
+GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], const bool vertexTransparency, const bool skinned)
 {
-    if ((raw.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0) {
-        return skinned ? RAW_MATERIAL_TYPE_SKINNED_VERTEX_COLORED : RAW_MATERIAL_TYPE_VERTEX_COLORED;
+    // if there is vertex transparency, definitely transparent
+    if (vertexTransparency) {
+        return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
     }
 
     // Determine material type based on texture occlusion.
@@ -588,12 +589,8 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
             maybeAddTexture(matProps.texShininess, RAW_TEXTURE_USAGE_SHININESS);
         }
 
-        const RawMaterialType materialType = GetMaterialType(raw, textures, skinning.IsSkinned());
-        const int rawMaterialIndex = raw.AddMaterial(
-            materialName, shadingModel, materialType, textures,
-            toVec3f(ambient), toVec4f(diffuse), toVec3f(specular), toVec3f(emissive), shininess);
-
         RawVertex rawVertices[3];
+        bool vertexTransparency = false;
         for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++, polygonVertexIndex++) {
             const int controlPointIndex = pMesh->GetPolygonVertex(polygonIndex, vertexIndex);
 
@@ -635,6 +632,9 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
             vertex.jointIndices = skinning.GetVertexIndices(controlPointIndex);
             vertex.jointWeights = skinning.GetVertexWeights(controlPointIndex);
             vertex.polarityUv0  = false;
+
+            // flag this triangle as transparent if any of its corner vertices substantially deviates from fully opaque
+            vertexTransparency |= (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
 
             rawSurface.bounds.AddPoint(vertex.position);
 
@@ -689,6 +689,11 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         for (int vertexIndex = 0; vertexIndex < 3; vertexIndex++) {
             rawVertexIndices[vertexIndex] = raw.AddVertex(rawVertices[vertexIndex]);
         }
+
+        const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
+        const int rawMaterialIndex = raw.AddMaterial(
+            materialName, shadingModel, materialType, textures,
+            toVec3f(ambient), toVec4f(diffuse), toVec3f(specular), toVec3f(emissive), shininess);
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
     }
