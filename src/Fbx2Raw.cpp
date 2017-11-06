@@ -168,8 +168,8 @@ public:
         if (facTex) {
             fmt::printf("Warning: Mat [%s]: Can't handle texture for %s; discarding.\n", name, FbxSurfaceMaterial::sTransparencyFactor);
         }
-        // FBX color is RGB, so we supply the A channel from TransparencyFactor
-        res.colDiffuse[3] = 1.0 - transparency[3];
+        // FBX color is RGB, so we calculate the A channel as the average of the FBX transparency color vector
+        res.colDiffuse[3] = 1.0 - (transparency[0] + transparency[1] + transparency[2])/3.0;
 
         return res;
     }
