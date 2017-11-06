@@ -41,11 +41,11 @@ void PrimitiveData::NoteDracoBuffer(const BufferViewData &data)
 
 void PrimitiveData::AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents)
 {
-    targetAccessors.push_back({
+    targetAccessors.push_back(std::make_tuple(
         positions->ix,
         normals ? normals->ix : -1,
         tangents ? tangents ->ix : -1
-    });
+    ));
 }
 
 void to_json(json &j, const PrimitiveData &d) {

@@ -537,7 +537,7 @@ ModelData *Raw2Gltf(
                 int triangleCount = surfaceModel.GetTriangleCount();
 
                 // initialize Draco mesh with vertex index information
-                auto dracoMesh { std::make_shared<draco::Mesh>() };
+                auto dracoMesh(std::make_shared<draco::Mesh>());
                 dracoMesh->SetNumFaces(static_cast<size_t>(triangleCount));
 
                 for (uint32_t ii = 0; ii < triangleCount; ii++) {
