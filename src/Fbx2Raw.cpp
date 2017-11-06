@@ -538,7 +538,7 @@ private:
 
         std::vector<BlendChannel> results;
         for (int shapeIx = 0; shapeIx < mesh->GetDeformerCount(FbxDeformer::eBlendShape); shapeIx++) {
-            auto *fbxBlendShape = dynamic_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
+            auto *fbxBlendShape = static_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
             if (fbxBlendShape == nullptr) {
                 continue;
             }
