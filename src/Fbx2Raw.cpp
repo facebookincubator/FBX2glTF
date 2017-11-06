@@ -495,7 +495,7 @@ public:
         const FbxDouble defaultDeform;
 
         // one for each FbxShape
-        std::vector<const TargetShape> targetShapes {};
+        std::vector<TargetShape> targetShapes {};
 
         // always the size of the scene's animation stack; can and will contain nulls
         std::vector<FbxAnimCurve *> animations {};
