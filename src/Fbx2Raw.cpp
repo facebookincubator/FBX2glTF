@@ -629,12 +629,7 @@ static bool TriangleTexturePolarity(const Vec2f &uv0, const Vec2f &uv1, const Ve
 static RawMaterialType
 GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], const bool vertexTransparency, const bool skinned)
 {
-    // if there is vertex transparency, definitely transparent
-    if (vertexTransparency) {
-        return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-    }
-
-    // Determine material type based on texture occlusion.
+    // If diffusely texture, determine material type based on texture occlusion.
     if (textures[RAW_TEXTURE_USAGE_DIFFUSE] >= 0) {
         switch (raw.GetTexture(textures[RAW_TEXTURE_USAGE_DIFFUSE]).occlusion) {
             case RAW_TEXTURE_OCCLUSION_OPAQUE:
@@ -643,6 +638,12 @@ GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], 
                 return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
         }
     }
+
+	// else if there is any vertex transparency, treat whole mesh as transparent
+	if (vertexTransparency) {
+		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
+	}
+
 
     // Default to simply opaque.
     return skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE;
