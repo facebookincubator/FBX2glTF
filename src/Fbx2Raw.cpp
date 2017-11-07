@@ -784,16 +784,14 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
                     const FbxVector4 &shapePosition = transform.MultNormalize(targetShape->positions[controlPointIndex]);
                     blendVertex.position = toVec3f(shapePosition - fbxPosition);
                     if (targetShape->normals.LayerPresent()) {
-                        FbxVector4 normal = targetShape->normals.GetElement(
+                        const FbxVector4 &normal = targetShape->normals.GetElement(
                             polygonIndex, polygonVertexIndex, controlPointIndex, FbxVector4(0.0f, 0.0f, 0.0f, 0.0f), inverseTransposeTransform, true);
-                        normal -= fbxNormal;
-                        blendVertex.normal = toVec3f(normal);
+                        blendVertex.normal = toVec3f(normal - fbxNormal);
                     }
                     if (targetShape->tangents.LayerPresent()) {
-                        FbxVector4 tangent = targetShape->tangents.GetElement(
+                        const FbxVector4 &tangent = targetShape->tangents.GetElement(
                             polygonIndex, polygonVertexIndex, controlPointIndex, FbxVector4(0.0f, 0.0f, 0.0f, 0.0f), inverseTransposeTransform, true);
-                        tangent -= fbxTangent;
-                        blendVertex.tangent = toVec4f(tangent);
+                        blendVertex.tangent = toVec4f(tangent - fbxTangent);
                     }
                     vertex.blends.push_back(blendVertex);
                 }
