@@ -1129,7 +1129,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
             FbxNodeAttribute *nodeAttr = pNode->GetNodeAttribute();
             if (nodeAttr != nullptr && nodeAttr->GetAttributeType() == FbxNodeAttribute::EType::eMesh) {
                 // it's inelegant to recreate this same access class multiple times, but it's also dirt cheap...
-                FbxBlendShapesAccess blendShapes(pScene, dynamic_cast<FbxMesh *>(nodeAttr));
+                FbxBlendShapesAccess blendShapes(pScene, static_cast<FbxMesh *>(nodeAttr));
 
                 for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
                     FbxTime pTime;
