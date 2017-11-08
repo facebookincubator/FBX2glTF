@@ -1015,13 +1015,18 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
         FbxAnimStack *pAnimStack = pScene->GetSrcObject<FbxAnimStack>(animIx);
         FbxString animStackName = pAnimStack->GetName();
 
+        pScene->SetCurrentAnimationStack(pAnimStack);
+
+        FbxTakeInfo *takeInfo = pScene->GetTakeInfo(animStackName);
+        if (takeInfo == nullptr) {
+            fmt::printf("Warning:: animation '%s' has no Take information. Skipping.\n", animStackName);
+            // not all animstacks have a take
+            continue;
+        }
         if (verboseOutput) {
             fmt::printf("animation %zu: %s (%d%%)", animIx, (const char *) animStackName, 0);
         }
 
-        pScene->SetCurrentAnimationStack(pAnimStack);
-
-        FbxTakeInfo *takeInfo = pScene->GetTakeInfo(animStackName);
         FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
         FbxTime end   = takeInfo->mLocalTimeSpan.GetStop();
 
