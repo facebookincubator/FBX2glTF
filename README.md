@@ -124,7 +124,8 @@ As part of this process, you will be asked to choose which generator
 to use. **At present, only Visual Studio 2017 is supported.** Older
 versions of the IDE are unlikely to successfully build the tool.
 
-*(MinGW support is plausible. Contributions welcome.)*
+*(MinGW support is plausible. The difficulty is linking statically against the
+FBX SDK .lib file. Contributions welcome.)*
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
@@ -150,7 +151,7 @@ node, and whenever we find any node that's rotated, translated or scaled, we
 record that fact in the output.
 
 Beyond skeleton-based animation, *Blend Shapes* are also supported; they are
-read from the FBX file on a per-mesh basis, and animations can them by varying
+read from the FBX file on a per-mesh basis, and clips can use them by varying
 the weights associated with each one.
 
 The baking method has the benefit of being simple and precise. It has the
@@ -165,7 +166,8 @@ There are three future enhancements we hope to see for animations:
   it into a long sequence of linear approximations.
 - We do not yet ever generate
   [sparse accessors](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#sparse-accessors),
-  but many animations would benefit from this storage optimisation.
+  but many animations (especially morph targets) would benefit from this
+  storage optimisation.
 - Perhaps most useful in practice is the idea of compressing animation curves
   the same way we use Draco to compress meshes (see below). Like geometry,
   animations are highly redundant — each new value is highly predictable from
