@@ -44,12 +44,14 @@ int main(int argc, char *argv[])
 
     GltfOptions gltfOptions{
         -1,            // keepAttribs
-        false,        // outputBinary
-        false,        // embedResources
-        false,        // useDraco
-        false,        // useKHRMatCom
-        false,        // usePBRMetRough
-        false        // usePBRSpecGloss
+        false,         // outputBinary
+        false,         // embedResources
+        false,         // useDraco
+        false,         // useKHRMatCom
+        false,         // usePBRMetRough
+        false,         // usePBRSpecGloss
+        false,         // useBlendShapeNormals
+        false,         // useBlendShapeTangents
     };
 
     options.positional_help("[<FBX File>]");
@@ -81,6 +83,12 @@ int main(int argc, char *argv[])
                (
                    "pbr-specular-glossiness", "(WIP) Experimentally fill in the KHR_materials_pbrSpecularGlossiness extension.",
                    cxxopts::value<bool>(gltfOptions.usePBRSpecGloss))
+               (
+                   "blend-shape-normals", "Include blend shape normals, if reported present by the FBX SDK.",
+                   cxxopts::value<bool>(gltfOptions.useBlendShapeNormals))
+               (
+                   "blend-shape-tangents", "Include blend shape tangents, if reported present by the FBX SDK.",
+                   cxxopts::value<bool>(gltfOptions.useBlendShapeTangents))
                (
                    "k,keep-attribute", "Used repeatedly to build a limiting set of vertex attributes to keep.",
                    cxxopts::value<std::vector<std::string>>())
