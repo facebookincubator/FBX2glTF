@@ -772,7 +772,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
             vertex.polarityUv0  = false;
 
             // flag this triangle as transparent if any of its corner vertices substantially deviates from fully opaque
-            vertexTransparency |= (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
+            vertexTransparency |= colorLayer.LayerPresent() && (fabs(fbxColor.mAlpha - 1.0) > 1e-3);
 
             rawSurface.bounds.AddPoint(vertex.position);
 
