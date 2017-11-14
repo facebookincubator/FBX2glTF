@@ -619,10 +619,10 @@ ModelData *Raw2Gltf(
                         auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
                         shapeBounds.AddPoint(blendVertex.position);
                         positions.push_back(blendVertex.position);
-                        if (channel.hasNormals) {
+                        if (options.useBlendShapeTangents && channel.hasNormals) {
                             normals.push_back(blendVertex.normal);
                         }
-                        if (channel.hasTangents) {
+                        if (options.useBlendShapeTangents && channel.hasTangents) {
                             tangents.push_back(blendVertex.tangent);
                         }
                     }
@@ -633,14 +633,14 @@ ModelData *Raw2Gltf(
                     pAcc->max = toStdVec(shapeBounds.max);
 
                     std::shared_ptr<AccessorData> nAcc;
-                    if (channel.hasNormals) {
+                    if (!normals.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC3F, normals);
                     }
 
                     std::shared_ptr<AccessorData> tAcc;
-                    if (channel.hasTangents) {
+                    if (!tangents.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC4F, tangents);
