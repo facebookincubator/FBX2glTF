@@ -88,6 +88,125 @@ private:
     const FbxLayerElementArrayTemplate<int>    *indices;
 };
 
+class FbxRoughMetMaterialAccess
+{
+    struct FbxMaterialProperties {
+        FbxFileTexture *texColor {};
+        FbxVector4     colBase {};
+        FbxFileTexture *texNormal {};
+        FbxFileTexture *texMetallic {};
+        FbxDouble       metallic {};
+        FbxFileTexture *texRoughness {};
+        FbxDouble       roughness {};
+        FbxFileTexture *texEmissive {};
+        FbxVector4     colEmissive {};
+        FbxDouble      emissiveIntensity;
+        FbxFileTexture *texAmbientOcclusion {};
+    };
+
+private:
+    const FbxSurfaceMaterial *fbxMaterial;
+    const std::map<const FbxTexture *, FbxString> &textureLocations;
+
+public:
+    const FbxString name;
+    const FbxString shadingModel;
+
+    const struct FbxMaterialProperties props;
+
+    explicit FbxRoughMetMaterialAccess(
+        const FbxSurfaceMaterial *fbxMaterial, const std::map<const FbxTexture *, FbxString> &textureNames) :
+        fbxMaterial(fbxMaterial),
+        name(fbxMaterial->GetName()),
+        shadingModel(fbxMaterial->ShadingModel),
+        textureLocations(textureNames),
+        props(extractTextures())
+    {}
+
+    struct FbxMaterialProperties extractTextures() {
+        struct FbxMaterialProperties res;
+
+        const FbxProperty mayaProp = fbxMaterial->FindProperty("Maya");
+        if (mayaProp.GetPropertyDataType() != FbxCompoundDT) {
+            return res;
+        }
+        auto foo = mayaProp.GetPropertyDataType();
+
+        fmt::printf("Maya property type for material %s: %s\n", fbxMaterial->GetName(), foo.GetName());
+
+        const FbxProperty normalMapProp = mayaProp.FindHierarchical("TEX_normal_map");
+        res.texNormal = normalMapProp.GetSrcObject<FbxFileTexture>();
+        fmt::printf("TEX_normal_map property type for material %s: %s\n", fbxMaterial->GetName(), normalMapProp.GetPropertyDataType().GetName());
+
+        const FbxProperty colorMapProp = mayaProp.FindHierarchical("TEX_color_map");
+        res.texColor = colorMapProp.GetSrcObject<FbxFileTexture>();
+        fmt::printf("TEX_color_map property type for material %s: %s\n", fbxMaterial->GetName(), colorMapProp.GetPropertyDataType().GetName());
+
+        return res;
+    }
+
+    std::tuple<FbxDouble, FbxFileTexture *> getSurfaceScalar(const char *propName) const
+    {
+        const FbxProperty prop = fbxMaterial->FindProperty(propName);
+
+        FbxDouble val(0);
+        FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
+        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
+            tex = nullptr;
+        }
+        if (tex == nullptr && prop.IsValid()) {
+            val = prop.Get<FbxDouble>();
+        }
+        return std::make_tuple(val, tex);
+    }
+
+    std::tuple<FbxDouble3, FbxFileTexture *> getSurfaceVector(const char *propName) const
+    {
+        const FbxProperty prop = fbxMaterial->FindProperty(propName);
+
+        FbxDouble3 val(1, 1, 1);
+        FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
+        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
+            tex = nullptr;
+        }
+        if (tex == nullptr && prop.IsValid()) {
+            val = prop.Get<FbxDouble3>();
+        }
+        return std::make_tuple(val, tex);
+    }
+
+    std::tuple<FbxVector4, FbxFileTexture *, FbxFileTexture *> getSurfaceValues(const char *colName, const char *facName) const
+    {
+        const FbxProperty colProp = fbxMaterial->FindProperty(colName);
+        const FbxProperty facProp = fbxMaterial->FindProperty(facName);
+
+        FbxDouble3 colorVal(1, 1, 1);
+        FbxDouble  factorVal(1);
+
+        FbxFileTexture *colTex = colProp.GetSrcObject<FbxFileTexture>();
+        if (colTex != nullptr && textureLocations.find(colTex) == textureLocations.end()) {
+            colTex = nullptr;
+        }
+        if (colTex == nullptr && colProp.IsValid()) {
+            colorVal = colProp.Get<FbxDouble3>();
+        }
+        FbxFileTexture *facTex = facProp.GetSrcObject<FbxFileTexture>();
+        if (facTex != nullptr && textureLocations.find(facTex) == textureLocations.end()) {
+            facTex = nullptr;
+        }
+        if (facTex == nullptr && facProp.IsValid()) {
+            factorVal = facProp.Get<FbxDouble>();
+        }
+
+        auto val = FbxVector4(
+            colorVal[0] * factorVal,
+            colorVal[1] * factorVal,
+            colorVal[2] * factorVal,
+            factorVal);
+        return std::make_tuple(val, colTex, facTex);
+    };
+};
+
 class FbxMaterialAccess
 {
     struct FbxMaterialProperties {
@@ -235,6 +354,7 @@ public:
         return std::make_tuple(val, colTex, facTex);
     };
 };
+
 
 class FbxMaterialsAccess
 {
