@@ -54,6 +54,16 @@ set(MATHFU_INCLUDE_DIRS
         "${CMAKE_BINARY_DIR}/mathfu/src/MathFu/include/"
         "${CMAKE_BINARY_DIR}/mathfu/src/MathFu/dependencies/vectorial/include")
 
+# OrderedMap
+ExternalProject_Add(FiFoMap
+  PREFIX fifo_map
+  GIT_REPOSITORY https://github.com/nlohmann/fifo_map
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping FiFoMap configure step."
+  BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping FiFoMap build step."
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping FiFoMap install step."
+)
+set(FIFO_MAP_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fifo_map/src/FiFoMap/src")
+
 # JSON
 ExternalProject_Add(Json
   PREFIX json
@@ -138,6 +148,7 @@ add_executable(FBX2glTF ${SOURCE_FILES})
 add_dependencies(FBX2glTF
   Draco
   MathFu
+  FiFoMap
   Json
   CxxOpts
   CPPCodec
@@ -167,6 +178,7 @@ target_include_directories(FBX2glTF PUBLIC
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
+  ${FIFO_MAP_INCLUDE_DIR}
   ${JSON_INCLUDE_DIR}
   ${CXXOPTS_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
