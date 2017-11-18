@@ -18,7 +18,12 @@
 #include <draco/compression/encode.h>
 
 #include <json.hpp>
-using json = nlohmann::json;
+#include <fifo_map.hpp>
+
+template<class K, class V, class ignore, class A>
+using workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
+
+using json = nlohmann::basic_json<workaround_fifo_map>;
 
 #include "FBX2glTF.h"
 #include "RawModel.h"
