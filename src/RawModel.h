@@ -104,6 +104,10 @@ enum RawTextureUsage
     RAW_TEXTURE_USAGE_SHININESS,
     RAW_TEXTURE_USAGE_EMISSIVE,
     RAW_TEXTURE_USAGE_REFLECTION,
+    RAW_TEXTURE_USAGE_ALBEDO,
+    RAW_TEXTURE_USAGE_OCCLUSION,
+    RAW_TEXTURE_USAGE_ROUGHNESS,
+    RAW_TEXTURE_USAGE_METALLIC,
     RAW_TEXTURE_USAGE_MAX
 };
 
@@ -127,6 +131,12 @@ inline std::string DescribeTextureUsage(int usage)
             return "emissive";
         case RAW_TEXTURE_USAGE_REFLECTION:
             return "reflection";
+        case RAW_TEXTURE_USAGE_OCCLUSION:
+            return "occlusion";
+        case RAW_TEXTURE_USAGE_ROUGHNESS:
+            return "roughness";
+        case RAW_TEXTURE_USAGE_METALLIC:
+            return "metallic";
         case RAW_TEXTURE_USAGE_MAX:
         default:
             return "unknown";

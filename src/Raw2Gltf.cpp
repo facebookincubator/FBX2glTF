@@ -425,7 +425,10 @@ ModelData *Raw2Gltf(
 
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
             if (options.usePBRMetRough) {
-                pbrMetRough.reset(new PBRMetallicRoughness(getTex(RAW_TEXTURE_USAGE_DIFFUSE), material.diffuseFactor));
+                pbrMetRough.reset(new PBRMetallicRoughness(
+                    getTex(RAW_TEXTURE_USAGE_ALBEDO),
+                    getTex(RAW_TEXTURE_USAGE_ROUGHNESS), // TODO: do actual layer-baking!
+                    material.diffuseFactor));
             }
             std::shared_ptr<PBRSpecularGlossiness> pbrSpecGloss;
             if (options.usePBRSpecGloss) {

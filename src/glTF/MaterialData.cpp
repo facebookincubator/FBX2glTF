@@ -126,10 +126,11 @@ void to_json(json &j, const PBRSpecularGlossiness &d)
 }
 
 PBRMetallicRoughness::PBRMetallicRoughness(
-    const TextureData *baseColorTexture, const Vec4f &baseolorFactor,
-    float metallic, float roughness)
+    const TextureData *baseColorTexture, const TextureData *metRoughTexture,
+    const Vec4f &baseColorFactor, float metallic, float roughness)
     : baseColorTexture(Tex::ref(baseColorTexture)),
-      baseColorFactor(baseolorFactor),
+      metRoughTexture(Tex::ref(metRoughTexture)),
+      baseColorFactor(baseColorFactor),
       metallic(metallic),
       roughness(roughness)
 {
@@ -143,6 +144,9 @@ void to_json(json &j, const PBRMetallicRoughness &d)
     }
     if (d.baseColorFactor.LengthSquared() > 0) {
         j["baseColorFactor"] = toStdVec(d.baseColorFactor);
+    }
+    if (d.metRoughTexture != nullptr) {
+        j["metallicRoughnessTexture"] = *d.metRoughTexture;
     }
     if (d.metallic != 1.0f) {
         j["metallicFactor"] = d.metallic;
