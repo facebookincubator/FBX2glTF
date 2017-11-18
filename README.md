@@ -48,6 +48,10 @@ Usage:
       --pbr-specular-glossiness
                                 (WIP) Experimentally fill in the
                                 KHR_materials_pbrSpecularGlossiness extension.
+      --blend-shape-normals     Include blend shape normals, if reported
+                                present by the FBX SDK.
+      --blend-shape-tangents    Include blend shape tangents, if reported
+                                present by the FBX SDK.
   -k, --keep-attribute arg      Used repeatedly to build a limiting set of
                                 vertex attributes to keep.
   -v, --verbose                 Enable verbose output.
@@ -81,6 +85,13 @@ Some of these switches are not obvious:
   the conversion process. This is a way to trim the size of the resulting glTF
   if you know the FBX contains superfluous attributes. The supported arguments
   are `position`, `normal`, `tangent`, `color`, `uv0`, and `uv1`.
+- When **blend shapes** are present, you may use `--blend-shape-normals` and
+  `--blend-shape-tangents` to include normal and tangent attributes in the glTF
+  morph targets. They are not included by default because they rarely or never
+  seem to be correctly present in the actual FBX source, which means the SDK
+  must be computing them from geometry, unasked? In any case, they are beyond
+  the control of the artist, and can yield strange crinkly behaviour. Since
+  they also take up significant space in the output file, we made them opt-in.
 
 ## Building it on your own
 
@@ -124,7 +135,8 @@ As part of this process, you will be asked to choose which generator
 to use. **At present, only Visual Studio 2017 is supported.** Older
 versions of the IDE are unlikely to successfully build the tool.
 
-*(MinGW support is plausible. Contributions welcome.)*
+*(MinGW support is plausible. The difficulty is linking statically against the
+FBX SDK .lib file. Contributions welcome.)*
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
@@ -150,7 +162,7 @@ node, and whenever we find any node that's rotated, translated or scaled, we
 record that fact in the output.
 
 Beyond skeleton-based animation, *Blend Shapes* are also supported; they are
-read from the FBX file on a per-mesh basis, and animations can them by varying
+read from the FBX file on a per-mesh basis, and clips can use them by varying
 the weights associated with each one.
 
 The baking method has the benefit of being simple and precise. It has the
@@ -165,7 +177,8 @@ There are three future enhancements we hope to see for animations:
   it into a long sequence of linear approximations.
 - We do not yet ever generate
   [sparse accessors](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#sparse-accessors),
-  but many animations would benefit from this storage optimisation.
+  but many animations (especially morph targets) would benefit from this
+  storage optimisation.
 - Perhaps most useful in practice is the idea of compressing animation curves
   the same way we use Draco to compress meshes (see below). Like geometry,
   animations are highly redundant — each new value is highly predictable from

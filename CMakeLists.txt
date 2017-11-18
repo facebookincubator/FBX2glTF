@@ -26,7 +26,6 @@ endif()
 
 # DRACO
 ExternalProject_Add(Draco
-  UPDATE_DISCONNECTED TRUE
   GIT_REPOSITORY https://github.com/google/draco
   PREFIX draco
   INSTALL_DIR
@@ -44,9 +43,9 @@ endif()
 set(mathfu_build_benchmarks OFF CACHE BOOL "")
 set(mathfu_build_tests OFF CACHE BOOL "")
 ExternalProject_Add(MathFu
-  UPDATE_DISCONNECTED TRUE
-  GIT_REPOSITORY https://github.com/google/mathfu
   PREFIX mathfu
+  GIT_REPOSITORY https://github.com/google/mathfu
+  GIT_TAG v1.1.0
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping MathFu configure step."
   BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping MathFu build step."
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping MathFu install step."
@@ -57,9 +56,9 @@ set(MATHFU_INCLUDE_DIRS
 
 # JSON
 ExternalProject_Add(Json
-  UPDATE_DISCONNECTED TRUE
-  GIT_REPOSITORY https://github.com/nlohmann/json
   PREFIX json
+  GIT_REPOSITORY https://github.com/nlohmann/json
+  GIT_TAG v2.1.1
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON configure step."
   BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON build step."
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON install step."
@@ -68,9 +67,8 @@ set(JSON_INCLUDE_DIR "${CMAKE_BINARY_DIR}/json/src/Json/src")
 
 # cppcodec
 ExternalProject_Add(CPPCodec
-  UPDATE_DISCONNECTED TRUE
-  GIT_REPOSITORY https://github.com/tplgy/cppcodec
   PREFIX cppcodec
+  GIT_REPOSITORY https://github.com/tplgy/cppcodec
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping CPPCodec configure step."
   BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping CPPCodec build step."
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping CPPCodec install step."
@@ -79,8 +77,8 @@ set(CPPCODEC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cppcodec/src/CPPCodec")
 
 # CXXOPTS
 ExternalProject_Add(CxxOpts
-  UPDATE_DISCONNECTED TRUE
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts
+  GIT_TAG v1.4.4
   PREFIX cxxopts
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping cxxopts configure step."
   BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping cxxopts build step."
@@ -90,12 +88,12 @@ set(CXXOPTS_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cxxopts/src/CxxOpts/include")
 
 # FMT
 ExternalProject_Add(Fmt
-  UPDATE_DISCONNECTED TRUE
+  PREFIX fmt
   GIT_REPOSITORY https://github.com/fmtlib/fmt
+  GIT_TAG 4.0.0
   CMAKE_CACHE_ARGS  "-DFMT_DOC:BOOL=OFF" "-DFMT_INSTALL:BOOL=ON" "-DFMT_TEST:BOOL=OFF"
   CMAKE_ARGS
 	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-  PREFIX fmt
 )
 set(FMT_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fmt/include")
 if (WIN32)

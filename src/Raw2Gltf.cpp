@@ -477,18 +477,11 @@ ModelData *Raw2Gltf(
 
         for (size_t surfaceIndex = 0; surfaceIndex < materialModels.size(); surfaceIndex++) {
             const RawModel &surfaceModel = materialModels[surfaceIndex];
-            assert(surfaceModel.GetSurfaceCount() == 1);
 
+            assert(surfaceModel.GetSurfaceCount() == 1);
             const RawSurface  &rawSurface = surfaceModel.GetSurface(0);
-            const std::string surfaceName = std::to_string(surfaceIndex) + "_" + rawSurface.name;
 
             const RawMaterial &rawMaterial = surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
-            if (rawMaterial.textures[RAW_TEXTURE_USAGE_DIFFUSE] < 0 &&
-                (surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) == 0) {
-                if (verboseOutput) {
-                    fmt::printf("Warning: surface %s has neither texture nor vertex colors.\n", surfaceName.c_str());
-                }
-            }
             const MaterialData &mData = require(materialsByName, materialHash(rawMaterial));
 
             std::string nodeName  = rawSurface.nodeName;
@@ -622,10 +615,10 @@ ModelData *Raw2Gltf(
                         auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
                         shapeBounds.AddPoint(blendVertex.position);
                         positions.push_back(blendVertex.position);
-                        if (channel.hasNormals) {
+                        if (options.useBlendShapeTangents && channel.hasNormals) {
                             normals.push_back(blendVertex.normal);
                         }
-                        if (channel.hasTangents) {
+                        if (options.useBlendShapeTangents && channel.hasTangents) {
                             tangents.push_back(blendVertex.tangent);
                         }
                     }
@@ -636,14 +629,14 @@ ModelData *Raw2Gltf(
                     pAcc->max = toStdVec(shapeBounds.max);
 
                     std::shared_ptr<AccessorData> nAcc;
-                    if (channel.hasNormals) {
+                    if (!normals.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC3F, normals);
                     }
 
                     std::shared_ptr<AccessorData> tAcc;
-                    if (channel.hasTangents) {
+                    if (!tangents.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC4F, tangents);

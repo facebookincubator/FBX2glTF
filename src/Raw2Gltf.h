@@ -53,6 +53,10 @@ struct GltfOptions
     bool usePBRMetRough;
     /** Whether to use KHR_materials_pbrSpecularGlossiness to extend material definitions. */
     bool usePBRSpecGloss;
+    /** Whether to include blend shape normals, if present according to the SDK. */
+    bool useBlendShapeNormals;
+    /** Whether to include blend shape tangents, if present according to the SDK. */
+    bool useBlendShapeTangents;
 };
 
 struct ComponentType {
