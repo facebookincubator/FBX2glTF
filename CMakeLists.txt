@@ -75,6 +75,16 @@ ExternalProject_Add(Json
 )
 set(JSON_INCLUDE_DIR "${CMAKE_BINARY_DIR}/json/src/Json/src")
 
+# stb
+ExternalProject_Add(STB
+  PREFIX stb
+  GIT_REPOSITORY https://github.com/nothings/stb
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping STB configure step."
+  BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping STB build step."
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping STB install step."
+)
+set(STB_INCLUDE_DIR "${CMAKE_BINARY_DIR}/stb/src/STB")
+
 # cppcodec
 ExternalProject_Add(CPPCodec
   PREFIX cppcodec
@@ -150,6 +160,7 @@ add_dependencies(FBX2glTF
   MathFu
   FiFoMap
   Json
+  STB
   CxxOpts
   CPPCodec
   Fmt
@@ -181,6 +192,7 @@ target_include_directories(FBX2glTF PUBLIC
   ${FIFO_MAP_INCLUDE_DIR}
   ${JSON_INCLUDE_DIR}
   ${CXXOPTS_INCLUDE_DIR}
+  ${STB_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
   ${FMT_INCLUDE_DIR}
 )
