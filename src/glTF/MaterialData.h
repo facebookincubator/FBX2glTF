@@ -53,6 +53,11 @@ struct KHRCommonMats
     const Vec3f                specularFactor;
 };
 
+struct KHRCmnConstantMaterial
+{
+    KHRCmnConstantMaterial();
+};
+
 struct PBRSpecularGlossiness
 {
     PBRSpecularGlossiness(
@@ -85,6 +90,7 @@ struct MaterialData : Holdable
         std::string name, bool isTransparent, const TextureData *normalTexture,
         const TextureData *emissiveTexture, const Vec3f &emissiveFactor,
         std::shared_ptr<KHRCommonMats> const khrCommonMats,
+        std::shared_ptr<KHRCmnConstantMaterial> const khrCmnConstantMaterial,
         std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness,
         std::shared_ptr<PBRSpecularGlossiness> const pbrSpecularGlossiness);
 
@@ -96,13 +102,15 @@ struct MaterialData : Holdable
     const std::unique_ptr<const Tex> emissiveTexture;
     const Vec3f                      emissiveFactor;
 
-    const std::shared_ptr<const KHRCommonMats>         khrCommonMats;
-    const std::shared_ptr<const PBRMetallicRoughness>  pbrMetallicRoughness;
-    const std::shared_ptr<const PBRSpecularGlossiness> pbrSpecularGlossiness;
+    const std::shared_ptr<const KHRCommonMats>          khrCommonMats;
+    const std::shared_ptr<const KHRCmnConstantMaterial> khrCmnConstantMaterial;
+    const std::shared_ptr<const PBRMetallicRoughness>   pbrMetallicRoughness;
+    const std::shared_ptr<const PBRSpecularGlossiness>  pbrSpecularGlossiness;
 };
 
 void to_json(json &j, const Tex &data);
 void to_json(json &j, const KHRCommonMats &d);
+void to_json(json &j, const KHRCmnConstantMaterial &d);
 void to_json(json &j, const PBRSpecularGlossiness &d);
 void to_json(json &j, const PBRMetallicRoughness &d);
 

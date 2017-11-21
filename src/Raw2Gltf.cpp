@@ -453,11 +453,20 @@ ModelData *Raw2Gltf(
                         getTex(RAW_TEXTURE_USAGE_DIFFUSE), material.diffuseFactor,
                         getTex(RAW_TEXTURE_USAGE_SPECULAR), material.specularFactor));
             }
+
+            std::shared_ptr<KHRCmnConstantMaterial> khrCmnConstantMat;
+            if (options.useKHRMatCmnConstant) {
+                khrCmnConstantMat.reset(new KHRCmnConstantMaterial());
+
+                // Set fallback parameters
+                pbrMetRough.reset(new PBRMetallicRoughness(nullptr, Vec4f(0.0f, 0.0f, 0.0f, 1.0f), 0.0f, 0.0f));
+            }
+
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
                     material.name, isTransparent, getTex(RAW_TEXTURE_USAGE_NORMAL),
                     getTex(RAW_TEXTURE_USAGE_EMISSIVE), material.emissiveFactor,
-                    khrComMat, pbrMetRough, pbrSpecGloss));
+                    khrComMat, khrCmnConstantMat, pbrMetRough, pbrSpecGloss));
             materialsByName[materialHash(material)] = mData;
         }
 
@@ -725,6 +734,9 @@ ModelData *Raw2Gltf(
             if (!options.usePBRSpecGloss && !options.usePBRMetRough) {
                 extensionsRequired.push_back(KHR_MATERIALS_COMMON);
             }
+        }
+        if (options.useKHRMatCmnConstant) {
+            extensionsUsed.push_back(KHR_MATERIALS_CMN_CONSTANT);
         }
         if (options.usePBRSpecGloss) {
             extensionsUsed.push_back(KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS);

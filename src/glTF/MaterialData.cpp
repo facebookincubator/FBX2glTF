@@ -93,6 +93,15 @@ void to_json(json &j, const KHRCommonMats &d)
     }
 }
 
+KHRCmnConstantMaterial::KHRCmnConstantMaterial()
+{
+}
+
+void to_json(json &j, const KHRCmnConstantMaterial &d)
+{
+	j = json({});
+}
+
 PBRSpecularGlossiness::PBRSpecularGlossiness(
     const TextureData *diffuseTexture, const Vec4f &diffuseFactor,
     const TextureData *specularGlossinessTexture, const Vec3f &specularFactor,
@@ -156,6 +165,7 @@ MaterialData::MaterialData(
     std::string name,  bool isTransparent, const TextureData *normalTexture,
     const TextureData *emissiveTexture, const Vec3f & emissiveFactor,
     std::shared_ptr<KHRCommonMats> const khrCommonMats,
+    std::shared_ptr<KHRCmnConstantMaterial> const khrCmnConstantMaterial,
     std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness,
     std::shared_ptr<PBRSpecularGlossiness> const pbrSpecularGlossiness)
     : Holdable(),
@@ -165,6 +175,7 @@ MaterialData::MaterialData(
       emissiveTexture(Tex::ref(emissiveTexture)),
       emissiveFactor(std::move(emissiveFactor)),
       khrCommonMats(khrCommonMats),
+      khrCmnConstantMaterial(khrCmnConstantMaterial),
       pbrMetallicRoughness(pbrMetallicRoughness),
       pbrSpecularGlossiness(pbrSpecularGlossiness) {}
 
@@ -187,10 +198,13 @@ json MaterialData::serialize() const
     if (pbrMetallicRoughness != nullptr) {
         result["pbrMetallicRoughness"] = *pbrMetallicRoughness;
     }
-    if (khrCommonMats != nullptr || pbrSpecularGlossiness != nullptr) {
+    if (khrCommonMats != nullptr || khrCmnConstantMaterial != nullptr || pbrSpecularGlossiness != nullptr) {
         json extensions = { };
         if (khrCommonMats != nullptr) {
             extensions[KHR_MATERIALS_COMMON] = *khrCommonMats;
+        }
+        if (khrCmnConstantMaterial != nullptr) {
+            extensions[KHR_MATERIALS_CMN_CONSTANT] = *khrCmnConstantMaterial;
         }
         if (pbrSpecularGlossiness != nullptr) {
             extensions[KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS] = *pbrSpecularGlossiness;
