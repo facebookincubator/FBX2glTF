@@ -21,7 +21,6 @@
 #include "utils/String_Utils.h"
 #include "utils/Image_Utils.h"
 #include <utils/File_Utils.h>
-#include <tiff.h>
 #include "RawModel.h"
 #include "Raw2Gltf.h"
 
