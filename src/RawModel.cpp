@@ -113,14 +113,14 @@ int RawModel::AddMaterial(const RawMaterial &material)
 {
     return AddMaterial(
         material.name.c_str(), material.shadingModel.c_str(), material.type, material.textures, material.ambientFactor,
-        material.diffuseFactor, material.specularFactor, material.emissiveFactor, material.shininess);
+        material.diffuseFactor, material.specularFactor, material.emissiveFactor, material.emissiveIntensity,
+        material.shininess, material.metallic, material.roughness);
 }
 
 int RawModel::AddMaterial(
-    const char *name, const char *shadingModel, const RawMaterialType materialType,
-    const int textures[RAW_TEXTURE_USAGE_MAX], const Vec3f ambientFactor,
-    const Vec4f diffuseFactor, const Vec3f specularFactor,
-    const Vec3f emissiveFactor, float shinineness)
+    const char *name, const char *shadingModel, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
+    const Vec3f ambientFactor, const Vec4f diffuseFactor, const Vec3f specularFactor, const Vec3f emissiveFactor,
+    float emissiveIntensity, float shinineness, float metallic, float roughness)
 {
     for (size_t i = 0; i < materials.size(); i++) {
         if (materials[i].name != name) {
@@ -136,7 +136,10 @@ int RawModel::AddMaterial(
             materials[i].diffuseFactor != diffuseFactor ||
             materials[i].specularFactor != specularFactor ||
             materials[i].emissiveFactor != emissiveFactor ||
-            materials[i].shininess != shinineness) {
+            materials[i].emissiveIntensity != emissiveIntensity ||
+            materials[i].shininess != shinineness ||
+            materials[i].metallic != metallic ||
+            materials[i].roughness != roughness) {
             continue;
         }
 
@@ -150,14 +153,17 @@ int RawModel::AddMaterial(
     }
 
     RawMaterial material;
-    material.name           = name;
-    material.shadingModel   = shadingModel;
-    material.type           = materialType;
-    material.ambientFactor  = ambientFactor;
-    material.diffuseFactor  = diffuseFactor;
-    material.specularFactor = specularFactor;
-    material.emissiveFactor = emissiveFactor;
-    material.shininess      = shinineness;
+    material.name              = name;
+    material.shadingModel      = shadingModel;
+    material.type              = materialType;
+    material.ambientFactor     = ambientFactor;
+    material.diffuseFactor     = diffuseFactor;
+    material.specularFactor    = specularFactor;
+    material.emissiveFactor    = emissiveFactor;
+    material.emissiveIntensity = emissiveIntensity;
+    material.shininess         = shinineness;
+    material.metallic          = metallic;
+    material.roughness         = roughness;
 
     for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++) {
         material.textures[i] = textures[i];

@@ -147,11 +147,12 @@ void to_json(json &j, const PBRMetallicRoughness &d)
     }
     if (d.metRoughTexture != nullptr) {
         j["metallicRoughnessTexture"] = *d.metRoughTexture;
-    }
-    if (d.metallic != 1.0f) {
+        // if a texture is provided, throw away metallic/roughness values
+        j["roughnessFactor"] = 1.0f;
+        j["metallicFactor"] = 1.0f;
+    } else {
+        // without a texture, however, use metallic/roughness as constants
         j["metallicFactor"] = d.metallic;
-    }
-    if (d.roughness != 1.0f) {
         j["roughnessFactor"] = d.roughness;
     }
 }

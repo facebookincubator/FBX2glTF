@@ -565,11 +565,7 @@ ModelData *Raw2Gltf(
                 // albedo is basic
                 const TextureData *albedoTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
 
-                // if there's a met/rough texture, just set the factors to 1.0 multipliers, else use reasonable
-                // defaults for a possible vertex-coloured or solid colour setup
-                float metallic  = metRoughTex ? 1.0f : 0.3f;
-                float roughness = metRoughTex ? 1.0f : 0.6f;
-                pbrMetRough.reset(new PBRMetallicRoughness(albedoTex, metRoughTex, material.diffuseFactor, metallic, roughness));
+                pbrMetRough.reset(new PBRMetallicRoughness(albedoTex, metRoughTex, material.diffuseFactor, material.metallic, material.roughness));
             }
 
             std::shared_ptr<PBRSpecularGlossiness> pbrSpecGloss;
@@ -601,7 +597,7 @@ ModelData *Raw2Gltf(
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
                     material.name, isTransparent, simpleTex(RAW_TEXTURE_USAGE_NORMAL),
-                    simpleTex(RAW_TEXTURE_USAGE_EMISSIVE), material.emissiveFactor,
+                    simpleTex(RAW_TEXTURE_USAGE_EMISSIVE), material.emissiveFactor * material.emissiveIntensity, // TODO: 1.0 default value for emissiveIntensity?
                     khrComMat, pbrMetRough, pbrSpecGloss));
             materialsByName[materialHash(material)] = mData;
         }

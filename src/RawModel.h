@@ -179,7 +179,10 @@ struct RawMaterial
     Vec4f           diffuseFactor;
     Vec3f           specularFactor;
     Vec3f           emissiveFactor;
+    float           emissiveIntensity;
     float           shininess;
+    float           metallic;
+    float           roughness;
     int             textures[RAW_TEXTURE_USAGE_MAX];
 };
 
@@ -272,10 +275,9 @@ public:
     int AddTexture(const std::string &name, const std::string &fileName, const std::string &fileLocation, RawTextureUsage usage);
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
-        const char *name, const char *shadingModel, RawMaterialType materialType,
-        const int textures[RAW_TEXTURE_USAGE_MAX], Vec3f ambientFactor,
-        Vec4f diffuseFactor, Vec3f specularFactor,
-        Vec3f emissiveFactor, float shinineness);
+        const char *name, const char *shadingModel, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
+        const Vec3f ambientFactor, const Vec4f diffuseFactor, const Vec3f specularFactor, const Vec3f emissiveFactor,
+        float emissiveIntensity, float shinineness, float metallic, float roughness);
     int AddSurface(const RawSurface &suface);
     int AddSurface(const char *name, const char *nodeName);
     int AddAnimation(const RawAnimation &animation);

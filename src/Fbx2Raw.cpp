@@ -88,51 +88,47 @@ private:
     const FbxLayerElementArrayTemplate<int>    *indices;
 };
 
-class FbxRoughMetMaterialAccess
-{
-    struct FbxMaterialProperties {
-        const FbxFileTexture *texColor {};
-        FbxVector4           colBase { 1, 1, 1, 1 };
-        const FbxFileTexture *texNormal {};
-        const FbxFileTexture *texMetallic {};
-        FbxDouble            metallic {};
-        const FbxFileTexture *texRoughness {};
-        FbxDouble            roughness {};
-        const FbxFileTexture *texEmissive {};
-        FbxVector4           colEmissive {};
-        FbxDouble            emissiveIntensity;
-        const FbxFileTexture *texAmbientOcclusion {};
-    };
-
-private:
-    const FbxSurfaceMaterial *fbxMaterial;
-    const std::map<const FbxTexture *, FbxString> &textureLocations;
-
-public:
+struct FbxMaterialInfo {
+    FbxMaterialInfo(const FbxString &name, const FbxString &shadingModel)
+        : name(name),
+          shadingModel(shadingModel)
+    {}
     const FbxString name;
     const FbxString shadingModel;
+};
 
-    const struct FbxMaterialProperties props;
+struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
+    static constexpr const char *FBX_SHADER_METROUGH = "MetallicRoughness";
 
-    explicit FbxRoughMetMaterialAccess(
-        const FbxSurfaceMaterial *fbxMaterial, const std::map<const FbxTexture *, FbxString> &textureNames) :
-        fbxMaterial(fbxMaterial),
-        name(fbxMaterial->GetName()),
-        shadingModel(fbxMaterial->ShadingModel),
-        textureLocations(textureNames),
-        props(extractTextures())
+    FbxRoughMetMaterialInfo(const FbxString &name, const FbxString &shadingModel)
+        : FbxMaterialInfo(name, shadingModel)
     {}
+    const FbxFileTexture *texColor {};
+    FbxVector4           colBase { 1, 1, 1, 1 };
+    const FbxFileTexture *texNormal {};
+    const FbxFileTexture *texMetallic {};
+    FbxDouble            metallic {};
+    const FbxFileTexture *texRoughness {};
+    FbxDouble            roughness {};
+    const FbxFileTexture *texEmissive {};
+    FbxVector4           colEmissive {};
+    FbxDouble            emissiveIntensity {};
+    const FbxFileTexture *texAmbientOcclusion {};
 
-    struct FbxMaterialProperties extractTextures() {
-        struct FbxMaterialProperties res { };
+    static std::unique_ptr<FbxRoughMetMaterialInfo> From(
+        FbxSurfaceMaterial *fbxMaterial,
+        const std::map<const FbxTexture *, FbxString> &textureLocations)
+    {
+        std::unique_ptr<FbxRoughMetMaterialInfo> res(new FbxRoughMetMaterialInfo(fbxMaterial->GetName(), FBX_SHADER_METROUGH));
 
         const FbxProperty mayaProp = fbxMaterial->FindProperty("Maya");
         if (mayaProp.GetPropertyDataType() != FbxCompoundDT) {
-            return res;
+            return nullptr;
         }
-        auto foo = mayaProp.GetPropertyDataType();
-
-        fmt::printf("Maya property type for material %s: %s\n", fbxMaterial->GetName(), foo.GetName());
+        if (!fbxMaterial->ShadingModel.Get().IsEmpty()) {
+            fmt::printf("Warning: Material %s has surprising shading model: %s\n",
+                fbxMaterial->GetName(), fbxMaterial->ShadingModel.Get());
+        }
 
         auto getTex = [&](std::string propName) {
             const FbxFileTexture *ptr = nullptr;
@@ -143,62 +139,128 @@ public:
                 if (texProp.IsValid()) {
                     fmt::printf("%s property type for material %s: %s\n", propName, fbxMaterial->GetName(), texProp.GetPropertyDataType().GetName());
                     ptr = texProp.GetSrcObject<FbxFileTexture>();
+                    if (ptr != nullptr && textureLocations.find(ptr) == textureLocations.end()) {
+                        ptr = nullptr;
+                    }
                 }
             }
             return ptr;
         };
 
-        res.texNormal = getTex("normal");
-        res.texColor = getTex("color");
-        res.texAmbientOcclusion = getTex("ao");
-        res.texEmissive = getTex("emissive");
-        res.texMetallic = getTex("metallic");
-        res.texRoughness = getTex("roughness");
+        auto getVec = [&](std::string propName) -> FbxDouble3 {
+            const FbxProperty vecProp = mayaProp.FindHierarchical(propName.c_str());
+            return vecProp.IsValid() ? vecProp.Get<FbxDouble3>() : FbxDouble3(1, 1, 1);
+        };
+
+        auto getVal = [&](std::string propName) -> FbxDouble {
+            const FbxProperty vecProp = mayaProp.FindHierarchical(propName .c_str());
+            return vecProp.IsValid() ? vecProp.Get<FbxDouble>() : 0;
+        };
+
+        res->texNormal = getTex("normal");
+        res->texColor = getTex("color");
+        res->colBase = getVec("base_color");
+        res->texAmbientOcclusion = getTex("ao");
+        res->texEmissive = getTex("emissive");
+        res->colEmissive = getVec("emissive");
+        res->emissiveIntensity = getVal("emissive_intensity");
+        res->texMetallic = getTex("metallic");
+        res->metallic = getVal("metallic");
+        res->texRoughness = getTex("roughness");
+        res->roughness = getVal("roughness");
 
         return res;
     }
 };
 
-class FbxMaterialAccess
-{
-    struct FbxMaterialProperties {
-        FbxFileTexture *texAmbient {};
-        FbxVector4     colAmbient {};
-        FbxFileTexture *texSpecular {};
-        FbxVector4     colSpecular {};
-        FbxFileTexture *texDiffuse {};
-        FbxVector4     colDiffuse {};
-        FbxFileTexture *texEmissive {};
-        FbxVector4     colEmissive {};
-        FbxFileTexture *texNormal {};
-        FbxFileTexture *texShininess {};
-        FbxDouble      shininess {};
-    };
+struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
+    static constexpr const char *FBX_SHADER_LAMBERT = "Lambert";
+    static constexpr const char *FBX_SHADER_BLINN   = "Blinn";
+    static constexpr const char *FBX_SHADER_PHONG   = "Phong";
 
-private:
-    const FbxSurfaceMaterial *fbxMaterial;
-    const std::map<const FbxTexture *, FbxString> &textureLocations;
-
-public:
-    const FbxString name;
-    const FbxString shadingModel;
-
-    const struct FbxMaterialProperties props;
-
-    explicit FbxMaterialAccess(
-        const FbxSurfaceMaterial *fbxMaterial, const std::map<const FbxTexture *, FbxString> &textureNames) :
-        fbxMaterial(fbxMaterial),
-        name(fbxMaterial->GetName()),
-        shadingModel(fbxMaterial->ShadingModel),
-        textureLocations(textureNames),
-        props(extractTextures())
+    FbxTraditionalMaterialInfo(const FbxString &name, const FbxString &shadingModel)
+        : FbxMaterialInfo(name, shadingModel)
     {}
 
-    struct FbxMaterialProperties extractTextures() {
-        struct FbxMaterialProperties res;
+    FbxFileTexture *texAmbient {};
+    FbxVector4     colAmbient {};
+    FbxFileTexture *texSpecular {};
+    FbxVector4     colSpecular {};
+    FbxFileTexture *texDiffuse {};
+    FbxVector4     colDiffuse {};
+    FbxFileTexture *texEmissive {};
+    FbxVector4     colEmissive {};
+    FbxFileTexture *texNormal {};
+    FbxFileTexture *texShininess {};
+    FbxDouble      shininess {};
+
+    static std::unique_ptr<FbxTraditionalMaterialInfo> From(
+        FbxSurfaceMaterial *fbxMaterial,
+        const std::map<const FbxTexture *, FbxString> &textureLocations)
+    {
+        auto getSurfaceScalar = [&](const char *propName) -> std::tuple<FbxDouble, FbxFileTexture *> {
+            const FbxProperty prop = fbxMaterial->FindProperty(propName);
+
+            FbxDouble val(0);
+            FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
+            if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
+                tex = nullptr;
+            }
+            if (tex == nullptr && prop.IsValid()) {
+                val = prop.Get<FbxDouble>();
+            }
+            return std::make_tuple(val, tex);
+        };
+
+        auto getSurfaceVector = [&](const char *propName) -> std::tuple<FbxDouble3, FbxFileTexture *> {
+            const FbxProperty prop = fbxMaterial->FindProperty(propName);
+
+            FbxDouble3 val(1, 1, 1);
+            FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
+            if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
+                tex = nullptr;
+            }
+            if (tex == nullptr && prop.IsValid()) {
+                val = prop.Get<FbxDouble3>();
+            }
+            return std::make_tuple(val, tex);
+        };
+
+        auto getSurfaceValues = [&](const char *colName, const char *facName) -> std::tuple<FbxVector4, FbxFileTexture *, FbxFileTexture *> {
+            const FbxProperty colProp = fbxMaterial->FindProperty(colName);
+            const FbxProperty facProp = fbxMaterial->FindProperty(facName);
+
+            FbxDouble3 colorVal(1, 1, 1);
+            FbxDouble  factorVal(1);
+
+            FbxFileTexture *colTex = colProp.GetSrcObject<FbxFileTexture>();
+            if (colTex != nullptr && textureLocations.find(colTex) == textureLocations.end()) {
+                colTex = nullptr;
+            }
+            if (colTex == nullptr && colProp.IsValid()) {
+                colorVal = colProp.Get<FbxDouble3>();
+            }
+            FbxFileTexture *facTex = facProp.GetSrcObject<FbxFileTexture>();
+            if (facTex != nullptr && textureLocations.find(facTex) == textureLocations.end()) {
+                facTex = nullptr;
+            }
+            if (facTex == nullptr && facProp.IsValid()) {
+                factorVal = facProp.Get<FbxDouble>();
+            }
+
+            auto val = FbxVector4(
+                colorVal[0] * factorVal,
+                colorVal[1] * factorVal,
+                colorVal[2] * factorVal,
+                factorVal);
+            return std::make_tuple(val, colTex, facTex);
+        };
+
+        std::string name = fbxMaterial->GetName();
+        std::unique_ptr<FbxTraditionalMaterialInfo> res(new FbxTraditionalMaterialInfo(name.c_str(), fbxMaterial->sShadingModel));
 
         // four properties are on the same structure and follow the same rules
-        auto handleBasicProperty = [&](const char *colName, const char *facName) {
+        auto handleBasicProperty = [&](const char *colName, const char *facName) -> std::tuple<FbxVector4, FbxFileTexture *>{
             FbxFileTexture *colTex, *facTex;
             FbxVector4     vec;
 
@@ -212,20 +274,20 @@ public:
             return std::make_tuple(vec, facTex);
         };
 
-        std::tie(res.colAmbient, res.texAmbient) =
+        std::tie(res->colAmbient, res->texAmbient) =
             handleBasicProperty(FbxSurfaceMaterial::sAmbient, FbxSurfaceMaterial::sAmbientFactor);
-        std::tie(res.colSpecular, res.texSpecular) =
+        std::tie(res->colSpecular, res->texSpecular) =
             handleBasicProperty(FbxSurfaceMaterial::sSpecular, FbxSurfaceMaterial::sSpecularFactor);
-        std::tie(res.colDiffuse, res.texDiffuse) =
+        std::tie(res->colDiffuse, res->texDiffuse) =
             handleBasicProperty(FbxSurfaceMaterial::sDiffuse, FbxSurfaceMaterial::sDiffuseFactor);
-        std::tie(res.colEmissive, res.texEmissive) =
+        std::tie(res->colEmissive, res->texEmissive) =
             handleBasicProperty(FbxSurfaceMaterial::sEmissive, FbxSurfaceMaterial::sEmissiveFactor);
 
         // the normal map can only ever be a map, ignore everything else
-        std::tie(std::ignore, res.texNormal) = getSurfaceVector(FbxSurfaceMaterial::sNormalMap);
+        std::tie(std::ignore, res->texNormal) = getSurfaceVector(FbxSurfaceMaterial::sNormalMap);
 
         // shininess can be a map or a factor
-        std::tie(res.shininess, res.texShininess) = getSurfaceScalar(FbxSurfaceMaterial::sShininess);
+        std::tie(res->shininess, res->texShininess) = getSurfaceScalar(FbxSurfaceMaterial::sShininess);
 
         // for transparency we just want a constant vector value;
         FbxVector4 transparency;
@@ -240,73 +302,23 @@ public:
             fmt::printf("Warning: Mat [%s]: Can't handle texture for %s; discarding.\n", name, FbxSurfaceMaterial::sTransparencyFactor);
         }
         // FBX color is RGB, so we calculate the A channel as the average of the FBX transparency color vector
-        res.colDiffuse[3] = 1.0 - (transparency[0] + transparency[1] + transparency[2])/3.0;
+        res->colDiffuse[3] = 1.0 - (transparency[0] + transparency[1] + transparency[2])/3.0;
 
         return res;
     }
-
-    std::tuple<FbxDouble, FbxFileTexture *> getSurfaceScalar(const char *propName) const
-    {
-        const FbxProperty prop = fbxMaterial->FindProperty(propName);
-
-        FbxDouble val(0);
-        FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
-        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
-            tex = nullptr;
-        }
-        if (tex == nullptr && prop.IsValid()) {
-            val = prop.Get<FbxDouble>();
-        }
-        return std::make_tuple(val, tex);
-    }
-
-    std::tuple<FbxDouble3, FbxFileTexture *> getSurfaceVector(const char *propName) const
-    {
-        const FbxProperty prop = fbxMaterial->FindProperty(propName);
-
-        FbxDouble3 val(1, 1, 1);
-        FbxFileTexture *tex = prop.GetSrcObject<FbxFileTexture>();
-        if (tex != nullptr && textureLocations.find(tex) == textureLocations.end()) {
-            tex = nullptr;
-        }
-        if (tex == nullptr && prop.IsValid()) {
-            val = prop.Get<FbxDouble3>();
-        }
-        return std::make_tuple(val, tex);
-    }
-
-    std::tuple<FbxVector4, FbxFileTexture *, FbxFileTexture *> getSurfaceValues(const char *colName, const char *facName) const
-    {
-        const FbxProperty colProp = fbxMaterial->FindProperty(colName);
-        const FbxProperty facProp = fbxMaterial->FindProperty(facName);
-
-        FbxDouble3 colorVal(1, 1, 1);
-        FbxDouble  factorVal(1);
-
-        FbxFileTexture *colTex = colProp.GetSrcObject<FbxFileTexture>();
-        if (colTex != nullptr && textureLocations.find(colTex) == textureLocations.end()) {
-            colTex = nullptr;
-        }
-        if (colTex == nullptr && colProp.IsValid()) {
-            colorVal = colProp.Get<FbxDouble3>();
-        }
-        FbxFileTexture *facTex = facProp.GetSrcObject<FbxFileTexture>();
-        if (facTex != nullptr && textureLocations.find(facTex) == textureLocations.end()) {
-            facTex = nullptr;
-        }
-        if (facTex == nullptr && facProp.IsValid()) {
-            factorVal = facProp.Get<FbxDouble>();
-        }
-
-        auto val = FbxVector4(
-            colorVal[0] * factorVal,
-            colorVal[1] * factorVal,
-            colorVal[2] * factorVal,
-            factorVal);
-        return std::make_tuple(val, colTex, facTex);
-    };
 };
 
+
+std::unique_ptr<FbxMaterialInfo>
+GetMaterialInfo(FbxSurfaceMaterial *material, const std::map<const FbxTexture *, FbxString> &textureLocations)
+{
+    std::unique_ptr<FbxMaterialInfo> res;
+    res = FbxRoughMetMaterialInfo::From(material, textureLocations);
+    if (!res) {
+        res = FbxTraditionalMaterialInfo::From(material, textureLocations);
+    }
+    return res;
+}
 
 class FbxMaterialsAccess
 {
@@ -345,14 +357,14 @@ public:
             }
             auto summary = summaries[materialNum];
             if (summary == nullptr) {
-                summary = summaries[materialNum] = std::make_shared<FbxRoughMetMaterialAccess>(
+                summary = summaries[materialNum] = GetMaterialInfo(
                     mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum),
                     textureLocations);
             }
         }
     }
 
-    const std::shared_ptr<FbxRoughMetMaterialAccess> GetMaterial(const int polygonIndex) const
+    const std::shared_ptr<FbxMaterialInfo> GetMaterial(const int polygonIndex) const
     {
         if (mappingMode != FbxGeometryElement::eNone) {
             const int materialNum = indices->GetAt((mappingMode == FbxGeometryElement::eByPolygon) ? polygonIndex : 0);
@@ -365,10 +377,10 @@ public:
     }
 
 private:
-    FbxGeometryElement::EMappingMode                mappingMode;
-    std::vector<std::shared_ptr<FbxRoughMetMaterialAccess>> summaries {};
-    const FbxMesh                                   *mesh;
-    const FbxLayerElementArrayTemplate<int>         *indices;
+    FbxGeometryElement::EMappingMode              mappingMode;
+    std::vector<std::shared_ptr<FbxMaterialInfo>> summaries {};
+    const FbxMesh                                 *mesh;
+    const FbxLayerElementArrayTemplate<int>       *indices;
 };
 
 class FbxSkinningAccess
@@ -757,15 +769,14 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     for (int polygonIndex = 0; polygonIndex < pMesh->GetPolygonCount(); polygonIndex++) {
         FBX_ASSERT(pMesh->GetPolygonSize(polygonIndex) == 3);
 
-        const std::shared_ptr<FbxRoughMetMaterialAccess> fbxMaterial = materials.GetMaterial(polygonIndex);
-
-        int textures[RAW_TEXTURE_USAGE_MAX];
+        int textures[RAW_TEXTURE_USAGE_MAX] { -1 };
         std::fill_n(textures, RAW_TEXTURE_USAGE_MAX, -1);
 
         FbxString  shadingModel, materialName;
         FbxVector4 ambient, specular, diffuse, emissive;
-        FbxDouble  shininess;
+        FbxDouble  shininess, emissiveIntensity, metallic, roughness;
 
+        const std::shared_ptr<FbxMaterialInfo> fbxMaterial = materials.GetMaterial(polygonIndex);
         if (fbxMaterial == nullptr) {
             materialName = "DefaultMaterial";
             shadingModel = "Lambert";
@@ -773,8 +784,6 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         } else {
             materialName = fbxMaterial->name;
             shadingModel = fbxMaterial->shadingModel;
-
-            const auto &matProps = fbxMaterial->props;
 
             const auto maybeAddTexture = [&](const FbxFileTexture *tex, RawTextureUsage usage) {
                 if (tex != nullptr) {
@@ -784,12 +793,37 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
                 }
             };
 
-            maybeAddTexture(matProps.texColor, RAW_TEXTURE_USAGE_ALBEDO);
-            maybeAddTexture(matProps.texNormal, RAW_TEXTURE_USAGE_NORMAL);
-            maybeAddTexture(matProps.texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
-            maybeAddTexture(matProps.texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
-            maybeAddTexture(matProps.texMetallic, RAW_TEXTURE_USAGE_METALLIC);
-            maybeAddTexture(matProps.texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
+            if (shadingModel == FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH) {
+                FbxRoughMetMaterialInfo *matProps = static_cast<FbxRoughMetMaterialInfo *>(fbxMaterial.get());
+
+                maybeAddTexture(matProps->texColor, RAW_TEXTURE_USAGE_ALBEDO);
+                diffuse = matProps->colBase;
+                maybeAddTexture(matProps->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+                maybeAddTexture(matProps->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
+                emissive = matProps->colEmissive;
+                emissiveIntensity = matProps->emissiveIntensity;
+                maybeAddTexture(matProps->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
+                maybeAddTexture(matProps->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
+                metallic = matProps->metallic;
+                maybeAddTexture(matProps->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
+                roughness = matProps->roughness;
+            } else {
+
+                FbxTraditionalMaterialInfo *matProps = static_cast<FbxTraditionalMaterialInfo *>(fbxMaterial.get());
+
+                maybeAddTexture(matProps->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
+                diffuse = matProps->colDiffuse;
+                maybeAddTexture(matProps->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+                maybeAddTexture(matProps->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
+                emissive = matProps->colEmissive;
+                maybeAddTexture(matProps->texShininess, RAW_TEXTURE_USAGE_SHININESS);
+                shininess = matProps->shininess;
+                maybeAddTexture(matProps->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
+                ambient = matProps->colAmbient;
+                maybeAddTexture(matProps->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
+                specular = matProps->colSpecular;
+            }
+
         }
 
         RawVertex rawVertices[3];
@@ -919,7 +953,8 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
         const int rawMaterialIndex = raw.AddMaterial(
             materialName, shadingModel, materialType, textures,
-            toVec3f(ambient), toVec4f(diffuse), toVec3f(specular), toVec3f(emissive), shininess);
+            toVec3f(ambient), toVec4f(diffuse), toVec3f(specular), toVec3f(emissive),
+            emissiveIntensity, shininess, metallic, roughness);
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
     }
