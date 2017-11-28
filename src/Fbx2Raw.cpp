@@ -257,7 +257,7 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
         };
 
         std::string name = fbxMaterial->GetName();
-        std::unique_ptr<FbxTraditionalMaterialInfo> res(new FbxTraditionalMaterialInfo(name.c_str(), fbxMaterial->sShadingModel));
+        std::unique_ptr<FbxTraditionalMaterialInfo> res(new FbxTraditionalMaterialInfo(name.c_str(), fbxMaterial->ShadingModel.Get()));
 
         // four properties are on the same structure and follow the same rules
         auto handleBasicProperty = [&](const char *colName, const char *facName) -> std::tuple<FbxVector4, FbxFileTexture *>{
@@ -768,22 +768,20 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
     for (int polygonIndex = 0; polygonIndex < pMesh->GetPolygonCount(); polygonIndex++) {
         FBX_ASSERT(pMesh->GetPolygonSize(polygonIndex) == 3);
-
-        int textures[RAW_TEXTURE_USAGE_MAX] { -1 };
-        std::fill_n(textures, RAW_TEXTURE_USAGE_MAX, -1);
-
-        FbxString  shadingModel, materialName;
-        FbxVector4 ambient, specular, diffuse, emissive;
-        FbxDouble  shininess, emissiveIntensity, metallic, roughness;
-
         const std::shared_ptr<FbxMaterialInfo> fbxMaterial = materials.GetMaterial(polygonIndex);
+
+        int textures[RAW_TEXTURE_USAGE_MAX];
+        std::fill_n(textures, RAW_TEXTURE_USAGE_MAX, -1);
+        FbxString  materialName;
+        std::shared_ptr<RawMatProps> rawMatProps;
+
         if (fbxMaterial == nullptr) {
             materialName = "DefaultMaterial";
-            shadingModel = "Lambert";
+            rawMatProps.reset(new RawTraditionalMatProps(RAW_SHADING_MODEL_LAMBERT,
+                Vec3f(0, 0, 0), Vec4f(.5, .5, .5, 1), Vec3f(0, 0, 0), Vec3f(0, 0, 0), 0.5));
 
         } else {
             materialName = fbxMaterial->name;
-            shadingModel = fbxMaterial->shadingModel;
 
             const auto maybeAddTexture = [&](const FbxFileTexture *tex, RawTextureUsage usage) {
                 if (tex != nullptr) {
@@ -793,37 +791,44 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
                 }
             };
 
-            if (shadingModel == FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH) {
-                FbxRoughMetMaterialInfo *matProps = static_cast<FbxRoughMetMaterialInfo *>(fbxMaterial.get());
+            std::shared_ptr<RawMatProps> matInfo;
+            if (fbxMaterial->shadingModel == FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH) {
+                FbxRoughMetMaterialInfo *fbxMatInfo = static_cast<FbxRoughMetMaterialInfo *>(fbxMaterial.get());
 
-                maybeAddTexture(matProps->texColor, RAW_TEXTURE_USAGE_ALBEDO);
-                diffuse = matProps->colBase;
-                maybeAddTexture(matProps->texNormal, RAW_TEXTURE_USAGE_NORMAL);
-                maybeAddTexture(matProps->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
-                emissive = matProps->colEmissive;
-                emissiveIntensity = matProps->emissiveIntensity;
-                maybeAddTexture(matProps->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
-                maybeAddTexture(matProps->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
-                metallic = matProps->metallic;
-                maybeAddTexture(matProps->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
-                roughness = matProps->roughness;
+                maybeAddTexture(fbxMatInfo->texColor, RAW_TEXTURE_USAGE_ALBEDO);
+                maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+                maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
+                maybeAddTexture(fbxMatInfo->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
+                maybeAddTexture(fbxMatInfo->texMetallic, RAW_TEXTURE_USAGE_METALLIC);
+                maybeAddTexture(fbxMatInfo->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
+                rawMatProps.reset(new RawMetRoughMatProps(
+                    RAW_SHADING_MODEL_PBR_MET_ROUGH, toVec4f(fbxMatInfo->colBase), toVec3f(fbxMatInfo->colEmissive),
+                    fbxMatInfo->emissiveIntensity, fbxMatInfo->metallic, fbxMatInfo->roughness));
             } else {
 
-                FbxTraditionalMaterialInfo *matProps = static_cast<FbxTraditionalMaterialInfo *>(fbxMaterial.get());
-
-                maybeAddTexture(matProps->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
-                diffuse = matProps->colDiffuse;
-                maybeAddTexture(matProps->texNormal, RAW_TEXTURE_USAGE_NORMAL);
-                maybeAddTexture(matProps->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
-                emissive = matProps->colEmissive;
-                maybeAddTexture(matProps->texShininess, RAW_TEXTURE_USAGE_SHININESS);
-                shininess = matProps->shininess;
-                maybeAddTexture(matProps->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
-                ambient = matProps->colAmbient;
-                maybeAddTexture(matProps->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
-                specular = matProps->colSpecular;
+                FbxTraditionalMaterialInfo *fbxMatInfo = static_cast<FbxTraditionalMaterialInfo *>(fbxMaterial.get());
+                RawShadingModel shadingModel;
+                if (fbxMaterial->shadingModel == "Lambert") {
+                    shadingModel = RAW_SHADING_MODEL_LAMBERT;
+                } else if (fbxMaterial->shadingModel == "Blinn") {
+                    shadingModel = RAW_SHADING_MODEL_BLINN;
+                } else if (fbxMaterial->shadingModel == "Phong") {
+                    shadingModel = RAW_SHADING_MODEL_PHONG;
+                } else if (fbxMaterial->shadingModel == "Constant") {
+                    shadingModel = RAW_SHADING_MODEL_PHONG;
+                } else {
+                    shadingModel = RAW_SHADING_MODEL_UNKNOWN;
+                }
+                maybeAddTexture(fbxMatInfo->texDiffuse, RAW_TEXTURE_USAGE_DIFFUSE);
+                maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
+                maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
+                maybeAddTexture(fbxMatInfo->texShininess, RAW_TEXTURE_USAGE_SHININESS);
+                maybeAddTexture(fbxMatInfo->texAmbient, RAW_TEXTURE_USAGE_AMBIENT);
+                maybeAddTexture(fbxMatInfo->texSpecular, RAW_TEXTURE_USAGE_SPECULAR);
+                rawMatProps.reset(new RawTraditionalMatProps(shadingModel,
+                    toVec3f(fbxMatInfo->colAmbient), toVec4f(fbxMatInfo->colDiffuse), toVec3f(fbxMatInfo->colEmissive),
+                    toVec3f(fbxMatInfo->colSpecular), fbxMatInfo->shininess));
             }
-
         }
 
         RawVertex rawVertices[3];
@@ -951,10 +956,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         }
 
         const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
-        const int rawMaterialIndex = raw.AddMaterial(
-            materialName, shadingModel, materialType, textures,
-            toVec3f(ambient), toVec4f(diffuse), toVec3f(specular), toVec3f(emissive),
-            emissiveIntensity, shininess, metallic, roughness);
+        const int rawMaterialIndex = raw.AddMaterial(materialName, materialType, textures, rawMatProps);
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
     }
