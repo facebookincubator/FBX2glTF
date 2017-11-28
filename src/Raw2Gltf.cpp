@@ -428,10 +428,10 @@ ModelData *Raw2Gltf(
                 explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
 
                 const int rawTexIx;
-                int width;
-                int height;
-                int channels;
-                uint8_t *pixels;
+                int width {};
+                int height {};
+                int channels {};
+                uint8_t *pixels {};
             };
 
             int width = -1, height = -1;
