@@ -180,18 +180,18 @@ int RawModel::AddSurface(const RawSurface &surface)
     return (int) (surfaces.size() - 1);
 }
 
-int RawModel::AddSurface(const char *name, const char *nodeName)
+int RawModel::AddSurface(const char *name, const long surfaceId)
 {
     assert(name[0] != '\0');
 
     for (size_t i = 0; i < surfaces.size(); i++) {
-        if (Gltf::StringUtils::CompareNoCase(surfaces[i].name, name) == 0) {
+        if (surfaces[i].id == surfaceId) {
             return (int) i;
         }
     }
     RawSurface  surface;
+    surface.id = surfaceId;
     surface.name     = name;
-    surface.nodeName = nodeName;
     surface.bounds.Clear();
     surface.discrete  = false;
 
@@ -263,6 +263,7 @@ int RawModel::AddNode(const char *name, const char *parentName)
     joint.isJoint     = false;
     joint.name        = name;
     joint.parentName  = parentName;
+    joint.surfaceId   = 0;
     joint.translation = Vec3f(0, 0, 0);
     joint.rotation    = Quatf(0, 0, 0, 1);
     joint.scale       = Vec3f(1, 1, 1);
@@ -281,7 +282,7 @@ void RawModel::Condense()
 
         for (auto &triangle : triangles) {
             const RawSurface &surface     = oldSurfaces[triangle.surfaceIndex];
-            const int        surfaceIndex = AddSurface(surface.name.c_str(), surface.nodeName.c_str());
+            const int        surfaceIndex = AddSurface(surface.name.c_str(), surface.id);
             surfaces[surfaceIndex] = surface;
             triangle.surfaceIndex = surfaceIndex;
         }
@@ -538,3 +539,14 @@ int RawModel::GetNodeByName(const char *name) const
     }
     return -1;
 }
+
+int RawModel::GetSurfaceById(const long surfaceId) const
+{
+    for (size_t i = 0; i < surfaces.size(); i++) {
+        if (surfaces[i].id == surfaceId) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
