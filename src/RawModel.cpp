@@ -549,4 +549,3 @@ int RawModel::GetSurfaceById(const long surfaceId) const
     }
     return -1;
 }
-

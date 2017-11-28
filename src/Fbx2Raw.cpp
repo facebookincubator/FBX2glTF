@@ -612,14 +612,12 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
     // Associate the node to this surface
     int nodeId = raw.GetNodeByName(pNode->GetName());
-    if (nodeId >= 0)
-    {
-        RawNode& node = raw.GetNode(nodeId);
+    if (nodeId >= 0) {
+        RawNode &node = raw.GetNode(nodeId);
         node.surfaceId = surfaceId;
     }
 
-    if (raw.GetSurfaceById(surfaceId) >= 0)
-    {
+    if (raw.GetSurfaceById(surfaceId) >= 0) {
         // This surface is already loaded
         return;
     }

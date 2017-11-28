@@ -293,7 +293,7 @@ ModelData *Raw2Gltf(
 
     std::map<std::string, std::shared_ptr<NodeData>>     nodesByName;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
-    std::map<long, std::shared_ptr<MeshData>>     meshBySurfaceId;
+    std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
 
     // for now, we only have one buffer; data->binary points to the same vector as that BufferData does.
     BufferData &buffer = *gltf->buffers.hold(
@@ -475,20 +475,18 @@ ModelData *Raw2Gltf(
 
             assert(surfaceModel.GetSurfaceCount() == 1);
             const RawSurface  &rawSurface = surfaceModel.GetSurface(0);
+            const int surfaceId = rawSurface.id;
 
             const RawMaterial &rawMaterial = surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
             const MaterialData &mData = require(materialsByName, materialHash(rawMaterial));
 
-            int surfaceId = rawSurface.id;
-            //NodeData    &meshNode = require(nodesByName, nodeName);
 
             MeshData *mesh = nullptr;
-            auto     meshIter = meshBySurfaceId.find(surfaceId);
+            auto meshIter = meshBySurfaceId.find(surfaceId);
             if (meshIter != meshBySurfaceId.end()) {
                 mesh = meshIter->second.get();
 
-            }
-            else {
+            } else {
                 std::vector<float> defaultDeforms;
                 for (const auto &channel : rawSurface.blendChannels) {
                     defaultDeforms.push_back(channel.defaultDeform);
@@ -517,8 +515,7 @@ ModelData *Raw2Gltf(
                 AccessorData &indexes = *gltf->accessors.hold(new AccessorData(GLT_USHORT));
                 indexes.count = 3 * triangleCount;
                 primitive.reset(new PrimitiveData(indexes, mData, dracoMesh));
-            }
-            else {
+            } else {
                 const AccessorData &indexes = *gltf->AddAccessorWithView(
                     *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
                     GLT_USHORT, getIndexArray(surfaceModel));
@@ -650,7 +647,7 @@ ModelData *Raw2Gltf(
 
             //
             // Assign mesh to node
-            // 
+            //
             if (node.surfaceId > 0)
             {
                 int surfaceIndex = raw.GetSurfaceById(node.surfaceId);
