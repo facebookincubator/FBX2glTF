@@ -44,9 +44,10 @@ Usage:
       --khr-materials-common    (WIP) Use KHR_materials_common extensions to
                                 specify Unlit/Lambert/Blinn/Phong shaders.
       --pbr-metallic-roughness  (WIP) Try to glean glTF 2.0 native PBR
-                                attributes from the FBX.
+                                attributes from the FBX, or make a best effort
+                                to convert from traditional shader models.
       --pbr-specular-glossiness
-                                (WIP) Experimentally fill in the
+                                (WIP) Very experimentally employ the
                                 KHR_materials_pbrSpecularGlossiness extension.
       --blend-shape-normals     Include blend shape normals, if reported
                                 present by the FBX SDK.
@@ -192,50 +193,68 @@ With glTF 2.0, we leaped headlong into physically-based rendering (BPR), where
 the canonical way of expressing what a mesh looks like is by describing its
 visible material in fundamental attributes like "how rough is this surface".
 
-By contrast, FBX's material support remains in the older world of Lambert and
-Phong, with simpler and more direct illumination and shading models. These modes
-are largely incompatible — for example, textures in the old workflow often
-contain baked lighting, which would arise naturally in a PBR environment.
+By contrast, FBX's material support remains largely in the older world of
+Lambert and Phong, with simpler and more direct illumination and shading
+models. These modes are inherently incompatible — for example, textures in the
+old workflow often contain baked lighting of the type that would arise naturally
+in a PBR environment.
 
 Some material settings remain well supported and transfer automatically:
  - Emissive constants and textures
  - Occlusion maps
  - Normal maps
 
-This leaves the other traditional settings of Lambert:
+This leaves the other traditional settings, first of Lambert:
  - Ambient — this is anathema in the PBR world, where such effects should
    emerge naturally from the fundamental colour of the material and any ambient
    lighting present.
  - Diffuse — the material's direction-agnostic, non-specular reflection,
 and additionally, with Blinn/Phong:
  - Specular — a more polished material's direction-sensitive reflection,
- - Shininess — just how polished the material is,
+ - Shininess — just how polished the material is; a higher value here yields a
+   more mirror-like surface.
 
 (All these can be either constants or textures.)
 
 #### Exporting as Unlit/Lambert/Phong 
-Increasingly with PBR materials, these properties are just left at zero or
-default values in the FBX. But when they're there, and they're how you want the
-glTF materials generated, one option is to use the --khr-materials-common
-command line switch, with the awareness that this incurs a required dependency
-on the glTF extension `KHR_materials_common`.
+If you have a model was constructed using the traditional workflow, you may
+choose to export it using the --khr-materials-common switch. This incurs a
+dependency on the glTF extension 'KHR_materials_common'; a client that accepts
+that extension is making a promise it'll do its best to render i.e. Lambert or
+Phong.
+
+You can use this flag even for PBR models, but the conversion is imperfect to
+say the least, and there is no reason why you would ever want to do such a
+thing.
 
 **Note that at the time of writing, this glTF extension is still undergoing the
 ratification process, and is furthermore likely to change names.**
 
 #### Exporting as Metallic-Roughness PBR
-Given the command line flag --pbr-metallic-roughness, we accept glTF 2.0's PBR
-mode, but we do so very partially, filling in a couple of reasonable constants
-for metalness and roughness and using the diffuse texture, if it exists, as the
-`base colour` texture.
+Given the command line flag --pbr-metallic-roughness, we throw ourselves into
+the warm embrace of glTF 2.0's PBR preference.
 
-More work is needed to harness the power of glTF's 2.0's materials. The biggest
-issue here is the lack of any obviously emerging standards to complement FBX
-itself. It's not clear what format an artist can export their PBR materials on,
-and when they can, how to communicate this information well to `FBX2glTF`.
+As mentioned above, there is lilttle consensus in the world on how PBR should be
+represented in FBX. At present, we support only one format: Stingray PBS. This
+is a featue that comes bundled with Maya, and any PBR model exported through
+that route should be digested propertly by FBX2glTF.
 
-(*Stingray PBS* support is
-[high on the TODO list](https://github.com/facebookincubator/FBX2glTF/issues/12).)
+(A happy note: Allegorithmic's Susbstance Painter also exports Stingray PBS,
+when hooked up to Maya.)
+
+If your model is not a Stingray PBS one, but you still wish to export PBR
+(perhaps you want to generate only core glTF wirhout reliance on extensions),
+this converter will try its best to convert your old textures. It calculates, on
+a pixel by pixel basis, reasonable values for base colour, metallicness and
+roughness, using your model's diffuse, specular, and shinines textures.
+
+It should noted here that this process cannot ever be perfect; this is very much
+an apples and oranges situation.
+
+A note of gratitude here to Gary Hsu who developed the formulae we use for this
+process. They can be eyeballed
+[here](https://github.com/KhronosGroup/glTF/blob/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness/examples/convert-between-workflows/js/three.pbrUtilities.js)
+for the curious.
 
 ## Draco Compression
 The tool will optionally apply [Draco](https://github.com/google/draco)
