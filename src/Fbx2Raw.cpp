@@ -691,8 +691,23 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     meshConverter.Triangulate(pNode->GetNodeAttribute(), true);
     FbxMesh *pMesh = pNode->GetMesh();
 
+    // Obtains the surface Id
+    const long surfaceId = pMesh->GetUniqueID();
+
+    // Associate the node to this surface
+    int nodeId = raw.GetNodeByName(pNode->GetName());
+    if (nodeId >= 0) {
+        RawNode &node = raw.GetNode(nodeId);
+        node.surfaceId = surfaceId;
+    }
+
+    if (raw.GetSurfaceById(surfaceId) >= 0) {
+        // This surface is already loaded
+        return;
+    }
+
     const char *meshName = (pNode->GetName()[0] != '\0') ? pNode->GetName() : pMesh->GetName();
-    const int rawSurfaceIndex = raw.AddSurface(meshName, pNode->GetName());
+    const int rawSurfaceIndex = raw.AddSurface(meshName, surfaceId);
 
     const FbxVector4 *controlPoints = pMesh->GetControlPoints();
     const FbxLayerElementAccess<FbxVector4> normalLayer(pMesh->GetElementNormal(), pMesh->GetElementNormalCount());
@@ -771,9 +786,10 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         const std::shared_ptr<FbxMaterialInfo> fbxMaterial = materials.GetMaterial(polygonIndex);
 
         int textures[RAW_TEXTURE_USAGE_MAX];
-        std::fill_n(textures, RAW_TEXTURE_USAGE_MAX, -1);
-        FbxString  materialName;
+        std::fill_n(textures, (int) RAW_TEXTURE_USAGE_MAX, -1);
+
         std::shared_ptr<RawMatProps> rawMatProps;
+        FbxString materialName;
 
         if (fbxMaterial == nullptr) {
             materialName = "DefaultMaterial";

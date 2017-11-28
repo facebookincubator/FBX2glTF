@@ -275,8 +275,8 @@ struct RawBlendChannel
 
 struct RawSurface
 {
+    long                         id;
     std::string                  name;                            // The name of this surface
-    std::string                  nodeName;                        // The node that links to this surface.
     std::string                  skeletonRootName;                // The name of the root of the skeleton.
     Bounds<float, 3>             bounds;
     std::vector<std::string>     jointNames;
@@ -341,6 +341,7 @@ struct RawNode
     Vec3f                    translation;
     Quatf                    rotation;
     Vec3f                    scale;
+    long                     surfaceId;
 };
 
 class RawModel
@@ -358,7 +359,7 @@ public:
         const char *name, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
         std::shared_ptr<RawMatProps> materialInfo);
     int AddSurface(const RawSurface &suface);
-    int AddSurface(const char *name, const char *nodeName);
+    int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);
     int AddCameraPerspective(
         const char *name, const char *nodeName, const float aspectRatio, const float fovDegreesX, const float fovDegreesY,
@@ -398,6 +399,7 @@ public:
     int GetSurfaceCount() const { return (int) surfaces.size(); }
     const RawSurface &GetSurface(const int index) const { return surfaces[index]; }
     RawSurface &GetSurface(const int index) { return surfaces[index]; }
+    int GetSurfaceById(const long id) const;
 
     // Iterate over the animations.
     int GetAnimationCount() const { return (int) animations.size(); }

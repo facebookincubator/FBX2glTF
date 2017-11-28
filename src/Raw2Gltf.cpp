@@ -244,6 +244,15 @@ T &require(std::map<std::string, std::shared_ptr<T>> map, const std::string &key
     return result;
 }
 
+template<typename T>
+T &require(std::map<long, std::shared_ptr<T>> map, long key)
+{
+    auto iter = map.find(key);
+    assert(iter != map.end());
+    T &result = *iter->second;
+    return result;
+}
+
 static const std::vector<TriangleIndex> getIndexArray(const RawModel &raw)
 {
     std::vector<TriangleIndex> result;
@@ -297,8 +306,8 @@ ModelData *Raw2Gltf(
 
     std::map<std::string, std::shared_ptr<NodeData>>     nodesByName;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
-    std::map<std::string, std::shared_ptr<MeshData>>     meshByNodeName;
     std::map<std::string, std::shared_ptr<TextureData>>  textureByIndicesKey;
+    std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
 
     // for now, we only have one buffer; data->binary points to the same vector as that BufferData does.
     BufferData &buffer = *gltf->buffers.hold(
@@ -883,32 +892,20 @@ ModelData *Raw2Gltf(
             materialsByName[materialHash(material)] = mData;
         }
 
-        //
-        // surfaces
-        //
-
-        // in GLTF 2.0, the structural limitation is that a node can
-        // only belong to a single mesh. A mesh can however contain any
-        // number of primitives, which are essentially little meshes.
-        //
-        // so each RawSurface turns into a primitive, and we sort them
-        // by root node using this map; one mesh per node.
-
         for (size_t surfaceIndex = 0; surfaceIndex < materialModels.size(); surfaceIndex++) {
             const RawModel &surfaceModel = materialModels[surfaceIndex];
 
             assert(surfaceModel.GetSurfaceCount() == 1);
             const RawSurface  &rawSurface = surfaceModel.GetSurface(0);
+            const int surfaceId = rawSurface.id;
 
             const RawMaterial &rawMaterial = surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
             const MaterialData &mData = require(materialsByName, materialHash(rawMaterial));
 
-            std::string nodeName  = rawSurface.nodeName;
-            NodeData    &meshNode = require(nodesByName, nodeName);
 
-            MeshData *mesh    = nullptr;
-            auto     meshIter = meshByNodeName.find(nodeName);
-            if (meshIter != meshByNodeName.end()) {
+            MeshData *mesh = nullptr;
+            auto meshIter = meshBySurfaceId.find(surfaceId);
+            if (meshIter != meshBySurfaceId.end()) {
                 mesh = meshIter->second.get();
 
             } else {
@@ -917,34 +914,8 @@ ModelData *Raw2Gltf(
                     defaultDeforms.push_back(channel.defaultDeform);
                 }
                 auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name, defaultDeforms));
-                meshByNodeName[nodeName] = meshPtr;
-                meshNode.SetMesh(meshPtr->ix);
+                meshBySurfaceId[surfaceId] = meshPtr;
                 mesh = meshPtr.get();
-            }
-
-            //
-            // surface skin
-            //
-            if (!rawSurface.jointNames.empty()) {
-                if (meshNode.skin == -1) {
-                    // glTF uses column-major matrices
-                    std::vector<Mat4f> inverseBindMatrices;
-                    for (const auto &inverseBindMatrice : rawSurface.inverseBindMatrices) {
-                        inverseBindMatrices.push_back(inverseBindMatrice.Transpose());
-                    }
-
-                    std::vector<uint32_t> jointIndexes;
-                    for (const auto &jointName : rawSurface.jointNames) {
-                        jointIndexes.push_back(require(nodesByName, jointName).ix);
-                    }
-
-                    // Write out inverseBindMatrices
-                    auto accIBM = gltf->AddAccessorAndView(buffer, GLT_MAT4F, inverseBindMatrices);
-
-                    auto skeletonRoot = require(nodesByName, rawSurface.skeletonRootName);
-                    auto skin         = *gltf->skins.hold(new SkinData(jointIndexes, *accIBM, skeletonRoot));
-                    meshNode.SetSkin(skin.ix);
-                }
             }
 
             std::shared_ptr<PrimitiveData> primitive;
@@ -1085,6 +1056,53 @@ ModelData *Raw2Gltf(
                 primitive->NoteDracoBuffer(*view);
             }
             mesh->AddPrimitive(primitive);
+        }
+
+        //
+        // Assign meshes to node
+        //
+
+        for (int i = 0; i < raw.GetNodeCount(); i++) {
+
+            const RawNode &node = raw.GetNode(i);
+            auto nodeData = gltf->nodes.ptrs[i];
+
+            //
+            // Assign mesh to node
+            //
+            if (node.surfaceId > 0)
+            {
+                int surfaceIndex = raw.GetSurfaceById(node.surfaceId);
+                const RawSurface &rawSurface = raw.GetSurface(surfaceIndex);
+
+                MeshData &meshData = require(meshBySurfaceId, rawSurface.id);
+                nodeData->SetMesh(meshData.ix);
+
+                //
+                // surface skin
+                //
+                if (!rawSurface.jointNames.empty()) {
+                    if (nodeData->skin == -1) {
+                        // glTF uses column-major matrices
+                        std::vector<Mat4f> inverseBindMatrices;
+                        for (const auto &inverseBindMatrice : rawSurface.inverseBindMatrices) {
+                            inverseBindMatrices.push_back(inverseBindMatrice.Transpose());
+                        }
+
+                        std::vector<uint32_t> jointIndexes;
+                        for (const auto &jointName : rawSurface.jointNames) {
+                            jointIndexes.push_back(require(nodesByName, jointName).ix);
+                        }
+
+                        // Write out inverseBindMatrices
+                        auto accIBM = gltf->AddAccessorAndView(buffer, GLT_MAT4F, inverseBindMatrices);
+
+                        auto skeletonRoot = require(nodesByName, rawSurface.skeletonRootName);
+                        auto skin = *gltf->skins.hold(new SkinData(jointIndexes, *accIBM, skeletonRoot));
+                        nodeData->SetSkin(skin.ix);
+                    }
+                }
+            }
         }
 
         //
