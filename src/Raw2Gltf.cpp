@@ -735,8 +735,8 @@ ModelData *Raw2Gltf(
                                 getPerceivedBrightness(specular),
                                 oneMinus);
 
-                            Vec3f fromDiffuse = diffuse.xyz() * (oneMinus / (1.0 - dielectric.x) / fmax(1.0 - pixelMet, epsilon));
-                            Vec3f fromSpecular = specular - dielectric * (1.0 - pixelMet) * (1.0 / fmax(pixelMet, epsilon));
+                            Vec3f fromDiffuse = diffuse.xyz() * (oneMinus / (1.0f - dielectric.x) / fmax(1.0f - pixelMet, epsilon));
+                            Vec3f fromSpecular = specular - dielectric * (1.0f - pixelMet) * (1.0f / fmax(pixelMet, epsilon));
                             Vec3f baseColor = Vec3f::Lerp(fromDiffuse, fromSpecular, pixelMet * pixelMet);
 
                             return { baseColor[0], baseColor[1], baseColor[2], diffuse[3] };
