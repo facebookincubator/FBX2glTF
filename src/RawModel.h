@@ -95,8 +95,32 @@ struct RawTriangle
     int surfaceIndex;
 };
 
+enum RawShadingModel
+{
+    RAW_SHADING_MODEL_UNKNOWN = -1,
+    RAW_SHADING_MODEL_CONSTANT,
+    RAW_SHADING_MODEL_LAMBERT,
+    RAW_SHADING_MODEL_BLINN,
+    RAW_SHADING_MODEL_PHONG,
+    RAW_SHADING_MODEL_PBR_MET_ROUGH,
+    RAW_SHADING_MODEL_MAX
+};
+
+static inline std::string Describe(RawShadingModel model) {
+    switch(model) {
+        case RAW_SHADING_MODEL_UNKNOWN:         return "<unknown>";
+        case RAW_SHADING_MODEL_CONSTANT:        return "Constant";
+        case RAW_SHADING_MODEL_LAMBERT:         return "Lambert";
+        case RAW_SHADING_MODEL_BLINN:           return "Blinn";
+        case RAW_SHADING_MODEL_PHONG:           return "Phong";
+        case RAW_SHADING_MODEL_PBR_MET_ROUGH:   return "Metallic/Roughness";
+        case RAW_SHADING_MODEL_MAX: default:    return "<unknown>";
+    }
+}
+
 enum RawTextureUsage
 {
+    RAW_TEXTURE_USAGE_NONE = -1,
     RAW_TEXTURE_USAGE_AMBIENT,
     RAW_TEXTURE_USAGE_DIFFUSE,
     RAW_TEXTURE_USAGE_NORMAL,
@@ -104,32 +128,28 @@ enum RawTextureUsage
     RAW_TEXTURE_USAGE_SHININESS,
     RAW_TEXTURE_USAGE_EMISSIVE,
     RAW_TEXTURE_USAGE_REFLECTION,
+    RAW_TEXTURE_USAGE_ALBEDO,
+    RAW_TEXTURE_USAGE_OCCLUSION,
+    RAW_TEXTURE_USAGE_ROUGHNESS,
+    RAW_TEXTURE_USAGE_METALLIC,
     RAW_TEXTURE_USAGE_MAX
 };
 
-inline std::string DescribeTextureUsage(int usage)
+static inline std::string Describe(RawTextureUsage usage)
 {
-    if (usage < 0) {
-        return "<none>";
-    }
-    switch (static_cast<RawTextureUsage>(usage)) {
-        case RAW_TEXTURE_USAGE_AMBIENT:
-            return "ambient";
-        case RAW_TEXTURE_USAGE_DIFFUSE:
-            return "diffuse";
-        case RAW_TEXTURE_USAGE_NORMAL:
-            return "normal";
-        case RAW_TEXTURE_USAGE_SPECULAR:
-            return "specuar";
-        case RAW_TEXTURE_USAGE_SHININESS:
-            return "shininess";
-        case RAW_TEXTURE_USAGE_EMISSIVE:
-            return "emissive";
-        case RAW_TEXTURE_USAGE_REFLECTION:
-            return "reflection";
-        case RAW_TEXTURE_USAGE_MAX:
-        default:
-            return "unknown";
+    switch (usage) {
+        case RAW_TEXTURE_USAGE_NONE:        return "<none>";
+        case RAW_TEXTURE_USAGE_AMBIENT:     return "ambient";
+        case RAW_TEXTURE_USAGE_DIFFUSE:     return "diffuse";
+        case RAW_TEXTURE_USAGE_NORMAL:      return "normal";
+        case RAW_TEXTURE_USAGE_SPECULAR:    return "specuar";
+        case RAW_TEXTURE_USAGE_SHININESS:   return "shininess";
+        case RAW_TEXTURE_USAGE_EMISSIVE:    return "emissive";
+        case RAW_TEXTURE_USAGE_REFLECTION:  return "reflection";
+        case RAW_TEXTURE_USAGE_OCCLUSION:   return "occlusion";
+        case RAW_TEXTURE_USAGE_ROUGHNESS:   return "roughness";
+        case RAW_TEXTURE_USAGE_METALLIC:    return "metallic";
+        case RAW_TEXTURE_USAGE_MAX:default: return "unknown";
     }
 };
 
@@ -159,18 +179,91 @@ enum RawMaterialType
     RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT,
 };
 
+struct RawMatProps {
+    explicit RawMatProps(RawShadingModel shadingModel)
+        : shadingModel(shadingModel)
+    {}
+    const RawShadingModel shadingModel;
+
+    virtual bool operator!=(const RawMatProps &other) const { return !(*this == other); }
+    virtual bool operator==(const RawMatProps &other) const { return shadingModel == other.shadingModel; };
+};
+
+struct RawTraditionalMatProps : RawMatProps {
+    RawTraditionalMatProps(
+        RawShadingModel shadingModel,
+        const Vec3f &&ambientFactor,
+        const Vec4f &&diffuseFactor,
+        const Vec3f &&emissiveFactor,
+        const Vec3f &&specularFactor,
+        const float shininess
+    ) : RawMatProps(shadingModel),
+          ambientFactor(ambientFactor),
+          diffuseFactor(diffuseFactor),
+          emissiveFactor(emissiveFactor),
+          specularFactor(specularFactor),
+          shininess(shininess)
+    {}
+
+    const Vec3f ambientFactor;
+    const Vec4f diffuseFactor;
+    const Vec3f emissiveFactor;
+    const Vec3f specularFactor;
+    const float shininess;
+
+    bool operator==(const RawMatProps &other) const override {
+        if (RawMatProps::operator==(other)) {
+            const auto &typed = (RawTraditionalMatProps &) other;
+            return ambientFactor == typed.ambientFactor &&
+                diffuseFactor == typed.diffuseFactor &&
+                specularFactor == typed.specularFactor &&
+                emissiveFactor == typed.emissiveFactor &&
+                shininess == typed.shininess;
+        }
+        return false;
+    }
+};
+
+struct RawMetRoughMatProps : RawMatProps {
+    RawMetRoughMatProps(
+        RawShadingModel shadingModel,
+        const Vec4f &&diffuseFactor,
+        const Vec3f &&emissiveFactor,
+        float emissiveIntensity,
+        float metallic,
+        float roughness
+    ) : RawMatProps(shadingModel),
+      diffuseFactor(diffuseFactor),
+      emissiveFactor(emissiveFactor),
+      emissiveIntensity(emissiveIntensity),
+      metallic(metallic),
+      roughness(roughness)
+    {}
+    const Vec4f diffuseFactor;
+    const Vec3f emissiveFactor;
+    const float emissiveIntensity;
+    const float metallic;
+    const float roughness;
+
+    bool operator==(const RawMatProps &other) const override {
+        if (RawMatProps::operator==(other)) {
+            const auto &typed = (RawMetRoughMatProps &) other;
+            return diffuseFactor == typed.diffuseFactor &&
+            emissiveFactor == typed.emissiveFactor &&
+            emissiveIntensity == typed.emissiveIntensity &&
+            metallic == typed.metallic &&
+            roughness == typed.roughness;
+        }
+        return false;
+    }
+};
+
 struct RawMaterial
 {
-
-    std::string     name;
-    std::string     shadingModel;    // typically "Surface", "Anisotropic", "Blinn", "Lambert", "Phong", "Phone E"
-    RawMaterialType type;
-    Vec3f           ambientFactor;
-    Vec4f           diffuseFactor;
-    Vec3f           specularFactor;
-    Vec3f           emissiveFactor;
-    float           shininess;
-    int             textures[RAW_TEXTURE_USAGE_MAX];
+    std::string                  name;
+    RawMaterialType              type;
+    std::shared_ptr<RawMatProps> info;
+    int                          textures[RAW_TEXTURE_USAGE_MAX];
 };
 
 struct RawBlendChannel
@@ -263,10 +356,8 @@ public:
     int AddTexture(const std::string &name, const std::string &fileName, const std::string &fileLocation, RawTextureUsage usage);
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
-        const char *name, const char *shadingModel, RawMaterialType materialType,
-        const int textures[RAW_TEXTURE_USAGE_MAX], Vec3f ambientFactor,
-        Vec4f diffuseFactor, Vec3f specularFactor,
-        Vec3f emissiveFactor, float shinineness);
+        const char *name, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
+        std::shared_ptr<RawMatProps> materialInfo);
     int AddSurface(const RawSurface &suface);
     int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);

@@ -111,35 +111,25 @@ int RawModel::AddTexture(const std::string &name, const std::string &fileName, c
 
 int RawModel::AddMaterial(const RawMaterial &material)
 {
-    return AddMaterial(
-        material.name.c_str(), material.shadingModel.c_str(), material.type, material.textures, material.ambientFactor,
-        material.diffuseFactor, material.specularFactor, material.emissiveFactor, material.shininess);
+    return AddMaterial(material.name.c_str(), material.type, material.textures, material.info);
 }
 
 int RawModel::AddMaterial(
-    const char *name, const char *shadingModel, const RawMaterialType materialType,
-    const int textures[RAW_TEXTURE_USAGE_MAX], const Vec3f ambientFactor,
-    const Vec4f diffuseFactor, const Vec3f specularFactor,
-    const Vec3f emissiveFactor, float shinineness)
+    const char *name,
+    const RawMaterialType materialType,
+    const int textures[RAW_TEXTURE_USAGE_MAX],
+    std::shared_ptr<RawMatProps> materialInfo)
 {
     for (size_t i = 0; i < materials.size(); i++) {
         if (materials[i].name != name) {
             continue;
         }
-        if (materials[i].shadingModel != shadingModel) {
-            continue;
-        }
         if (materials[i].type != materialType) {
             continue;
         }
-        if (materials[i].ambientFactor != ambientFactor ||
-            materials[i].diffuseFactor != diffuseFactor ||
-            materials[i].specularFactor != specularFactor ||
-            materials[i].emissiveFactor != emissiveFactor ||
-            materials[i].shininess != shinineness) {
+        if (*(materials[i].info) != *materialInfo) {
             continue;
         }
-
         bool match = true;
         for (int j = 0; match && j < RAW_TEXTURE_USAGE_MAX; j++) {
             match = match && (materials[i].textures[j] == textures[j]);
@@ -150,14 +140,9 @@ int RawModel::AddMaterial(
     }
 
     RawMaterial material;
-    material.name           = name;
-    material.shadingModel   = shadingModel;
-    material.type           = materialType;
-    material.ambientFactor  = ambientFactor;
-    material.diffuseFactor  = diffuseFactor;
-    material.specularFactor = specularFactor;
-    material.emissiveFactor = emissiveFactor;
-    material.shininess      = shinineness;
+    material.name = name;
+    material.type = materialType;
+    material.info = materialInfo;
 
     for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++) {
         material.textures[i] = textures[i];

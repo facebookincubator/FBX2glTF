@@ -12,6 +12,11 @@
 #include <iostream>
 #include <fstream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 #include "FBX2glTF.h"
 #include "utils/String_Utils.h"
 #include "utils/Image_Utils.h"
@@ -217,13 +222,21 @@ struct GLTFData
     Holder<SceneData>      scenes;
 };
 
+template <class T>
+static void WriteToVectorContext(void *context, void *data, int size) {
+    std::vector<T> *vec = static_cast<std::vector<T> *>(context);
+    for (int ii = 0; ii < size; ii ++) {
+        vec->emplace_back(((T *) data)[ii]);
+    }
+}
+
 /**
  * This method sanity-checks existance and then returns a *reference* to the *Data instance
  * registered under that name. This is safe in the context of this tool, where all such data
  * classes are guaranteed to stick around for the duration of the process.
  */
 template<typename T>
-T &require(std::map<std::string, std::shared_ptr<T>> map, std::string key)
+T &require(std::map<std::string, std::shared_ptr<T>> map, const std::string &key)
 {
     auto iter = map.find(key);
     assert(iter != map.end());
@@ -269,7 +282,7 @@ ModelData *Raw2Gltf(
         for (int i = 0; i < raw.GetMaterialCount(); i++) {
             fmt::printf(
                 "Material %d: %s [shading: %s]\n", i, raw.GetMaterial(i).name.c_str(),
-                raw.GetMaterial(i).shadingModel.c_str());
+                Describe(raw.GetMaterial(i).info->shadingModel));
         }
         if (raw.GetVertexCount() > 2 * raw.GetTriangleCount()) {
             fmt::printf(
@@ -293,6 +306,7 @@ ModelData *Raw2Gltf(
 
     std::map<std::string, std::shared_ptr<NodeData>>     nodesByName;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
+    std::map<std::string, std::shared_ptr<TextureData>>  textureByIndicesKey;
     std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
 
     // for now, we only have one buffer; data->binary points to the same vector as that BufferData does.
@@ -378,24 +392,189 @@ ModelData *Raw2Gltf(
         //
         // textures
         //
+        typedef std::array<float, 4> pixel; // pixel components are floats in [0, 1]
+        typedef std::function<pixel(const std::vector<const pixel *>)> pixel_merger;
 
-        for (int textureIndex = 0; textureIndex < raw.GetTextureCount(); textureIndex++) {
-            const RawTexture  &texture         = raw.GetTexture(textureIndex);
-            const std::string textureName      = Gltf::StringUtils::GetFileBaseString(texture.name);
-            const std::string relativeFilename = Gltf::StringUtils::GetFileNameString(texture.fileLocation);
+        auto texIndicesKey = [&](std::vector<int> ixVec, std::string tag) -> std::string {
+            std::string result = tag;
+            for (int ix : ixVec) {
+                result += "_";
+                result += ix;
+            }
+            return result;
+        };
 
-            ImageData *source = nullptr;
+        /**
+         * Create a new derived TextureData for the two given RawTexture indexes, or return a previously created one.
+         * Each pixel in the derived texture will be determined from its equivalent in each source pixels, as decided
+         * by the provided `combine` function.
+         */
+        auto getDerivedTexture = [&](
+            std::vector<int> rawTexIndices,
+            const pixel_merger &combine,
+            const std::string &tag
+        ) -> std::shared_ptr<TextureData>
+        {
+            const std::string key = texIndicesKey(rawTexIndices, tag);
+            auto iter = textureByIndicesKey.find(key);
+            if (iter != textureByIndicesKey.end()) {
+                return iter->second;
+            }
+
+            auto describeChannel = [&](int channels) -> std::string {
+                switch(channels) {
+                    case 1: return "G";
+                    case 2: return "GA";
+                    case 3: return "RGB";
+                    case 4: return "RGBA";
+                    default:
+                        return fmt::format("?%d?", channels);
+                }
+            };
+
+            // keep track of some texture data as we load them
+            struct TexInfo {
+                explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
+
+                const int rawTexIx;
+                int width {};
+                int height {};
+                int channels {};
+                uint8_t *pixels {};
+            };
+
+            int width = -1, height = -1;
+            std::string mergedName = tag;
+            std::string mergedFilename = tag;
+            std::vector<TexInfo> texes { };
+            for (const int rawTexIx : rawTexIndices) {
+                TexInfo info(rawTexIx);
+                if (rawTexIx >= 0) {
+                    const RawTexture &rawTex = raw.GetTexture(rawTexIx);
+                    const std::string &fileLoc = rawTex.fileLocation;
+                    const std::string &fileLocBase = Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc));
+                    if (!fileLoc.empty()) {
+                        info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 4);
+                        if (!info.pixels) {
+                            fmt::printf("Warning: merge texture [%d](%s) could not be loaded.\n",
+                                rawTexIx,
+                                Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc)));
+                        } else {
+                            if (width < 0) {
+                                width = info.width;
+                                height = info.height;
+                            } else if (width != info.width || height != info.height) {
+                                fmt::printf("Warning: texture %s (%d, %d) can't be merged with previous texture(s) of dimension (%d, %d)\n",
+                                    Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc)),
+                                    info.width, info.height, width, height);
+                                // this is bad enough that we abort the whole merge
+                                return nullptr;
+                            }
+                            mergedName += "_" + rawTex.fileName;
+                            mergedFilename += "_" + fileLocBase;
+                        }
+                    }
+                }
+                texes.push_back(info);
+            }
+
+            if (width < 0) {
+                // no textures to merge; bail
+                return nullptr;
+            }
+            // TODO: which channel combinations make sense in input files?
+
+            std::vector<uint8_t > mergedPixels(4 * width * height);
+            std::vector<pixel> pixels(texes.size());
+            std::vector<const pixel *> pixelPointers(texes.size());
+            for (int ii = 0; ii < mergedPixels.size(); ii += 4) {
+                pixels.clear();
+                for (int jj = 0; jj < texes.size(); jj ++) {
+                    const TexInfo &tex = texes[jj];
+                    if (tex.pixels != nullptr) {
+                        pixels[jj] = { tex.pixels[ii+0]/255.0f, tex.pixels[ii+1]/255.0f, tex.pixels[ii+2]/255.0f, tex.pixels[ii+3]/255.0f };
+                    } else {
+                        // absent textures are to be treated as all ones
+                        pixels[jj] = { 1.0f, 1.0f, 1.0f, 1.0f };
+                    }
+                    pixelPointers[jj] = &pixels[jj];
+                }
+                const pixel &merged = combine(pixelPointers);
+                for (int jj = 0; jj < 4; jj ++) {
+                    mergedPixels[ii + jj] = static_cast<uint8_t>(fmax(0, fmin(255.0f, merged[jj] * 255.0f)));
+                }
+            }
+
+            bool png = true;
+            std::vector<char> imgBuffer;
+            int res;
+            if (png) {
+                res = stbi_write_png_to_func(WriteToVectorContext<char>, &imgBuffer, width, height, 4, mergedPixels.data(), width * 4);
+            } else {
+                res = stbi_write_jpg_to_func(WriteToVectorContext<char>, &imgBuffer, width, height, 4, mergedPixels.data(), 80);
+            }
+            if (!res) {
+                fmt::printf("Warning: failed to generate merge texture '%s'.\n", mergedFilename);
+                return nullptr;
+            }
+
+            ImageData *image;
             if (options.outputBinary) {
-                auto bufferView = gltf->AddBufferViewForFile(buffer, texture.fileLocation);
+                const auto bufferView = gltf->AddRawBufferView(buffer, imgBuffer.data(), imgBuffer.size());
+                image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
+
+            } else {
+                const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
+                const std::string imagePath = outputFolder + imageFilename;
+                FILE *fp = fopen(imagePath.c_str(), "wb");
+                if (fp == nullptr) {
+                    fmt::printf("Warning:: Couldn't write file '%s' for writing.\n", imagePath);
+                    return nullptr;
+                }
+
+                if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1) {
+                    fmt::printf("Warning: Failed to write %lu bytes to file '%s'.\n", imgBuffer.size(), imagePath);
+                    fclose(fp);
+                    return nullptr;
+                }
+                fclose(fp);
+                if (verboseOutput) {
+                    fmt::printf("Wrote %lu bytes to texture '%s'.\n", imgBuffer.size(), imagePath);
+                }
+
+                image = new ImageData(mergedName, imageFilename);
+            }
+
+            std::shared_ptr<TextureData> texDat = gltf->textures.hold(
+                new TextureData(mergedName, defaultSampler, *gltf->images.hold(image)));
+            textureByIndicesKey.insert(std::make_pair(key, texDat));
+            return texDat;
+        };
+
+        /** Create a new TextureData for the given RawTexture index, or return a previously created one. */
+        auto getSimpleTexture = [&](int rawTexIndex, const std::string &tag) {
+            const std::string key = texIndicesKey({ rawTexIndex }, tag);
+            auto iter = textureByIndicesKey.find(key);
+            if (iter != textureByIndicesKey.end()) {
+                return iter->second;
+            }
+
+            const RawTexture  &rawTexture      = raw.GetTexture(rawTexIndex);
+            const std::string textureName      = Gltf::StringUtils::GetFileBaseString(rawTexture.name);
+            const std::string relativeFilename = Gltf::StringUtils::GetFileNameString(rawTexture.fileLocation);
+
+            ImageData *image = nullptr;
+            if (options.outputBinary) {
+                auto bufferView = gltf->AddBufferViewForFile(buffer, rawTexture.fileLocation);
                 if (bufferView) {
-                    std::string suffix = Gltf::StringUtils::GetFileSuffixString(texture.fileLocation);
-                    source = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
+                    std::string suffix = Gltf::StringUtils::GetFileSuffixString(rawTexture.fileLocation);
+                    image = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
                 }
 
             } else if (!relativeFilename.empty()) {
-                source = new ImageData(relativeFilename, relativeFilename);
+                image = new ImageData(relativeFilename, relativeFilename);
                 std::string outputPath = outputFolder + relativeFilename;
-                if (FileUtils::CopyFile(texture.fileLocation, outputPath)) {
+                if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath)) {
                     if (verboseOutput) {
                         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
                     }
@@ -405,15 +584,16 @@ ModelData *Raw2Gltf(
                     // reference, even if the copy failed.
                 }
             }
-            if (!source) {
+            if (!image) {
                 // fallback is tiny transparent gif
-                source = new ImageData(textureName, "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=");
+                image = new ImageData(textureName, "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=");
             }
 
-            const TextureData &texDat = *gltf->textures.hold(
-                new TextureData(textureName, defaultSampler, *gltf->images.hold(source)));
-            assert(texDat.ix == textureIndex);
-        }
+            std::shared_ptr<TextureData> texDat = gltf->textures.hold(
+                new TextureData(textureName, defaultSampler, *gltf->images.hold(image)));
+            textureByIndicesKey.insert(std::make_pair(key, texDat));
+            return texDat;
+        };
 
         //
         // materials
@@ -425,47 +605,289 @@ ModelData *Raw2Gltf(
                            material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
                            material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
 
-            // find a texture by usage and return it as a TextureData*, or nullptr if none exists.
-            auto getTex = [&](RawTextureUsage usage)
-            {
-                // note that we depend on TextureData.ix == rawTexture's index
-                return (material.textures[usage] >= 0) ? gltf->textures.ptrs[material.textures[usage]].get() : nullptr;
+            Vec3f emissiveFactor;
+            float emissiveIntensity;
+
+            const Vec3f dielectric(0.04f, 0.04f, 0.04f);
+            const float epsilon = 1e-6f;
+
+            // acquire the texture of a specific RawTextureUsage as *TextData, or nullptr if none exists
+            auto simpleTex = [&](RawTextureUsage usage) -> std::shared_ptr<TextureData> {
+                return (material.textures[usage] >= 0) ? getSimpleTexture(material.textures[usage], "simple") : nullptr;
+            };
+
+            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
+            auto merge2Tex = [&](
+                const std::string tag,
+                RawTextureUsage u1,
+                RawTextureUsage u2,
+                const pixel_merger &combine
+            ) -> std::shared_ptr<TextureData> {
+                return getDerivedTexture({ material.textures[u1], material.textures[u2] }, combine, tag);
+            };
+
+            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
+            auto merge3Tex = [&](
+                const std::string tag,
+                RawTextureUsage u1,
+                RawTextureUsage u2,
+                RawTextureUsage u3,
+                const pixel_merger &combine
+            ) -> std::shared_ptr<TextureData> {
+                return getDerivedTexture({ material.textures[u1], material.textures[u2], material.textures[u3] }, combine, tag);
+            };
+
+            auto getMaxComponent = [&](const Vec3f &color) {
+                return fmax(color.x, fmax(color.y, color.z));
+            };
+            auto getPerceivedBrightness = [&](const Vec3f &color) {
+                return sqrt(0.299 * color.x * color.x + 0.587 * color.y * color.y + 0.114 * color.z * color.z);
+            };
+            auto toVec3f = [&](const pixel &pix) -> const Vec3f {
+                return Vec3f(pix[0], pix[1], pix[2]);
+            };
+            auto toVec4f = [&](const pixel &pix) -> const Vec4f {
+                return Vec4f(pix[0], pix[1], pix[2], pix[3]);
             };
 
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
             if (options.usePBRMetRough) {
-                pbrMetRough.reset(new PBRMetallicRoughness(getTex(RAW_TEXTURE_USAGE_DIFFUSE), material.diffuseFactor));
+                // albedo is a basic texture, no merging needed
+                std::shared_ptr<TextureData> baseColorTex, metRoughTex;
+
+                Vec4f diffuseFactor;
+                float metallic, roughness;
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
+                    /**
+                     * PBR FBX Material -> PBR Met/Rough glTF.
+                     *
+                     * METALLIC and ROUGHNESS textures are packed in G and B channels of a rough/met texture.
+                     * Other values translate directly.
+                     */
+                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                    // merge metallic into the blue channel and roughness into the green, of a new combinatory texture
+                    metRoughTex = merge2Tex("met_rough",
+                        RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
+                        [&](const std::vector<const pixel *> pixels) -> pixel { return { 0, (*pixels[1])[0], (*pixels[0])[0], 0 }; });
+                    baseColorTex      = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+                    diffuseFactor     = props->diffuseFactor;
+                    metallic          = props->metallic;
+                    roughness         = props->roughness;
+                    emissiveFactor    = props->emissiveFactor;
+                    emissiveIntensity = props->emissiveIntensity;
+                } else {
+                    /**
+                     * Traditional FBX Material -> PBR Met/Rough glTF.
+                     *
+                     * Diffuse channel is used as base colour. No metallic/roughness texture is attempted. Constant
+                     * metallic/roughness values are hard-coded.
+                     *
+                     * TODO: If we have specular & optional shininess map, we can generate a reasonable rough/met map.
+                     */
+                    const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
+                    diffuseFactor = props->diffuseFactor;
+                    // TODO: make configurable on the command line, or do a better job guessing from other, supplied params
+                    if (material.info->shadingModel == RAW_SHADING_MODEL_LAMBERT) {
+                        metallic  = 0.6f;
+                        roughness = 1.0f;
+                    } else {
+                        metallic  = 0.2f;
+                        roughness = 0.6f;
+                    }
+                    auto solveMetallic = [&](float pDiff, float pSpec, float oneMinusSpecularStrength)
+                    {
+                        if (pSpec < dielectric.x) {
+                            return 0.0;
+                        }
+
+                        float a = dielectric.x;
+                        float b = pDiff * oneMinusSpecularStrength / (1 - dielectric.x) + pSpec - 2 * dielectric.x;
+                        float c = dielectric.x - pSpec;
+                        float D = fmax(b * b - 4 * a * c, 0);
+                        return fmax(0.0, fmin(1.0, (-b + sqrt(D)) / (2 * a)));
+                    };
+                    metRoughTex = merge3Tex("rough_met",
+                        RAW_TEXTURE_USAGE_SPECULAR, RAW_TEXTURE_USAGE_SHININESS, RAW_TEXTURE_USAGE_DIFFUSE,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            const Vec3f specular = pixels[0] ? toVec3f(*pixels[0]) : props->specularFactor;
+                            float shininess = pixels[1] ? (*pixels[1])[0] : props->shininess;
+                            const Vec4f diffuse = pixels[2] ? toVec4f(*pixels[2]) : props->diffuseFactor;
+
+                            float pixelMet = solveMetallic(
+                                getPerceivedBrightness(diffuse.xyz()),
+                                getPerceivedBrightness(specular),
+                                1 - getMaxComponent(specular));
+                            float pixelRough = 1 - shininess;
+
+                            return { 0, pixelRough, pixelMet, 0 };
+                    });
+                    if (material.textures[RAW_TEXTURE_USAGE_DIFFUSE] >= 0) {
+                        baseColorTex = merge2Tex("base_col",
+                            RAW_TEXTURE_USAGE_DIFFUSE, RAW_TEXTURE_USAGE_SPECULAR,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            const Vec4f diffuse = pixels[0] ? toVec4f(*pixels[0]) : props->diffuseFactor;
+                            const Vec3f specular = pixels[1] ? toVec3f(*pixels[1]) : props->specularFactor;
+
+                            float oneMinus = 1 - getMaxComponent(specular);
+
+                            float pixelMet = solveMetallic(
+                                getPerceivedBrightness(diffuse.xyz()),
+                                getPerceivedBrightness(specular),
+                                oneMinus);
+
+                            Vec3f fromDiffuse = diffuse.xyz() * (oneMinus / (1.0 - dielectric.x) / fmax(1.0 - pixelMet, epsilon));
+                            Vec3f fromSpecular = specular - dielectric * (1.0 - pixelMet) * (1.0 / fmax(pixelMet, epsilon));
+                            Vec3f baseColor = Vec3f::Lerp(fromDiffuse, fromSpecular, pixelMet * pixelMet);
+
+                            return { baseColor[0], baseColor[1], baseColor[2], diffuse[3] };
+                        });
+                    }
+                    emissiveFactor    = props->emissiveFactor;
+                    emissiveIntensity = 1.0f;
+                }
+                pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), metRoughTex.get(), diffuseFactor, metallic, roughness));
             }
+
             std::shared_ptr<PBRSpecularGlossiness> pbrSpecGloss;
             if (options.usePBRSpecGloss) {
+                Vec4f                        diffuseFactor;
+                Vec3f                        specularFactor;
+                float                        glossiness;
+                std::shared_ptr<TextureData> specGlossTex;
+                std::shared_ptr<TextureData> diffuseTex;
+
+                const Vec3f dielectric(0.04f, 0.04f, 0.04f);
+                const float epsilon = 1e-6f;
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
+                    /**
+                     * PBR FBX Material -> PBR Spec/Gloss glTF.
+                     *
+                     * TODO: A complete mess. Low priority.
+                     */
+                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                    // we can estimate spec/gloss from met/rough by between Vec4f(0.04, 0.04, 0.04) and baseColor
+                    // according to metalness, and then taking gloss to be the inverse of roughness
+                    specGlossTex = merge3Tex("specgloss",
+                        RAW_TEXTURE_USAGE_ALBEDO, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            Vec3f baseColor(1.0f);
+                            if (pixels[0]) {
+                                baseColor.x = (*pixels[0])[0];
+                                baseColor.y = (*pixels[0])[1];
+                                baseColor.z = (*pixels[0])[2];
+                            }
+                            float metallic = pixels[1] ? (*pixels[1])[0] : 1.0f;
+                            float roughness = pixels[2] ? (*pixels[2])[0] : 1.0f;
+                            Vec3f spec = Vec3f::Lerp(dielectric, baseColor, metallic);
+                            return { spec[0], spec[1], spec[2], 1.0f - roughness };
+                         });
+                    diffuseTex = merge2Tex("albedo",
+                        RAW_TEXTURE_USAGE_ALBEDO, RAW_TEXTURE_USAGE_METALLIC,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            Vec3f baseColor(1.0f);
+                            float alpha = 1.0f;
+                            if (pixels[0]) {
+                                baseColor[0] = (*pixels[0])[0];
+                                baseColor[1] = (*pixels[0])[1];
+                                baseColor[2] = (*pixels[0])[2];
+                                alpha = (*pixels[0])[3];
+                            }
+                            float metallic = pixels[1] ? (*pixels[1])[0] : 1.0f;
+                            Vec3f spec = Vec3f::Lerp(dielectric, baseColor, metallic);
+                            float maxSpecComp = fmax(fmax(spec.x, spec.y), spec.z);
+                            // attenuate baseColor to get specgloss-compliant diffuse; for details consult
+                            // https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
+                            Vec3f diffuse = baseColor * (1 - dielectric[0]) * (1 - metallic) * fmax(1.0f - maxSpecComp, epsilon);
+                            return { diffuse[0], diffuse[1], diffuse[2], alpha };
+                         });
+                    diffuseFactor = props->diffuseFactor;
+                    specularFactor = Vec3f::Lerp(dielectric, props->diffuseFactor.xyz(), props->metallic);
+                    glossiness = 1.0f - props->roughness;
+
+                } else {
+                    /**
+                     * Traditional FBX Material -> PBR Spec/Gloss glTF.
+                     *
+                     * TODO: A complete mess. Low priority.
+                     */
+                    // TODO: this section a ludicrous over-simplifictation; we can surely do better.
+                    const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
+                    specGlossTex = merge2Tex("specgloss",
+                        RAW_TEXTURE_USAGE_SPECULAR, RAW_TEXTURE_USAGE_SHININESS,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            const auto &spec = *(pixels[0]);
+                            const auto &shine = *(pixels[1]);
+                            return { spec[0], spec[1], spec[2], shine[0] };
+                        });
+                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
+                    diffuseFactor = props->diffuseFactor;
+                    specularFactor = props->specularFactor;
+                    glossiness = props->shininess;
+                }
+
                 pbrSpecGloss.reset(
                     new PBRSpecularGlossiness(
-                        getTex(RAW_TEXTURE_USAGE_DIFFUSE), material.diffuseFactor,
-                        getTex(RAW_TEXTURE_USAGE_SPECULAR), material.specularFactor, material.shininess));
+                        diffuseTex.get(), diffuseFactor, specGlossTex.get(), specularFactor, glossiness));
             }
 
             std::shared_ptr<KHRCommonMats> khrComMat;
             if (options.useKHRMatCom) {
-                auto type = KHRCommonMats::MaterialType::Constant;
-                if (material.shadingModel == "Lambert") {
-                    type = KHRCommonMats::MaterialType::Lambert;
-                } else if (material.shadingModel == "Blinn") {
-                    type = KHRCommonMats::MaterialType::Blinn;
-                } else if (material.shadingModel == "Phong") {
-                    type = KHRCommonMats::MaterialType::Phong;
+                float                        shininess;
+                Vec3f                        ambientFactor, specularFactor;
+                Vec4f                        diffuseFactor;
+                std::shared_ptr<TextureData> diffuseTex;
+                auto                         type = KHRCommonMats::MaterialType::Constant;
+
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
+                    /**
+                     * PBR FBX Material -> KHR Common Materials glTF.
+                     *
+                     * TODO: We can use the specularFactor calculation below to generate a reasonable specular map, too.
+                     */
+                    const RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                    shininess = 1.0f - props->roughness;
+                    ambientFactor = Vec3f(0.0f, 0.0f, 0.0f);
+                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+                    diffuseFactor = props->diffuseFactor;
+                    specularFactor = Vec3f::Lerp(Vec3f(0.04f, 0.04f, 0.04f), props->diffuseFactor.xyz(), props->metallic);
+                    // render as Phong if there's any specularity, otherwise Lambert
+                    type = (specularFactor.LengthSquared() > 1e-4) ?
+                        KHRCommonMats::MaterialType::Phong : KHRCommonMats::MaterialType::Lambert;
+                    // TODO: convert textures
+
+                } else {
+                    /**
+                     * Traditional FBX Material -> KHR Common Materials glTF.
+                     *
+                     * Should be in good shape. Essentially pass-through.
+                     */
+                    const RawTraditionalMatProps *props = (RawTraditionalMatProps *) material.info.get();
+                    shininess = props->shininess;
+                    ambientFactor = props->ambientFactor;
+                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
+                    diffuseFactor = props->diffuseFactor;
+                    specularFactor = props->specularFactor;
+
+                    if (material.info->shadingModel == RAW_SHADING_MODEL_LAMBERT) {
+                        type = KHRCommonMats::MaterialType::Lambert;
+                    } else if (material.info->shadingModel == RAW_SHADING_MODEL_BLINN) {
+                        type = KHRCommonMats::MaterialType::Blinn;
+                    } else if (material.info->shadingModel == RAW_SHADING_MODEL_PHONG) {
+                        type = KHRCommonMats::MaterialType::Phong;
+                    }
                 }
                 khrComMat.reset(
-                    new KHRCommonMats(
-                        type,
-                        getTex(RAW_TEXTURE_USAGE_SHININESS), material.shininess,
-                        getTex(RAW_TEXTURE_USAGE_AMBIENT), material.ambientFactor,
-                        getTex(RAW_TEXTURE_USAGE_DIFFUSE), material.diffuseFactor,
-                        getTex(RAW_TEXTURE_USAGE_SPECULAR), material.specularFactor));
+                    new KHRCommonMats(type,
+                        simpleTex(RAW_TEXTURE_USAGE_SHININESS).get(), shininess,
+                        simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get(), ambientFactor,
+                        diffuseTex.get(), diffuseFactor,
+                        simpleTex(RAW_TEXTURE_USAGE_SPECULAR).get(), specularFactor));
             }
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
-                    material.name, isTransparent, getTex(RAW_TEXTURE_USAGE_NORMAL),
-                    getTex(RAW_TEXTURE_USAGE_EMISSIVE), material.emissiveFactor,
+                    material.name, isTransparent,
+                    simpleTex(RAW_TEXTURE_USAGE_NORMAL).get(), simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get(),
+                    emissiveFactor * emissiveIntensity,
                     khrComMat, pbrMetRough, pbrSpecGloss));
             materialsByName[materialHash(material)] = mData;
         }
