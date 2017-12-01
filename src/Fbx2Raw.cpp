@@ -104,7 +104,7 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
         : FbxMaterialInfo(name, shadingModel)
     {}
     const FbxFileTexture *texColor {};
-    FbxVector4           colBase { 1, 1, 1, 1 };
+    FbxVector4           colBase {};
     const FbxFileTexture *texNormal {};
     const FbxFileTexture *texMetallic {};
     FbxDouble            metallic {};
@@ -137,12 +137,14 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
             if (useProp.IsValid() && useProp.Get<bool>()) {
                 const FbxProperty texProp = mayaProp.FindHierarchical(("TEX_" + propName + "_map").c_str());
                 if (texProp.IsValid()) {
-                    fmt::printf("%s property type for material %s: %s\n", propName, fbxMaterial->GetName(), texProp.GetPropertyDataType().GetName());
                     ptr = texProp.GetSrcObject<FbxFileTexture>();
                     if (ptr != nullptr && textureLocations.find(ptr) == textureLocations.end()) {
                         ptr = nullptr;
                     }
                 }
+            } else if (verboseOutput && useProp.IsValid()) {
+                fmt::printf("Note: Property '%s' of material '%s' exists, but is flagged as 'do not use'.\n",
+                    propName, fbxMaterial->GetName());
             }
             return ptr;
         };
