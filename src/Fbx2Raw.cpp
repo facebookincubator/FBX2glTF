@@ -739,7 +739,10 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const FbxVector4 meshScaling               = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
     const FbxAMatrix meshTransform(meshTranslation, meshRotation, meshScaling);
     const FbxMatrix  transform                 = meshTransform;
-    const FbxMatrix  inverseTransposeTransform = transform.Inverse().Transpose();
+
+    // Remove translation & scaling from transforms that will bi applied to normals, tangents & binormals
+    const FbxMatrix  normalTransform(FbxVector4(), meshRotation, meshScaling);
+    const FbxMatrix  inverseTransposeTransform = normalTransform.Inverse().Transpose();
 
     raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_POSITION);
     if (normalLayer.LayerPresent()) { raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_NORMAL); }
