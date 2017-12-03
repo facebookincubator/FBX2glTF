@@ -741,7 +741,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const FbxMatrix  transform                 = meshTransform;
 
     // Remove translation & scaling from transforms that will bi applied to normals, tangents & binormals
-    const FbxMatrix  normalTransform(FbxVector4(), meshRotation, FbxVector4(1.0f, 1.0f, 1.0f, 1.0f));
+    const FbxMatrix  normalTransform(FbxVector4(), meshRotation, meshScaling);
     const FbxMatrix  inverseTransposeTransform = normalTransform.Inverse().Transpose();
 
     raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_POSITION);
