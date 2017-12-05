@@ -1114,7 +1114,7 @@ static void ReadNodeHierarchy(
     node.scale       = toVec3f(localScaling);
 
     if (parentId) {
-        RawNode &parentNode = raw.GetNode(raw.GetNodeById(nodeId));
+        RawNode &parentNode = raw.GetNode(raw.GetNodeById(parentId));
         // Add unique child name to the parent node.
         if (std::find(parentNode.childIds.begin(), parentNode.childIds.end(), nodeId) == parentNode.childIds.end()) {
             parentNode.childIds.push_back(nodeId);
