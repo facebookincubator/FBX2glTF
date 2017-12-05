@@ -193,8 +193,8 @@ int RawModel::AddAnimation(const RawAnimation &animation)
 int RawModel::AddNode(const RawNode &node)
 {
     for (size_t i = 0; i < nodes.size(); i++) {
-        if (Gltf::StringUtils::CompareNoCase(nodes[i].name.c_str(), node.name) == 0) {
-            return (int) i;
+        if (nodes[i].id == node.id) {
+            return (int)i;
         }
     }
 
@@ -203,12 +203,12 @@ int RawModel::AddNode(const RawNode &node)
 }
 
 int RawModel::AddCameraPerspective(
-    const char *name, const char *nodeName, const float aspectRatio, const float fovDegreesX, const float fovDegreesY, const float nearZ,
+    const char *name, const long nodeId, const float aspectRatio, const float fovDegreesX, const float fovDegreesY, const float nearZ,
     const float farZ)
 {
     RawCamera camera;
     camera.name                    = name;
-    camera.nodeName                = nodeName;
+    camera.nodeId                  = nodeId;
     camera.mode                    = RawCamera::CAMERA_MODE_PERSPECTIVE;
     camera.perspective.aspectRatio = aspectRatio;
     camera.perspective.fovDegreesX = fovDegreesX;
@@ -220,11 +220,11 @@ int RawModel::AddCameraPerspective(
 }
 
 int RawModel::AddCameraOrthographic(
-    const char *name, const char *nodeName, const float magX, const float magY, const float nearZ, const float farZ)
+    const char *name, const long nodeId, const float magX, const float magY, const float nearZ, const float farZ)
 {
     RawCamera camera;
     camera.name               = name;
-    camera.nodeName           = nodeName;
+    camera.nodeId = nodeId;
     camera.mode               = RawCamera::CAMERA_MODE_ORTHOGRAPHIC;
     camera.orthographic.magX  = magX;
     camera.orthographic.magY  = magY;
@@ -234,20 +234,21 @@ int RawModel::AddCameraOrthographic(
     return (int) cameras.size() - 1;
 }
 
-int RawModel::AddNode(const char *name, const char *parentName)
+int RawModel::AddNode(const long id, const char *name, const long parentId)
 {
     assert(name[0] != '\0');
 
     for (size_t i = 0; i < nodes.size(); i++) {
-        if (Gltf::StringUtils::CompareNoCase(nodes[i].name, name) == 0) {
+        if (nodes[i].id == id ) {
             return (int) i;
         }
     }
 
     RawNode joint;
     joint.isJoint     = false;
+    joint.id          = id;
     joint.name        = name;
-    joint.parentName  = parentName;
+    joint.parentId    = parentId;
     joint.surfaceId   = 0;
     joint.translation = Vec3f(0, 0, 0);
     joint.rotation    = Quatf(0, 0, 0, 1);
@@ -455,9 +456,9 @@ void RawModel::CreateMaterialModels(
         RawSurface &rawSurface = model->GetSurface(surfaceIndex);
 
         if (model->GetSurfaceCount() > prevSurfaceCount) {
-            const std::vector<std::string> &jointNames = surfaces[sortedTriangles[i].surfaceIndex].jointNames;
-            for (const auto &jointName : jointNames) {
-                const int nodeIndex = GetNodeByName(jointName.c_str());
+            const std::vector<long> &jointIds = surfaces[sortedTriangles[i].surfaceIndex].jointIds;
+            for (const auto &jointId : jointIds) {
+                const int nodeIndex = GetNodeById(jointId);
                 assert(nodeIndex != -1);
                 model->AddNode(GetNode(nodeIndex));
             }
@@ -515,10 +516,10 @@ void RawModel::CreateMaterialModels(
     }
 }
 
-int RawModel::GetNodeByName(const char *name) const
+int RawModel::GetNodeById(const long nodeId) const
 {
     for (size_t i = 0; i < nodes.size(); i++) {
-        if (nodes[i].name == name) {
+        if (nodes[i].id == nodeId) {
             return (int) i;
         }
     }

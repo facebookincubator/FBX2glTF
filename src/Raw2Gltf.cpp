@@ -304,7 +304,7 @@ ModelData *Raw2Gltf(
 
     std::unique_ptr<GLTFData> gltf(new GLTFData(options.outputBinary));
 
-    std::map<std::string, std::shared_ptr<NodeData>>     nodesByName;
+    std::map<long, std::shared_ptr<NodeData>>     nodesById;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
     std::map<std::string, std::shared_ptr<TextureData>>  textureByIndicesKey;
     std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
@@ -326,13 +326,13 @@ ModelData *Raw2Gltf(
             auto nodeData = gltf->nodes.hold(
                 new NodeData(node.name, node.translation, node.rotation, node.scale, node.isJoint));
 
-            for (const auto &childName : node.childNames) {
-                int childIx = raw.GetNodeByName(childName.c_str());
+            for (const auto &childId : node.childIds) {
+                int childIx = raw.GetNodeById(childId);
                 assert(childIx >= 0);
                 nodeData->AddChildNode(childIx);
             }
-            assert(nodesByName.find(nodeData->name) == nodesByName.end());
-            nodesByName.insert(std::make_pair(nodeData->name, nodeData));
+            
+            nodesById.insert(std::make_pair(node.id, nodeData));
         }
 
         //
@@ -367,7 +367,7 @@ ModelData *Raw2Gltf(
                         channel.scales.size(), channel.weights.size());
                 }
 
-                NodeData &nDat = require(nodesByName, node.name);
+                NodeData &nDat = require(nodesById, node.id);
                 if (!channel.translations.empty()) {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.translations), "translation");
                 }
@@ -1081,7 +1081,7 @@ ModelData *Raw2Gltf(
                 //
                 // surface skin
                 //
-                if (!rawSurface.jointNames.empty()) {
+                if (!rawSurface.jointIds.empty()) {
                     if (nodeData->skin == -1) {
                         // glTF uses column-major matrices
                         std::vector<Mat4f> inverseBindMatrices;
@@ -1090,14 +1090,14 @@ ModelData *Raw2Gltf(
                         }
 
                         std::vector<uint32_t> jointIndexes;
-                        for (const auto &jointName : rawSurface.jointNames) {
-                            jointIndexes.push_back(require(nodesByName, jointName).ix);
+                        for (const auto &jointId : rawSurface.jointIds) {
+                            jointIndexes.push_back(require(nodesById, jointId).ix);
                         }
 
                         // Write out inverseBindMatrices
                         auto accIBM = gltf->AddAccessorAndView(buffer, GLT_MAT4F, inverseBindMatrices);
 
-                        auto skeletonRoot = require(nodesByName, rawSurface.skeletonRootName);
+                        auto skeletonRoot = require(nodesById, rawSurface.skeletonRootId);
                         auto skin = *gltf->skins.hold(new SkinData(jointIndexes, *accIBM, skeletonRoot));
                         nodeData->SetSkin(skin.ix);
                     }
@@ -1129,16 +1129,16 @@ ModelData *Raw2Gltf(
             }
             // Add the camera to the node hierarchy.
 
-            auto iter = nodesByName.find(cam.nodeName);
-            if (iter == nodesByName.end()) {
-                fmt::printf("Warning: Camera node name %s does not exist.\n", cam.nodeName);
+            auto iter = nodesById.find(cam.nodeId);
+            if (iter == nodesById.end()) {
+                fmt::printf("Warning: Camera node id %s does not exist.\n", cam.nodeId);
                 continue;
             }
             iter->second->SetCamera(camera.ix);
         }
     }
 
-    NodeData        &rootNode  = require(nodesByName, "RootNode");
+    NodeData        &rootNode  = require(nodesById, raw.GetRootNode());
     const SceneData &rootScene = *gltf->scenes.hold(new SceneData(defaultSceneName, rootNode));
 
     if (options.outputBinary) {
