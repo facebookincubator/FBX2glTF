@@ -1134,7 +1134,7 @@ ModelData *Raw2Gltf(
                 fmt::printf("Warning: Camera node name %s does not exist.\n", cam.nodeName);
                 continue;
             }
-            iter->second->AddCamera(cam.name);
+            iter->second->SetCamera(camera.ix);
         }
     }
 

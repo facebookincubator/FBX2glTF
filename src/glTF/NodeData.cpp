@@ -20,7 +20,7 @@ NodeData::NodeData(
       scale(scale),
       children(),
       mesh(-1),
-      cameraName(""),
+      camera(-1),
       skin(-1)
 {
 }
@@ -44,10 +44,10 @@ void NodeData::SetSkin(uint32_t skinIx)
     skin = skinIx;
 }
 
-void NodeData::AddCamera(std::string camera)
+void NodeData::SetCamera(uint32_t cameraIndex)
 {
     assert(!isJoint);
-    cameraName = std::move(camera);
+    camera = cameraIndex;
 }
 
 json NodeData::serialize() const
@@ -75,8 +75,8 @@ json NodeData::serialize() const
         if (skin >= 0) {
             result["skin"] = skin;
         }
-        if (!cameraName.empty()) {
-            result["camera"] = cameraName;
+        if (camera >= 0) {
+            result["camera"] = camera;
         }
     }
     return result;
