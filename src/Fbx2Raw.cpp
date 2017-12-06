@@ -424,7 +424,7 @@ public:
                     inverseBindMatrices.emplace_back(globalBindposeInverseMatrix);
 
                     jointNodes.push_back(cluster->GetLink());
-                    jointNames.push_back(*cluster->GetLink()->GetName() != '\0' ? cluster->GetLink()->GetName() : cluster->GetName());
+                    jointIds.push_back(cluster->GetLink()->GetUniqueID());
 
                     const FbxAMatrix globalNodeTransform = cluster->GetLink()->EvaluateGlobalTransform();
                     jointSkinningTransforms.push_back(FbxMatrix(globalNodeTransform * globalBindposeInverseMatrix));
@@ -486,9 +486,9 @@ public:
         return jointNodes[jointIndex];
     }
 
-    const char *GetJointName(const int jointIndex) const
+    const long GetJointId(const int jointIndex) const
     {
-        return jointNames[jointIndex].c_str();
+        return jointIds[jointIndex];
     }
 
     const FbxMatrix &GetJointSkinningTransform(const int jointIndex) const
@@ -501,10 +501,10 @@ public:
         return jointInverseGlobalTransforms[jointIndex];
     }
 
-    const char *GetRootNode() const
+    const long GetRootNode() const
     {
         assert(rootIndex != -1);
-        return jointNames[rootIndex].c_str();
+        return jointIds[rootIndex];
     }
 
     const FbxAMatrix &GetInverseBindMatrix(const int jointIndex) const
@@ -526,7 +526,7 @@ public:
 
 private:
     int                      rootIndex;
-    std::vector<std::string> jointNames;
+    std::vector<long>        jointIds;
     std::vector<FbxNode *>   jointNodes;
     std::vector<FbxMatrix>   jointSkinningTransforms;
     std::vector<FbxMatrix>   jointInverseGlobalTransforms;
@@ -697,7 +697,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     const long surfaceId = pMesh->GetUniqueID();
 
     // Associate the node to this surface
-    int nodeId = raw.GetNodeByName(pNode->GetName());
+    int nodeId = raw.GetNodeById(pNode->GetUniqueID());
     if (nodeId >= 0) {
         RawNode &node = raw.GetNode(nodeId);
         node.surfaceId = surfaceId;
@@ -725,7 +725,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     if (verboseOutput) {
         fmt::printf(
             "mesh %d: %s (skinned: %s)\n", rawSurfaceIndex, meshName,
-            skinning.IsSkinned() ? skinning.GetRootNode() : "NO");
+            skinning.IsSkinned() ? raw.GetNode(raw.GetNodeById(skinning.GetRootNode())).name.c_str() : "NO");
     }
 
     // The FbxNode geometric transformation describes how a FbxNodeAttribute is offset from
@@ -758,12 +758,12 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
     RawSurface &rawSurface = raw.GetSurface(rawSurfaceIndex);
 
-    rawSurface.skeletonRootName = (skinning.IsSkinned()) ? skinning.GetRootNode() : pNode->GetName();
+    rawSurface.skeletonRootId = (skinning.IsSkinned()) ? skinning.GetRootNode() : pNode->GetUniqueID();
     for (int jointIndex = 0; jointIndex < skinning.GetNodeCount(); jointIndex++) {
-        const char *jointName = skinning.GetJointName(jointIndex);
-        raw.GetNode(raw.GetNodeByName(jointName)).isJoint = true;
+        const long jointId = skinning.GetJointId(jointIndex);
+        raw.GetNode(raw.GetNodeById(jointId)).isJoint = true;
 
-        rawSurface.jointNames.emplace_back(jointName);
+        rawSurface.jointIds.emplace_back(jointId);
         rawSurface.inverseBindMatrices.push_back(toMat4f(skinning.GetInverseBindMatrix(jointIndex)));
         rawSurface.jointGeometryMins.emplace_back(FLT_MAX, FLT_MAX, FLT_MAX);
         rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -988,12 +988,12 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
     const FbxCamera *pCamera = pNode->GetCamera();
     if (pCamera->ProjectionType.Get() == FbxCamera::EProjectionType::ePerspective) {
         raw.AddCameraPerspective(
-            "", pNode->GetName(), (float) pCamera->FilmAspectRatio,
+            "", pNode->GetUniqueID(), (float) pCamera->FilmAspectRatio,
             (float) pCamera->FieldOfViewX, (float) pCamera->FieldOfViewX,
             (float) pCamera->NearPlane, (float) pCamera->FarPlane);
     } else {
         raw.AddCameraOrthographic(
-            "", pNode->GetName(),
+            "", pNode->GetUniqueID(),
             (float) pCamera->OrthoZoom, (float) pCamera->OrthoZoom,
             (float) pCamera->FarPlane, (float) pCamera->NearPlane);
     }
@@ -1069,10 +1069,11 @@ static FbxVector4 computeLocalScale(FbxNode *pNode, FbxTime pTime = FBXSDK_TIME_
 
 static void ReadNodeHierarchy(
     RawModel &raw, FbxScene *pScene, FbxNode *pNode,
-    const std::string &parentName, const std::string &path)
+    const long parentId, const std::string &path)
 {
+    const FbxUInt64 nodeId = pNode->GetUniqueID();
     const char *nodeName = pNode->GetName();
-    const int  nodeIndex = raw.AddNode(nodeName, parentName.c_str());
+    const int  nodeIndex = raw.AddNode(nodeId, nodeName, parentId);
     RawNode    &node     = raw.GetNode(nodeIndex);
 
     FbxTransform::EInheritType lInheritType;
@@ -1085,7 +1086,7 @@ static void ReadNodeHierarchy(
 
     static int warnRrSsCount = 0;
     static int warnRrsCount  = 0;
-    if (lInheritType == FbxTransform::eInheritRrSs && !parentName.empty()) {
+    if (lInheritType == FbxTransform::eInheritRrSs && parentId) {
         if (++warnRrSsCount == 1) {
             fmt::printf("Warning: node %s uses unsupported transform inheritance type 'eInheritRrSs'.\n", newPath);
             fmt::printf("         (Further warnings of this type squelched.)\n");
@@ -1112,19 +1113,19 @@ static void ReadNodeHierarchy(
     node.rotation    = toQuatf(localRotation);
     node.scale       = toVec3f(localScaling);
 
-    if (parentName.size() > 0) {
-        RawNode &parentNode = raw.GetNode(raw.GetNodeByName(parentName.c_str()));
+    if (parentId) {
+        RawNode &parentNode = raw.GetNode(raw.GetNodeById(parentId));
         // Add unique child name to the parent node.
-        if (std::find(parentNode.childNames.begin(), parentNode.childNames.end(), nodeName) == parentNode.childNames.end()) {
-            parentNode.childNames.push_back(nodeName);
+        if (std::find(parentNode.childIds.begin(), parentNode.childIds.end(), nodeId) == parentNode.childIds.end()) {
+            parentNode.childIds.push_back(nodeId);
         }
     } else {
         // If there is no parent then this is the root node.
-        raw.SetRootNode(nodeName);
+        raw.SetRootNode(nodeId);
     }
 
     for (int child = 0; child < pNode->GetChildCount(); child++) {
-        ReadNodeHierarchy(raw, pScene, pNode->GetChild(child), nodeName, newPath);
+        ReadNodeHierarchy(raw, pScene, pNode->GetChild(child), nodeId, newPath);
     }
 }
 
@@ -1180,7 +1181,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
             bool hasMorphs      = false;
 
             RawChannel channel;
-            channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
+            channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
 
             for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
                 FbxTime pTime;
@@ -1423,7 +1424,7 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
         FbxSystemUnit::m.ConvertScene(pScene);
     }
 
-    ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), "", "");
+    ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
     ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
     ReadAnimations(raw, pScene);
 

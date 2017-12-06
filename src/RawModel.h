@@ -277,9 +277,9 @@ struct RawSurface
 {
     long                         id;
     std::string                  name;                            // The name of this surface
-    std::string                  skeletonRootName;                // The name of the root of the skeleton.
+    long                         skeletonRootId;                  // The id of the root node of the skeleton.
     Bounds<float, 3>             bounds;
-    std::vector<std::string>     jointNames;
+    std::vector<long>            jointIds;
     std::vector<Vec3f>           jointGeometryMins;
     std::vector<Vec3f>           jointGeometryMaxs;
     std::vector<Mat4f>           inverseBindMatrices;
@@ -306,7 +306,7 @@ struct RawAnimation
 struct RawCamera
 {
     std::string name;
-    std::string nodeName;
+    long        nodeId;
 
     enum
     {
@@ -335,9 +335,10 @@ struct RawCamera
 struct RawNode
 {
     bool                     isJoint;
+    long                     id;
     std::string              name;
-    std::string              parentName;
-    std::vector<std::string> childNames;
+    long                     parentId;
+    std::vector<long>        childIds;
     Vec3f                    translation;
     Quatf                    rotation;
     Vec3f                    scale;
@@ -362,14 +363,14 @@ public:
     int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);
     int AddCameraPerspective(
-        const char *name, const char *nodeName, const float aspectRatio, const float fovDegreesX, const float fovDegreesY,
+        const char *name, const long nodeId, const float aspectRatio, const float fovDegreesX, const float fovDegreesY,
         const float nearZ, const float farZ);
     int
-    AddCameraOrthographic(const char *name, const char *nodeName, const float magX, const float magY, const float nearZ, const float farZ);
+    AddCameraOrthographic(const char *name, const long nodeId, const float magX, const float magY, const float nearZ, const float farZ);
     int AddNode(const RawNode &node);
-    int AddNode(const char *name, const char *parentName);
-    void SetRootNode(const char *name) { rootNodeName = name; }
-    const char *GetRootNode() const { return rootNodeName.c_str(); }
+    int AddNode(const long id, const char *name, const long parentId);
+    void SetRootNode(const long nodeId) { rootNodeId = nodeId; }
+    const long GetRootNode() const { return rootNodeId; }
 
     // Remove unused vertices, textures or materials after removing vertex attributes, textures, materials or surfaces.
     void Condense();
@@ -413,7 +414,7 @@ public:
     int GetNodeCount() const { return (int) nodes.size(); }
     const RawNode &GetNode(const int index) const { return nodes[index]; }
     RawNode &GetNode(const int index) { return nodes[index]; }
-    int GetNodeByName(const char *name) const;
+    int GetNodeById(const long nodeId) const;
 
     // Create individual attribute arrays.
     // Returns true if the vertices store the particular attribute.
@@ -427,7 +428,7 @@ public:
         std::vector<RawModel> &materialModels, const int maxModelVertices, const int keepAttribs, const bool forceDiscrete) const;
 
 private:
-    std::string                                      rootNodeName;
+    long                                             rootNodeId;
     int                                              vertexAttributes;
     std::unordered_map<RawVertex, int, VertexHasher> vertexHash;
     std::vector<RawVertex>                           vertices;
