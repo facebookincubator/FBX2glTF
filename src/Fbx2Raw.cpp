@@ -724,8 +724,8 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
 
     if (verboseOutput) {
         fmt::printf(
-            "mesh %d: %s (skinned: %d)\n", rawSurfaceIndex, meshName,
-            skinning.IsSkinned() ? skinning.GetRootNode() : 0);
+            "mesh %d: %s (skinned: %s)\n", rawSurfaceIndex, meshName,
+            skinning.IsSkinned() ? raw.GetNode(raw.GetNodeById(skinning.GetRootNode())).name.c_str() : "NO");
     }
 
     // The FbxNode geometric transformation describes how a FbxNodeAttribute is offset from
@@ -1081,7 +1081,7 @@ static void ReadNodeHierarchy(
 
     std::string newPath = path + "/" + nodeName;
     if (verboseOutput) {
-        fmt::printf("node %d: %s %d\n", nodeIndex, newPath.c_str(), nodeId);
+        fmt::printf("node %d: %s\n", nodeIndex, newPath.c_str());
     }
 
     static int warnRrSsCount = 0;
