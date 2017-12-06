@@ -304,7 +304,7 @@ ModelData *Raw2Gltf(
 
     std::unique_ptr<GLTFData> gltf(new GLTFData(options.outputBinary));
 
-    std::map<long, std::shared_ptr<NodeData>>     nodesById;
+    std::map<long, std::shared_ptr<NodeData>>            nodesById;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
     std::map<std::string, std::shared_ptr<TextureData>>  textureByIndicesKey;
     std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
