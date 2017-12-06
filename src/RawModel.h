@@ -277,7 +277,7 @@ struct RawSurface
 {
     long                         id;
     std::string                  name;                            // The name of this surface
-    long                         skeletonRootId;                  // The name of the root of the skeleton.
+    long                         skeletonRootId;                  // The id of the root node of the skeleton.
     Bounds<float, 3>             bounds;
     std::vector<long>            jointIds;
     std::vector<Vec3f>           jointGeometryMins;
