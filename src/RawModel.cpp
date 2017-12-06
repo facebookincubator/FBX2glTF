@@ -224,7 +224,7 @@ int RawModel::AddCameraOrthographic(
 {
     RawCamera camera;
     camera.name               = name;
-    camera.nodeId = nodeId;
+    camera.nodeId             = nodeId;
     camera.mode               = RawCamera::CAMERA_MODE_ORTHOGRAPHIC;
     camera.orthographic.magX  = magX;
     camera.orthographic.magY  = magY;
