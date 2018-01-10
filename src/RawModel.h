@@ -95,8 +95,32 @@ struct RawTriangle
     int surfaceIndex;
 };
 
+enum RawShadingModel
+{
+    RAW_SHADING_MODEL_UNKNOWN = -1,
+    RAW_SHADING_MODEL_CONSTANT,
+    RAW_SHADING_MODEL_LAMBERT,
+    RAW_SHADING_MODEL_BLINN,
+    RAW_SHADING_MODEL_PHONG,
+    RAW_SHADING_MODEL_PBR_MET_ROUGH,
+    RAW_SHADING_MODEL_MAX
+};
+
+static inline std::string Describe(RawShadingModel model) {
+    switch(model) {
+        case RAW_SHADING_MODEL_UNKNOWN:         return "<unknown>";
+        case RAW_SHADING_MODEL_CONSTANT:        return "Constant";
+        case RAW_SHADING_MODEL_LAMBERT:         return "Lambert";
+        case RAW_SHADING_MODEL_BLINN:           return "Blinn";
+        case RAW_SHADING_MODEL_PHONG:           return "Phong";
+        case RAW_SHADING_MODEL_PBR_MET_ROUGH:   return "Metallic/Roughness";
+        case RAW_SHADING_MODEL_MAX: default:    return "<unknown>";
+    }
+}
+
 enum RawTextureUsage
 {
+    RAW_TEXTURE_USAGE_NONE = -1,
     RAW_TEXTURE_USAGE_AMBIENT,
     RAW_TEXTURE_USAGE_DIFFUSE,
     RAW_TEXTURE_USAGE_NORMAL,
@@ -104,32 +128,28 @@ enum RawTextureUsage
     RAW_TEXTURE_USAGE_SHININESS,
     RAW_TEXTURE_USAGE_EMISSIVE,
     RAW_TEXTURE_USAGE_REFLECTION,
+    RAW_TEXTURE_USAGE_ALBEDO,
+    RAW_TEXTURE_USAGE_OCCLUSION,
+    RAW_TEXTURE_USAGE_ROUGHNESS,
+    RAW_TEXTURE_USAGE_METALLIC,
     RAW_TEXTURE_USAGE_MAX
 };
 
-inline std::string DescribeTextureUsage(int usage)
+static inline std::string Describe(RawTextureUsage usage)
 {
-    if (usage < 0) {
-        return "<none>";
-    }
-    switch (static_cast<RawTextureUsage>(usage)) {
-        case RAW_TEXTURE_USAGE_AMBIENT:
-            return "ambient";
-        case RAW_TEXTURE_USAGE_DIFFUSE:
-            return "diffuse";
-        case RAW_TEXTURE_USAGE_NORMAL:
-            return "normal";
-        case RAW_TEXTURE_USAGE_SPECULAR:
-            return "specuar";
-        case RAW_TEXTURE_USAGE_SHININESS:
-            return "shininess";
-        case RAW_TEXTURE_USAGE_EMISSIVE:
-            return "emissive";
-        case RAW_TEXTURE_USAGE_REFLECTION:
-            return "reflection";
-        case RAW_TEXTURE_USAGE_MAX:
-        default:
-            return "unknown";
+    switch (usage) {
+        case RAW_TEXTURE_USAGE_NONE:        return "<none>";
+        case RAW_TEXTURE_USAGE_AMBIENT:     return "ambient";
+        case RAW_TEXTURE_USAGE_DIFFUSE:     return "diffuse";
+        case RAW_TEXTURE_USAGE_NORMAL:      return "normal";
+        case RAW_TEXTURE_USAGE_SPECULAR:    return "specuar";
+        case RAW_TEXTURE_USAGE_SHININESS:   return "shininess";
+        case RAW_TEXTURE_USAGE_EMISSIVE:    return "emissive";
+        case RAW_TEXTURE_USAGE_REFLECTION:  return "reflection";
+        case RAW_TEXTURE_USAGE_OCCLUSION:   return "occlusion";
+        case RAW_TEXTURE_USAGE_ROUGHNESS:   return "roughness";
+        case RAW_TEXTURE_USAGE_METALLIC:    return "metallic";
+        case RAW_TEXTURE_USAGE_MAX:default: return "unknown";
     }
 };
 
@@ -159,18 +179,91 @@ enum RawMaterialType
     RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT,
 };
 
+struct RawMatProps {
+    explicit RawMatProps(RawShadingModel shadingModel)
+        : shadingModel(shadingModel)
+    {}
+    const RawShadingModel shadingModel;
+
+    virtual bool operator!=(const RawMatProps &other) const { return !(*this == other); }
+    virtual bool operator==(const RawMatProps &other) const { return shadingModel == other.shadingModel; };
+};
+
+struct RawTraditionalMatProps : RawMatProps {
+    RawTraditionalMatProps(
+        RawShadingModel shadingModel,
+        const Vec3f &&ambientFactor,
+        const Vec4f &&diffuseFactor,
+        const Vec3f &&emissiveFactor,
+        const Vec3f &&specularFactor,
+        const float shininess
+    ) : RawMatProps(shadingModel),
+          ambientFactor(ambientFactor),
+          diffuseFactor(diffuseFactor),
+          emissiveFactor(emissiveFactor),
+          specularFactor(specularFactor),
+          shininess(shininess)
+    {}
+
+    const Vec3f ambientFactor;
+    const Vec4f diffuseFactor;
+    const Vec3f emissiveFactor;
+    const Vec3f specularFactor;
+    const float shininess;
+
+    bool operator==(const RawMatProps &other) const override {
+        if (RawMatProps::operator==(other)) {
+            const auto &typed = (RawTraditionalMatProps &) other;
+            return ambientFactor == typed.ambientFactor &&
+                diffuseFactor == typed.diffuseFactor &&
+                specularFactor == typed.specularFactor &&
+                emissiveFactor == typed.emissiveFactor &&
+                shininess == typed.shininess;
+        }
+        return false;
+    }
+};
+
+struct RawMetRoughMatProps : RawMatProps {
+    RawMetRoughMatProps(
+        RawShadingModel shadingModel,
+        const Vec4f &&diffuseFactor,
+        const Vec3f &&emissiveFactor,
+        float emissiveIntensity,
+        float metallic,
+        float roughness
+    ) : RawMatProps(shadingModel),
+      diffuseFactor(diffuseFactor),
+      emissiveFactor(emissiveFactor),
+      emissiveIntensity(emissiveIntensity),
+      metallic(metallic),
+      roughness(roughness)
+    {}
+    const Vec4f diffuseFactor;
+    const Vec3f emissiveFactor;
+    const float emissiveIntensity;
+    const float metallic;
+    const float roughness;
+
+    bool operator==(const RawMatProps &other) const override {
+        if (RawMatProps::operator==(other)) {
+            const auto &typed = (RawMetRoughMatProps &) other;
+            return diffuseFactor == typed.diffuseFactor &&
+            emissiveFactor == typed.emissiveFactor &&
+            emissiveIntensity == typed.emissiveIntensity &&
+            metallic == typed.metallic &&
+            roughness == typed.roughness;
+        }
+        return false;
+    }
+};
+
 struct RawMaterial
 {
-
-    std::string     name;
-    std::string     shadingModel;    // typically "Surface", "Anisotropic", "Blinn", "Lambert", "Phong", "Phone E"
-    RawMaterialType type;
-    Vec3f           ambientFactor;
-    Vec4f           diffuseFactor;
-    Vec3f           specularFactor;
-    Vec3f           emissiveFactor;
-    float           shininess;
-    int             textures[RAW_TEXTURE_USAGE_MAX];
+    std::string                  name;
+    RawMaterialType              type;
+    std::shared_ptr<RawMatProps> info;
+    int                          textures[RAW_TEXTURE_USAGE_MAX];
 };
 
 struct RawBlendChannel
@@ -182,11 +275,11 @@ struct RawBlendChannel
 
 struct RawSurface
 {
+    long                         id;
     std::string                  name;                            // The name of this surface
-    std::string                  nodeName;                        // The node that links to this surface.
-    std::string                  skeletonRootName;                // The name of the root of the skeleton.
+    long                         skeletonRootId;                  // The id of the root node of the skeleton.
     Bounds<float, 3>             bounds;
-    std::vector<std::string>     jointNames;
+    std::vector<long>            jointIds;
     std::vector<Vec3f>           jointGeometryMins;
     std::vector<Vec3f>           jointGeometryMaxs;
     std::vector<Mat4f>           inverseBindMatrices;
@@ -213,7 +306,7 @@ struct RawAnimation
 struct RawCamera
 {
     std::string name;
-    std::string nodeName;
+    long        nodeId;
 
     enum
     {
@@ -242,12 +335,14 @@ struct RawCamera
 struct RawNode
 {
     bool                     isJoint;
+    long                     id;
     std::string              name;
-    std::string              parentName;
-    std::vector<std::string> childNames;
+    long                     parentId;
+    std::vector<long>        childIds;
     Vec3f                    translation;
     Quatf                    rotation;
     Vec3f                    scale;
+    long                     surfaceId;
 };
 
 class RawModel
@@ -262,22 +357,20 @@ public:
     int AddTexture(const std::string &name, const std::string &fileName, const std::string &fileLocation, RawTextureUsage usage);
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
-        const char *name, const char *shadingModel, RawMaterialType materialType,
-        const int textures[RAW_TEXTURE_USAGE_MAX], Vec3f ambientFactor,
-        Vec4f diffuseFactor, Vec3f specularFactor,
-        Vec3f emissiveFactor, float shinineness);
+        const char *name, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
+        std::shared_ptr<RawMatProps> materialInfo);
     int AddSurface(const RawSurface &suface);
-    int AddSurface(const char *name, const char *nodeName);
+    int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);
     int AddCameraPerspective(
-        const char *name, const char *nodeName, const float aspectRatio, const float fovDegreesX, const float fovDegreesY,
+        const char *name, const long nodeId, const float aspectRatio, const float fovDegreesX, const float fovDegreesY,
         const float nearZ, const float farZ);
     int
-    AddCameraOrthographic(const char *name, const char *nodeName, const float magX, const float magY, const float nearZ, const float farZ);
+    AddCameraOrthographic(const char *name, const long nodeId, const float magX, const float magY, const float nearZ, const float farZ);
     int AddNode(const RawNode &node);
-    int AddNode(const char *name, const char *parentName);
-    void SetRootNode(const char *name) { rootNodeName = name; }
-    const char *GetRootNode() const { return rootNodeName.c_str(); }
+    int AddNode(const long id, const char *name, const long parentId);
+    void SetRootNode(const long nodeId) { rootNodeId = nodeId; }
+    const long GetRootNode() const { return rootNodeId; }
 
     // Remove unused vertices, textures or materials after removing vertex attributes, textures, materials or surfaces.
     void Condense();
@@ -307,6 +400,7 @@ public:
     int GetSurfaceCount() const { return (int) surfaces.size(); }
     const RawSurface &GetSurface(const int index) const { return surfaces[index]; }
     RawSurface &GetSurface(const int index) { return surfaces[index]; }
+    int GetSurfaceById(const long id) const;
 
     // Iterate over the animations.
     int GetAnimationCount() const { return (int) animations.size(); }
@@ -320,7 +414,7 @@ public:
     int GetNodeCount() const { return (int) nodes.size(); }
     const RawNode &GetNode(const int index) const { return nodes[index]; }
     RawNode &GetNode(const int index) { return nodes[index]; }
-    int GetNodeByName(const char *name) const;
+    int GetNodeById(const long nodeId) const;
 
     // Create individual attribute arrays.
     // Returns true if the vertices store the particular attribute.
@@ -334,7 +428,7 @@ public:
         std::vector<RawModel> &materialModels, const int maxModelVertices, const int keepAttribs, const bool forceDiscrete) const;
 
 private:
-    std::string                                      rootNodeName;
+    long                                             rootNodeId;
     int                                              vertexAttributes;
     std::unordered_map<RawVertex, int, VertexHasher> vertexHash;
     std::vector<RawVertex>                           vertices;

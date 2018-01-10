@@ -75,10 +75,11 @@ struct PBRSpecularGlossiness
 struct PBRMetallicRoughness
 {
     PBRMetallicRoughness(
-        const TextureData *baseColorTexture, const Vec4f &baseolorFactor,
-        float metallic = 0.1f, float roughness = 0.4f);
+        const TextureData *baseColorTexture, const TextureData *metRoughTexture,
+        const Vec4f &baseColorFactor, float metallic = 0.1f, float roughness = 0.6f);
 
     std::unique_ptr<Tex> baseColorTexture;
+    std::unique_ptr<Tex> metRoughTexture;
     const Vec4f          baseColorFactor;
     const float          metallic;
     const float          roughness;
