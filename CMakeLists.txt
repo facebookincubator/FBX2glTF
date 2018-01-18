@@ -29,7 +29,6 @@ ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
   GIT_TAG 1.2.0
   PREFIX draco
-  GIT_TAG 1.2.0
   INSTALL_DIR
   CMAKE_ARGS
 	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
