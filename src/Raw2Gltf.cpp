@@ -852,6 +852,9 @@ ModelData *Raw2Gltf(
                         diffuseTex.get(), diffuseFactor, specGlossTex.get(), specularFactor, glossiness));
             }
 
+            TextureData *normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
+            TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
+
             std::shared_ptr<KHRCommonMats> khrComMat;
             if (options.useKHRMatCom) {
                 float                        shininess;
@@ -908,16 +911,33 @@ ModelData *Raw2Gltf(
 
             std::shared_ptr<KHRCmnConstantMaterial> khrCmnConstantMat;
             if (options.useKHRMatCmnConstant) {
-                khrCmnConstantMat.reset(new KHRCmnConstantMaterial());
+                normalTexture = nullptr;
 
-                // Set fallback parameters
-                pbrMetRough.reset(new PBRMetallicRoughness(nullptr, Vec4f(0.0f, 0.0f, 0.0f, 1.0f), 0.0f, 0.0f));
+                emissiveTexture = nullptr;
+                emissiveFactor = Vec3f(0.00f, 0.00f, 0.00f);
+
+                Vec4f diffuseFactor;
+                std::shared_ptr<TextureData> baseColorTex;
+
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
+                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                    diffuseFactor = props->diffuseFactor;
+                    baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+                } else {
+                    RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
+                    diffuseFactor = props->diffuseFactor;
+                    baseColorTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
+                }
+
+                pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), nullptr, diffuseFactor, 0.0f, 1.0f));
+
+                khrCmnConstantMat.reset(new KHRCmnConstantMaterial());
             }
 
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
                     material.name, isTransparent,
-                    simpleTex(RAW_TEXTURE_USAGE_NORMAL).get(), simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get(),
+                    normalTexture, emissiveTexture,
                     emissiveFactor * emissiveIntensity,
                     khrComMat, khrCmnConstantMat, pbrMetRough, pbrSpecGloss));
             materialsByName[materialHash(material)] = mData;

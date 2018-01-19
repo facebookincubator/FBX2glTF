@@ -30,7 +30,7 @@ using json = nlohmann::basic_json<workaround_fifo_map>;
 
 static const std::string KHR_DRACO_MESH_COMPRESSION            = "KHR_draco_mesh_compression";
 static const std::string KHR_MATERIALS_COMMON                  = "KHR_materials_common";
-static const std::string KHR_MATERIALS_CMN_CONSTANT                  = "KHR_materials_cmnConstant";
+static const std::string KHR_MATERIALS_CMN_CONSTANT                  = "KHR_materials_unlit";
 static const std::string KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS = "KHR_materials_pbrSpecularGlossiness";
 
 static const std::string extBufferFilename = "buffer.bin";
