@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
 
     std::string inputPath;
     std::string outputPath;
+    bool useModelFramerate = false;
 
     std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
 
@@ -71,6 +72,9 @@ int main(int argc, char *argv[])
                (
                    "d,draco", "Apply Draco mesh compression to geometries.",
                    cxxopts::value<bool>(gltfOptions.useDraco))
+               (
+                   "model-framerate", "Use the framerate of FBX model to sample animation keyframes.",
+                   cxxopts::value<bool>(useModelFramerate))
                ("flip-u", "Flip all U texture coordinates.")
                ("flip-v", "Flip all V texture coordinates (default behaviour!)")
                ("no-flip-v", "Suppress the default flipping of V texture coordinates")
@@ -197,7 +201,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
     if (verboseOutput) {
         fmt::printf("Loading FBX File: %s\n", inputPath);
     }
-    if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg")) {
+    if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg", useModelFramerate)) {
         fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
         return 1;
     }

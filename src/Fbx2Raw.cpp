@@ -688,7 +688,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         const std::shared_ptr<FbxMaterialAccess> fbxMaterial = materials.GetMaterial(polygonIndex);
 
         int textures[RAW_TEXTURE_USAGE_MAX];
-        std::fill_n(textures, RAW_TEXTURE_USAGE_MAX, -1);
+        std::fill_n(textures, (int)RAW_TEXTURE_USAGE_MAX, -1);
 
         FbxString  shadingModel, materialName;
         FbxVector4 ambient, specular, diffuse, emissive;
@@ -1005,9 +1005,10 @@ static void ReadNodeHierarchy(
     }
 }
 
-static void ReadAnimations(RawModel &raw, FbxScene *pScene)
+static void ReadAnimations(RawModel &raw, FbxScene *pScene, const bool useModelFramerate)
 {
-    FbxTime::EMode eMode = FbxTime::eFrames24;
+    FbxTime::EMode eMode = useModelFramerate ? pScene->GetGlobalSettings().GetTimeMode() : FbxTime::eFrames24;
+    
     const double epsilon = 1e-5f;
 
     const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
@@ -1261,7 +1262,7 @@ FindFbxTextures(
     }
 }
 
-bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExtensions)
+bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExtensions, const bool useModelFramerate)
 {
     FbxManager    *pManager    = FbxManager::Create();
     FbxIOSettings *pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
@@ -1302,7 +1303,7 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
 
     ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), "", "");
     ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
-    ReadAnimations(raw, pScene);
+    ReadAnimations(raw, pScene, useModelFramerate);
 
     pScene->Destroy();
     pManager->Destroy();

@@ -12,6 +12,6 @@
 
 #include "RawModel.h"
 
-bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExtensions);
+bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExtensions, const bool useModelFramerate);
 
 #endif // !__FBX2RAW_H__
