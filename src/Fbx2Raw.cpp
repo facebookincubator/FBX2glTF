@@ -26,6 +26,8 @@
 
 extern bool verboseOutput;
 
+float scaleFactor;
+
 template<typename _type_>
 class FbxLayerElementAccess
 {
@@ -757,6 +759,9 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     }
 
     RawSurface &rawSurface = raw.GetSurface(rawSurfaceIndex);
+    
+    Mat4f scaleMatrix = Mat4f::FromScaleVector(Vec3f(scaleFactor, scaleFactor, scaleFactor));
+    Mat4f invScaleMatrix = scaleMatrix.Inverse();
 
     rawSurface.skeletonRootId = (skinning.IsSkinned()) ? skinning.GetRootNode() : pNode->GetUniqueID();
     for (int jointIndex = 0; jointIndex < skinning.GetNodeCount(); jointIndex++) {
@@ -764,7 +769,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         raw.GetNode(raw.GetNodeById(jointId)).isJoint = true;
 
         rawSurface.jointIds.emplace_back(jointId);
-        rawSurface.inverseBindMatrices.push_back(toMat4f(skinning.GetInverseBindMatrix(jointIndex)));
+        rawSurface.inverseBindMatrices.push_back(invScaleMatrix * toMat4f(skinning.GetInverseBindMatrix(jointIndex)) * scaleMatrix);
         rawSurface.jointGeometryMins.emplace_back(FLT_MAX, FLT_MAX, FLT_MAX);
         rawSurface.jointGeometryMaxs.emplace_back(-FLT_MAX, -FLT_MAX, -FLT_MAX);
     }
@@ -871,9 +876,9 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
             const FbxVector2 fbxUV1      = uvLayer1.GetElement(polygonIndex, polygonVertexIndex, controlPointIndex, FbxVector2(0.0f, 0.0f));
 
             RawVertex &vertex = rawVertices[vertexIndex];
-            vertex.position[0]   = (float) fbxPosition[0];
-            vertex.position[1]   = (float) fbxPosition[1];
-            vertex.position[2]   = (float) fbxPosition[2];
+            vertex.position[0]   = (float) fbxPosition[0] * scaleFactor;
+            vertex.position[1]   = (float) fbxPosition[1] * scaleFactor;
+            vertex.position[2]   = (float) fbxPosition[2] * scaleFactor;
             vertex.normal[0]     = (float) fbxNormal[0];
             vertex.normal[1]     = (float) fbxNormal[1];
             vertex.normal[2]     = (float) fbxNormal[2];
@@ -907,7 +912,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
                     RawBlendVertex blendVertex;
                     // the morph target data must be transformed just as with the vertex positions above
                     const FbxVector4 &shapePosition = transform.MultNormalize(targetShape->positions[controlPointIndex]);
-                    blendVertex.position = toVec3f(shapePosition - fbxPosition);
+                    blendVertex.position = toVec3f(shapePosition - fbxPosition) * scaleFactor;
                     if (targetShape->normals.LayerPresent()) {
                         const FbxVector4 &normal = targetShape->normals.GetElement(
                             polygonIndex, polygonVertexIndex, controlPointIndex, FbxVector4(0.0f, 0.0f, 0.0f, 0.0f), inverseTransposeTransform, true);
@@ -1109,7 +1114,7 @@ static void ReadNodeHierarchy(
     const FbxQuaternion localRotation    = localTransform.GetQ();
     const FbxVector4    localScaling     = computeLocalScale(pNode);
 
-    node.translation = toVec3f(localTranslation);
+    node.translation = toVec3f(localTranslation) * scaleFactor;
     node.rotation    = toQuatf(localRotation);
     node.scale       = toVec3f(localScaling);
 
@@ -1130,7 +1135,7 @@ static void ReadNodeHierarchy(
 }
 
 static void ReadAnimations(RawModel &raw, FbxScene *pScene)
-{
+{    
     FbxTime::EMode eMode = FbxTime::eFrames24;
     const double epsilon = 1e-5f;
 
@@ -1206,7 +1211,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                     fabs(localScale[1] - baseScaling[1]) > epsilon ||
                     fabs(localScale[2] - baseScaling[2]) > epsilon);
 
-                channel.translations.push_back(toVec3f(localTranslation));
+                channel.translations.push_back(toVec3f(localTranslation) * scaleFactor);
                 channel.rotations.push_back(toQuatf(localRotation));
                 channel.scales.push_back(toVec3f(localScale));
             }
@@ -1420,9 +1425,7 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
 
     // Use meters as the default unit for glTF
     FbxSystemUnit sceneSystemUnit = pScene->GetGlobalSettings().GetSystemUnit();
-    if (sceneSystemUnit != FbxSystemUnit::m) {
-        FbxSystemUnit::m.ConvertScene(pScene);
-    }
+    scaleFactor = FbxSystemUnit::m.GetConversionFactorFrom(sceneSystemUnit);
 
     ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
     ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
