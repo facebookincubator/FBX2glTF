@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         false,         // embedResources
         false,         // useDraco
         false,         // useKHRMatCom
-        false,         // useKHRMatCmnConstant
+        false,         // useKHRMatUnlit
         false,         // usePBRMetRough
         false,         // usePBRSpecGloss
         false,         // useBlendShapeNormals
@@ -76,14 +76,14 @@ int main(int argc, char *argv[])
                ("flip-v", "Flip all V texture coordinates (default behaviour!)")
                ("no-flip-v", "Suppress the default flipping of V texture coordinates")
                (
-                   "khr-materials-common", "(WIP) Use KHR_materials_common extensions to specify Unlit/Lambert/Blinn/Phong shaders.",
-                   cxxopts::value<bool>(gltfOptions.useKHRMatCom))
-               (
-                   "khr-materials-cmnConstant", "(WIP) Use KHR_materials_cmnConstant extension to specify Unlit shader.",
-                   cxxopts::value<bool>(gltfOptions.useKHRMatCmnConstant))
-               (
-                   "pbr-metallic-roughness", "(WIP) Try to glean glTF 2.0 native PBR attributes from the FBX.",
+                   "pbr-metallic-roughness", "Try to glean glTF 2.0 native PBR attributes from the FBX.",
                    cxxopts::value<bool>(gltfOptions.usePBRMetRough))
+               (
+                   "khr-materials-unlit", "Use KHR_materials_unlit extension to specify Unlit shader.",
+                   cxxopts::value<bool>(gltfOptions.useKHRMatUnlit))
+               (
+                   "khr-materials-common", "(WIP) Use KHR_materials_common extensions to specify Lambert/Blinn/Phong shaders.",
+                   cxxopts::value<bool>(gltfOptions.useKHRMatCom))
                (
                    "pbr-specular-glossiness", "(WIP) Experimentally fill in the KHR_materials_pbrSpecularGlossiness extension.",
                    cxxopts::value<bool>(gltfOptions.usePBRSpecGloss))
@@ -133,7 +133,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         verboseOutput = true;
     }
 
-    if (!gltfOptions.useKHRMatCmnConstant && !gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
+    if (!gltfOptions.useKHRMatUnlit && !gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
         if (verboseOutput) {
             fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
         }
