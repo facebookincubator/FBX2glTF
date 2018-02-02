@@ -52,12 +52,18 @@ void NodeData::SetCamera(uint32_t cameraIndex)
 
 json NodeData::serialize() const
 {
-    json result = {
-        { "name", name },
-        { "translation", toStdVec(translation) },
-        { "rotation", toStdVec(rotation) },
-        { "scale", toStdVec(scale) }
+    json result = { { "name", name } };
+
+    // if any of the T/R/S have NaN components, just leave them out of the glTF
+    auto maybeAdd = [&](std::string key, std::vector<float> vec) {
+        if (std::none_of(vec.begin(), vec.end(), [&](float n) { return isnan(n); })) {
+            result[key] = vec;
+        }
     };
+    maybeAdd("translation", toStdVec(translation));
+    maybeAdd("rotation", toStdVec(rotation));
+    maybeAdd("scale", toStdVec(scale));
+
     if (!children.empty()) {
         result["children"] = children;
     }
