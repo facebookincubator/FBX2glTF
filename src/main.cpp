@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
         false,         // embedResources
         false,         // useDraco
         false,         // useKHRMatCom
+        false,         // useKHRMatCmnConstant
         false,         // usePBRMetRough
         false,         // usePBRSpecGloss
         false,         // useBlendShapeNormals
@@ -77,6 +78,9 @@ int main(int argc, char *argv[])
                (
                    "khr-materials-common", "(WIP) Use KHR_materials_common extensions to specify Unlit/Lambert/Blinn/Phong shaders.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatCom))
+               (
+                   "khr-materials-cmnConstant", "(WIP) Use KHR_materials_cmnConstant extension to specify Unlit shader.",
+                   cxxopts::value<bool>(gltfOptions.useKHRMatCmnConstant))
                (
                    "pbr-metallic-roughness", "(WIP) Try to glean glTF 2.0 native PBR attributes from the FBX.",
                    cxxopts::value<bool>(gltfOptions.usePBRMetRough))
@@ -129,7 +133,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         verboseOutput = true;
     }
 
-    if (!gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
+    if (!gltfOptions.useKHRMatCmnConstant && !gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
         if (verboseOutput) {
             fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
         }
