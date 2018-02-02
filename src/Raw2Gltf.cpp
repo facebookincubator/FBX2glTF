@@ -1097,7 +1097,6 @@ ModelData *Raw2Gltf(
                 encoder.SetAttributeQuantization(draco::GeometryAttribute::NORMAL, 10);
                 encoder.SetAttributeQuantization(draco::GeometryAttribute::COLOR, 8);
                 encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, 8);
-                encoder.SetEncodingMethod(draco::MeshEncoderMethod::MESH_EDGEBREAKER_ENCODING);
 
                 draco::EncoderBuffer dracoBuffer;
                 draco::Status        status = encoder.EncodeMeshToBuffer(*primitive->dracoMesh, &dracoBuffer);
