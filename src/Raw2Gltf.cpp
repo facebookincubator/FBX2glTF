@@ -701,10 +701,7 @@ ModelData *Raw2Gltf(
                     /**
                      * Traditional FBX Material -> PBR Met/Rough glTF.
                      *
-                     * Diffuse channel is used as base colour. No metallic/roughness texture is attempted. Constant
-                     * metallic/roughness values are hard-coded.
-                     *
-                     * TODO: If we have specular & optional shininess map, we can generate a reasonable rough/met map.
+                     * Diffuse channel is used as base colour.
                      */
                     const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
                     diffuseFactor = props->diffuseFactor;
@@ -731,7 +728,8 @@ ModelData *Raw2Gltf(
                     metRoughTex = merge3Tex("rough_met",
                         RAW_TEXTURE_USAGE_SPECULAR, RAW_TEXTURE_USAGE_SHININESS, RAW_TEXTURE_USAGE_DIFFUSE,
                         [&](const std::vector<const pixel *> pixels) -> pixel {
-                            const Vec3f specular = pixels[0] ? toVec3f(*pixels[0]) : props->specularFactor;
+                            const Vec3f specular = Vec3f(0.4f, 0.4f, 0.4f) +
+                                0.2f * (pixels[0] ? toVec3f(*pixels[0]) : props->specularFactor);
                             float shininess = pixels[1] ? (*pixels[1])[0] : props->shininess;
                             const Vec4f diffuse = pixels[2] ? toVec4f(*pixels[2]) : props->diffuseFactor;
 
@@ -748,7 +746,8 @@ ModelData *Raw2Gltf(
                         baseColorTex = merge2Tex("base_col", RAW_TEXTURE_USAGE_DIFFUSE, RAW_TEXTURE_USAGE_SPECULAR,
                         [&](const std::vector<const pixel *> pixels) -> pixel {
                             const Vec4f diffuse = pixels[0] ? toVec4f(*pixels[0]) : props->diffuseFactor;
-                            const Vec3f specular = pixels[1] ? toVec3f(*pixels[1]) : props->specularFactor;
+                            const Vec3f specular = Vec3f(0.4f, 0.4f, 0.4f) +
+                                0.2f * (pixels[1] ? toVec3f(*pixels[1]) : props->specularFactor);
 
                             float oneMinus = 1 - getMaxComponent(specular);
 
