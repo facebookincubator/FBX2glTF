@@ -210,6 +210,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         raw.TransformTextures(texturesTransforms);
     }
     raw.Condense();
+    raw.Repair();
 
     std::ofstream outStream; // note: auto-flushes in destructor
     const auto streamStart = outStream.tellp();

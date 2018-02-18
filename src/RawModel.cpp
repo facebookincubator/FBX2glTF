@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <cmath>
 #include <map>
+#include <set>
 
 #if defined( __unix__ )
 #include <algorithm>
@@ -21,6 +22,8 @@
 #include "utils/String_Utils.h"
 #include "utils/Image_Utils.h"
 #include "RawModel.h"
+
+extern bool verboseOutput;
 
 bool RawVertex::operator==(const RawVertex &other) const
 {
@@ -258,6 +261,16 @@ int RawModel::AddNode(const long id, const char *name, const long parentId)
     return (int) nodes.size() - 1;
 }
 
+void RawModel::Repair()
+{
+    const auto &brokenNormalVerts = this->CalculateBrokenNormals();
+    if (verboseOutput) {
+        fmt::printf("Repaired %lu empty normals.\n", brokenNormalVerts.size());
+    }
+
+}
+
+
 void RawModel::Condense()
 {
     // Only keep surfaces that are referenced by one or more triangles.
@@ -267,8 +280,8 @@ void RawModel::Condense()
         surfaces.clear();
 
         for (auto &triangle : triangles) {
-            const RawSurface &surface     = oldSurfaces[triangle.surfaceIndex];
-            const int        surfaceIndex = AddSurface(surface.name.c_str(), surface.id);
+            const RawSurface &surface = oldSurfaces[triangle.surfaceIndex];
+            const int surfaceIndex = AddSurface(surface.name.c_str(), surface.id);
             surfaces[surfaceIndex] = surface;
             triangle.surfaceIndex = surfaceIndex;
         }
@@ -281,8 +294,8 @@ void RawModel::Condense()
         materials.clear();
 
         for (auto &triangle : triangles) {
-            const RawMaterial &material     = oldMaterials[triangle.materialIndex];
-            const int         materialIndex = AddMaterial(material);
+            const RawMaterial &material = oldMaterials[triangle.materialIndex];
+            const int materialIndex = AddMaterial(material);
             materials[materialIndex] = material;
             triangle.materialIndex = materialIndex;
         }
@@ -534,4 +547,64 @@ int RawModel::GetSurfaceById(const long surfaceId) const
         }
     }
     return -1;
+}
+
+Vec3f RawModel::getFaceNormal(int verts[3]) const
+{
+    const float l0 = (vertices[verts[1]].position - vertices[verts[0]].position ).LengthSquared();
+    const float l1 = (vertices[verts[2]].position - vertices[verts[1]].position ).LengthSquared();
+    const float l2 = (vertices[verts[0]].position - vertices[verts[2]].position ).LengthSquared();
+    const int index = ( l0 > l1 ) ? ( l0 > l2 ? 2 : 1 ) : ( l1 > l2 ? 0 : 1 );
+
+    const Vec3f e0 = vertices[verts[(index + 1) % 3]].position - vertices[verts[index]].position;
+    const Vec3f e1 = vertices[verts[(index + 2) % 3]].position - vertices[verts[index]].position;
+
+    auto result = Vec3f::CrossProduct(e0, e1);
+    if (result.LengthSquared() < FLT_MIN) {
+        return Vec3f { 0.0f };
+    }
+    result.Normalize();
+    return result;
+}
+
+std::set<int> RawModel::CalculateNormals()
+{
+    Vec3f averagePos = Vec3f { 0.0f };
+    std::set<int> brokenVerts;
+    for (int vertIx = 0; vertIx < vertices.size(); vertIx ++) {
+        averagePos += (vertices[vertIx].position / vertices.size());
+        if (vertices[vertIx].normal.LengthSquared() < FLT_MIN) {
+            vertices[vertIx].normal = Vec3f { 0.0f };
+            brokenVerts.emplace(vertIx);
+        }
+    }
+
+	for (auto &triangle : triangles) {
+        bool relevant = false;
+        for (int vertIx : triangle.verts) {
+            relevant |= (brokenVerts.count(vertIx) > 0);
+		}
+        if (!relevant) {
+            continue;
+        }
+        Vec3f faceNormal = this->getFaceNormal(triangle.verts);
+        for (int vertIx : triangle.verts) {
+            if (brokenVerts.count(vertIx) > 0) {
+                vertices[vertIx].normal += faceNormal;
+            }
+		}
+	}
+
+    for (int vertIx : brokenVerts) {
+        RawVertex &vertex = vertices[vertIx];
+        if (vertex.normal.LengthSquared() < FLT_MIN) {
+            vertex.normal = vertex.position - averagePos;
+            if (vertex.normal.LengthSquared() < FLT_MIN) {
+                vertex.normal = Vec3f { 0.0f, 1.0f, 0.0f };
+                continue;
+            }
+        }
+        vertex.normal.Normalize();
+	}
+    return brokenVerts;
 }

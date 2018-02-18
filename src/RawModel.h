@@ -12,6 +12,7 @@
 
 #include <unordered_map>
 #include <functional>
+#include <set>
 
 enum RawVertexAttribute
 {
@@ -375,7 +376,11 @@ public:
     // Remove unused vertices, textures or materials after removing vertex attributes, textures, materials or surfaces.
     void Condense();
 
+    void Repair();
+
     void TransformTextures(const std::vector<std::function<Vec2f(Vec2f)>> &transforms);
+
+    std::set<int> CalculateBrokenNormals();
 
     // Get the attributes stored per vertex.
     int GetVertexAttributes() const { return vertexAttributes; }
@@ -428,6 +433,8 @@ public:
         std::vector<RawModel> &materialModels, const int maxModelVertices, const int keepAttribs, const bool forceDiscrete) const;
 
 private:
+    Vec3f getFaceNormal(int verts[3]) const;
+
     long                                             rootNodeId;
     int                                              vertexAttributes;
     std::unordered_map<RawVertex, int, VertexHasher> vertexHash;
