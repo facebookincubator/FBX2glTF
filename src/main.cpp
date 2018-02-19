@@ -42,18 +42,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
 
-    GltfOptions gltfOptions{
-        -1,            // keepAttribs
-        false,         // outputBinary
-        false,         // embedResources
-        false,         // useDraco
-        false,         // useKHRMatCom
-        false,         // useKHRMatUnlit
-        false,         // usePBRMetRough
-        false,         // usePBRSpecGloss
-        false,         // useBlendShapeNormals
-        false,         // useBlendShapeTangents
-    };
+    GltfOptions gltfOptions;
 
     options.positional_help("[<FBX File>]");
     options.add_options()
@@ -93,6 +82,9 @@ int main(int argc, char *argv[])
                (
                    "blend-shape-tangents", "Include blend shape tangents, if reported present by the FBX SDK.",
                    cxxopts::value<bool>(gltfOptions.useBlendShapeTangents))
+               (
+                   "compute-normals", "When to compute normals for vertices (never|broken|missing|always).",
+                   cxxopts::value<std::vector<std::string>>())
                (
                    "k,keep-attribute", "Used repeatedly to build a limiting set of vertex attributes to keep.",
                    cxxopts::value<std::vector<std::string>>())
@@ -152,9 +144,27 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         fmt::printf("Suppressing --flip-v transformation of texture coordinates.\n");
     }
 
+    if (options.count("compute-normals") > 0) {
+        for (const std::string &choice : options["compute-normals"].as<std::vector<std::string>>()) {
+            if (choice == "never") {
+                gltfOptions.computeNormals = NEVER;
+            } else if (choice == "broken") {
+                gltfOptions.computeNormals = BROKEN;
+            } else if (choice == "missing") {
+                gltfOptions.computeNormals = MISSING;
+            } else if (choice == "always") {
+                gltfOptions.computeNormals = ALWAYS;
+            } else {
+                fmt::printf("Unknown --compute-normals: %s\n", choice);
+                fmt::printf(options.help());
+                return 1;
+            }
+        }
+    }
+
     if (options.count("keep-attribute") > 0) {
         gltfOptions.keepAttribs = RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
-        for (const auto &attribute : options["keep-attribute"].as<std::vector<std::string>>()) {
+        for (std::string attribute : options["keep-attribute"].as<std::vector<std::string>>()) {
             if (attribute == "position") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION; }
             else if (attribute == "normal") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_NORMAL; }
             else if (attribute == "tangent") { gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_TANGENT; }
@@ -210,7 +220,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         raw.TransformTextures(texturesTransforms);
     }
     raw.Condense();
-    raw.Repair();
+    raw.TransformGeometry(gltfOptions.computeNormals);
 
     std::ofstream outStream; // note: auto-flushes in destructor
     const auto streamStart = outStream.tellp();

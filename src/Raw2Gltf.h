@@ -35,38 +35,6 @@ static const std::string KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS = "KHR_materials_
 
 static const std::string extBufferFilename = "buffer.bin";
 
-/**
- * User-supplied options that dictate the nature of the glTF being generated.
- */
-struct GltfOptions
-{
-    /**
-     * If negative, disabled. Otherwise, a bitfield of RawVertexAttributes that
-     * specify the largest set of attributes that'll ever be kept for a vertex.
-     * The special bit RAW_VERTEX_ATTRIBUTE_AUTO triggers smart mode, where the
-     * attributes to keep are inferred from which textures are supplied.
-     */
-    int  keepAttribs;
-    /** Whether to output a .glb file, the binary format of glTF. */
-    bool outputBinary;
-    /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
-    bool embedResources;
-    /** Whether to use KHR_draco_mesh_compression to minimize static geometry size. */
-    bool useDraco;
-    /** Whether to use KHR_materials_common to extend materials definitions. */
-    bool useKHRMatCom;
-    /** Whether to use KHR_materials_unlit to extend materials definitions. */
-    bool useKHRMatUnlit;
-    /** Whether to populate the pbrMetallicRoughness substruct in materials. */
-    bool usePBRMetRough;
-    /** Whether to use KHR_materials_pbrSpecularGlossiness to extend material definitions. */
-    bool usePBRSpecGloss;
-    /** Whether to include blend shape normals, if present according to the SDK. */
-    bool useBlendShapeNormals;
-    /** Whether to include blend shape tangents, if present according to the SDK. */
-    bool useBlendShapeTangents;
-};
-
 struct ComponentType {
     // OpenGL Datatype enums
     enum GL_DataType

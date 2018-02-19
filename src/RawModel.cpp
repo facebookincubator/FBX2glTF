@@ -261,16 +261,6 @@ int RawModel::AddNode(const long id, const char *name, const long parentId)
     return (int) nodes.size() - 1;
 }
 
-void RawModel::Repair()
-{
-    const auto &brokenNormalVerts = this->CalculateBrokenNormals();
-    if (verboseOutput) {
-        fmt::printf("Repaired %lu empty normals.\n", brokenNormalVerts.size());
-    }
-
-}
-
-
 void RawModel::Condense()
 {
     // Only keep surfaces that are referenced by one or more triangles.
@@ -331,6 +321,30 @@ void RawModel::Condense()
                 triangle.verts[j] = AddVertex(oldVertices[triangle.verts[j]]);
             }
         }
+    }
+}
+
+void RawModel::TransformGeometry(ComputeNormalsOption normals)
+{
+    switch(normals) {
+        case NEVER:
+            break;
+        case MISSING:
+            if ((vertexAttributes & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
+                break;
+            }
+            // otherwise fall through
+        case BROKEN:
+        case ALWAYS:
+            size_t computedNormalsCount = this->CalculateNormals(normals == ComputeNormalsOption::BROKEN);
+            if (verboseOutput) {
+                if (normals == ComputeNormalsOption::BROKEN) {
+                    fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
+                } else {
+                    fmt::printf("Computed %lu normals.\n", computedNormalsCount);
+                }
+            }
+            break;
     }
 }
 
@@ -567,14 +581,18 @@ Vec3f RawModel::getFaceNormal(int verts[3]) const
     return result;
 }
 
-std::set<int> RawModel::CalculateNormals()
+size_t RawModel::CalculateNormals(bool onlyBroken)
 {
     Vec3f averagePos = Vec3f { 0.0f };
     std::set<int> brokenVerts;
     for (int vertIx = 0; vertIx < vertices.size(); vertIx ++) {
-        averagePos += (vertices[vertIx].position / vertices.size());
-        if (vertices[vertIx].normal.LengthSquared() < FLT_MIN) {
-            vertices[vertIx].normal = Vec3f { 0.0f };
+        RawVertex &vertex = vertices[vertIx];
+        averagePos += (vertex.position / vertices.size());
+        if (onlyBroken && (vertex.normal.LengthSquared() >= FLT_MIN)) {
+            continue;
+        }
+        vertex.normal = Vec3f { 0.0f };
+        if (onlyBroken) {
             brokenVerts.emplace(vertIx);
         }
     }
@@ -589,13 +607,16 @@ std::set<int> RawModel::CalculateNormals()
         }
         Vec3f faceNormal = this->getFaceNormal(triangle.verts);
         for (int vertIx : triangle.verts) {
-            if (brokenVerts.count(vertIx) > 0) {
+            if (!onlyBroken || brokenVerts.count(vertIx) > 0) {
                 vertices[vertIx].normal += faceNormal;
             }
 		}
 	}
 
-    for (int vertIx : brokenVerts) {
+    for (int vertIx = 0; vertIx < vertices.size(); vertIx ++) {
+        if (onlyBroken && brokenVerts.count(vertIx) == 0) {
+            continue;
+        }
         RawVertex &vertex = vertices[vertIx];
         if (vertex.normal.LengthSquared() < FLT_MIN) {
             vertex.normal = vertex.position - averagePos;
@@ -606,5 +627,5 @@ std::set<int> RawModel::CalculateNormals()
         }
         vertex.normal.Normalize();
 	}
-    return brokenVerts;
+    return onlyBroken ? brokenVerts.size() : vertices.size();
 }

@@ -14,6 +14,50 @@
 #include <functional>
 #include <set>
 
+/**
+ * The variuos situations in which the user may wish for us to (re-)compute normals for our vertices.
+ */
+enum ComputeNormalsOption {
+    NEVER,      // do not ever compute any normals (results in broken glTF for some sources)
+    BROKEN,     // replace zero-length normals in any mesh that has a normal layer
+    MISSING,    // if a mesh lacks normals, compute them all
+    ALWAYS      // compute a new normal for every vertex, obliterating whatever may have been there before
+};
+
+/**
+ * User-supplied options that dictate the nature of the glTF being generated.
+ */
+struct GltfOptions
+{
+    /**
+     * If negative, disabled. Otherwise, a bitfield of RawVertexAttributes that
+     * specify the largest set of attributes that'll ever be kept for a vertex.
+     * The special bit RAW_VERTEX_ATTRIBUTE_AUTO triggers smart mode, where the
+     * attributes to keep are inferred from which textures are supplied.
+     */
+    int  keepAttribs { -1 };
+    /** Whether to output a .glb file, the binary format of glTF. */
+    bool outputBinary { false };
+    /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
+    bool embedResources { false };
+    /** Whether to use KHR_draco_mesh_compression to minimize static geometry size. */
+    bool useDraco { false };
+    /** Whether to use KHR_materials_common to extend materials definitions. */
+    bool useKHRMatCom { false };
+    /** Whether to use KHR_materials_unlit to extend materials definitions. */
+    bool useKHRMatUnlit { false };
+    /** Whether to populate the pbrMetallicRoughness substruct in materials. */
+    bool usePBRMetRough { false };
+    /** Whether to use KHR_materials_pbrSpecularGlossiness to extend material definitions. */
+    bool usePBRSpecGloss { false };
+    /** Whether to include blend shape normals, if present according to the SDK. */
+    bool useBlendShapeNormals { false };
+    /** Whether to include blend shape tangents, if present according to the SDK. */
+    bool useBlendShapeTangents { false };
+    /** When to compute vertex normals from geometry. */
+    ComputeNormalsOption computeNormals = ComputeNormalsOption::BROKEN;
+};
+
 enum RawVertexAttribute
 {
     RAW_VERTEX_ATTRIBUTE_POSITION      = 1 << 0,
@@ -376,11 +420,11 @@ public:
     // Remove unused vertices, textures or materials after removing vertex attributes, textures, materials or surfaces.
     void Condense();
 
-    void Repair();
+    void TransformGeometry(ComputeNormalsOption);
 
     void TransformTextures(const std::vector<std::function<Vec2f(Vec2f)>> &transforms);
 
-    std::set<int> CalculateBrokenNormals();
+    size_t CalculateNormals(bool);
 
     // Get the attributes stored per vertex.
     int GetVertexAttributes() const { return vertexAttributes; }
