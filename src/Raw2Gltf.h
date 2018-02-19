@@ -28,12 +28,10 @@ using json = nlohmann::basic_json<workaround_fifo_map>;
 #include "FBX2glTF.h"
 #include "RawModel.h"
 
-static const std::string KHR_DRACO_MESH_COMPRESSION            = "KHR_draco_mesh_compression";
-static const std::string KHR_MATERIALS_COMMON                  = "KHR_materials_common";
-static const std::string KHR_MATERIALS_CMN_UNLIT               = "KHR_materials_unlit";
-static const std::string KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS = "KHR_materials_pbrSpecularGlossiness";
+const std::string KHR_DRACO_MESH_COMPRESSION            = "KHR_draco_mesh_compression";
+const std::string KHR_MATERIALS_CMN_UNLIT               = "KHR_materials_unlit";
 
-static const std::string extBufferFilename = "buffer.bin";
+const std::string extBufferFilename = "buffer.bin";
 
 struct ComponentType {
     // OpenGL Datatype enums
@@ -52,8 +50,8 @@ struct ComponentType {
     const unsigned int size;
 };
 
-static const ComponentType CT_USHORT = {ComponentType::GL_UNSIGNED_SHORT, 2};
-static const ComponentType CT_FLOAT  = {ComponentType::GL_FLOAT, 4};
+const ComponentType CT_USHORT = {ComponentType::GL_UNSIGNED_SHORT, 2};
+const ComponentType CT_FLOAT  = {ComponentType::GL_FLOAT, 4};
 
 // Map our low-level data types for glTF output
 struct GLType {
@@ -101,16 +99,16 @@ struct GLType {
     const std::string   dataType;
 };
 
-static const GLType GLT_FLOAT  = {CT_FLOAT, 1, "SCALAR"};
-static const GLType GLT_USHORT = {CT_USHORT, 1, "SCALAR"};
-static const GLType GLT_VEC2F  = {CT_FLOAT, 2, "VEC2"};
-static const GLType GLT_VEC3F  = {CT_FLOAT, 3, "VEC3"};
-static const GLType GLT_VEC4F  = {CT_FLOAT, 4, "VEC4"};
-static const GLType GLT_VEC4I  = {CT_USHORT, 4, "VEC4"};
-static const GLType GLT_MAT2F  = {CT_USHORT, 4, "MAT2"};
-static const GLType GLT_MAT3F  = {CT_USHORT, 9, "MAT3"};
-static const GLType GLT_MAT4F  = {CT_FLOAT, 16, "MAT4"};
-static const GLType GLT_QUATF  = {CT_FLOAT, 4, "VEC4"};
+const GLType GLT_FLOAT  = {CT_FLOAT, 1, "SCALAR"};
+const GLType GLT_USHORT = {CT_USHORT, 1, "SCALAR"};
+const GLType GLT_VEC2F  = {CT_FLOAT, 2, "VEC2"};
+const GLType GLT_VEC3F  = {CT_FLOAT, 3, "VEC3"};
+const GLType GLT_VEC4F  = {CT_FLOAT, 4, "VEC4"};
+const GLType GLT_VEC4I  = {CT_USHORT, 4, "VEC4"};
+const GLType GLT_MAT2F  = {CT_USHORT, 4, "MAT2"};
+const GLType GLT_MAT3F  = {CT_USHORT, 9, "MAT3"};
+const GLType GLT_MAT4F  = {CT_FLOAT, 16, "MAT4"};
+const GLType GLT_QUATF  = {CT_FLOAT, 4, "VEC4"};
 
 /**
  * The base of any indexed glTF entity.

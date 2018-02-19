@@ -23,53 +23,9 @@ struct Tex
     const uint32_t texCoord;
 };
 
-struct KHRCommonMats
-{
-    enum MaterialType
-    {
-        Blinn,
-        Phong,
-        Lambert,
-        Constant,
-    };
-
-    KHRCommonMats(
-        MaterialType type,
-        const TextureData *shininessTexture, float shininess,
-        const TextureData *ambientTexture, const Vec3f &ambientFactor,
-        const TextureData *diffuseTexture, const Vec4f &diffuseFactor,
-        const TextureData *specularTexture, const Vec3f &specularFactor);
-
-    static std::string typeDesc(MaterialType type);
-
-    const MaterialType         type;
-    const std::unique_ptr<Tex> shininessTexture;
-    const float                shininess;
-    const std::unique_ptr<Tex> ambientTexture;
-    const Vec3f                ambientFactor;
-    const std::unique_ptr<Tex> diffuseTexture;
-    const Vec4f                diffuseFactor;
-    const std::unique_ptr<Tex> specularTexture;
-    const Vec3f                specularFactor;
-};
-
 struct KHRCmnUnlitMaterial
 {
     KHRCmnUnlitMaterial();
-};
-
-struct PBRSpecularGlossiness
-{
-    PBRSpecularGlossiness(
-        const TextureData *diffuseTexture, const Vec4f &diffuseFactor,
-        const TextureData *specularGlossinessTexture,
-        const Vec3f &specularFactor, float glossinessFactor);
-
-    std::unique_ptr<Tex> diffuseTexture;
-    const Vec4f          diffuseFactor;
-    std::unique_ptr<Tex> specularGlossinessTexture;
-    const Vec3f          specularFactor;
-    const float          glossinessFactor;
 };
 
 struct PBRMetallicRoughness
@@ -90,10 +46,8 @@ struct MaterialData : Holdable
     MaterialData(
         std::string name, bool isTransparent, const TextureData *normalTexture,
         const TextureData *emissiveTexture, const Vec3f &emissiveFactor,
-        std::shared_ptr<KHRCommonMats> const khrCommonMats,
         std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
-        std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness,
-        std::shared_ptr<PBRSpecularGlossiness> const pbrSpecularGlossiness);
+        std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness);
 
     json serialize() const override;
 
@@ -103,16 +57,12 @@ struct MaterialData : Holdable
     const std::unique_ptr<const Tex> emissiveTexture;
     const Vec3f                      emissiveFactor;
 
-    const std::shared_ptr<const KHRCommonMats>          khrCommonMats;
-    const std::shared_ptr<const KHRCmnUnlitMaterial> khrCmnConstantMaterial;
+    const std::shared_ptr<const KHRCmnUnlitMaterial>    khrCmnConstantMaterial;
     const std::shared_ptr<const PBRMetallicRoughness>   pbrMetallicRoughness;
-    const std::shared_ptr<const PBRSpecularGlossiness>  pbrSpecularGlossiness;
 };
 
 void to_json(json &j, const Tex &data);
-void to_json(json &j, const KHRCommonMats &d);
 void to_json(json &j, const KHRCmnUnlitMaterial &d);
-void to_json(json &j, const PBRSpecularGlossiness &d);
 void to_json(json &j, const PBRMetallicRoughness &d);
 
 #endif //FBX2GLTF_MATERIALDATA_H

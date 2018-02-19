@@ -26,7 +26,6 @@
 #include "utils/String_Utils.h"
 #include "utils/File_Utils.h"
 #include "Fbx2Raw.h"
-#include "RawModel.h"
 #include "Raw2Gltf.h"
 
 bool verboseOutput = false;
@@ -70,12 +69,6 @@ int main(int argc, char *argv[])
                (
                    "khr-materials-unlit", "Use KHR_materials_unlit extension to specify Unlit shader.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatUnlit))
-               (
-                   "khr-materials-common", "(WIP) Use KHR_materials_common extensions to specify Lambert/Blinn/Phong shaders.",
-                   cxxopts::value<bool>(gltfOptions.useKHRMatCom))
-               (
-                   "pbr-specular-glossiness", "(WIP) Experimentally fill in the KHR_materials_pbrSpecularGlossiness extension.",
-                   cxxopts::value<bool>(gltfOptions.usePBRSpecGloss))
                (
                    "blend-shape-normals", "Include blend shape normals, if reported present by the FBX SDK.",
                    cxxopts::value<bool>(gltfOptions.useBlendShapeNormals))
@@ -125,7 +118,7 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         verboseOutput = true;
     }
 
-    if (!gltfOptions.useKHRMatUnlit && !gltfOptions.useKHRMatCom && !gltfOptions.usePBRSpecGloss && !gltfOptions.usePBRMetRough) {
+    if (!gltfOptions.useKHRMatUnlit && !gltfOptions.usePBRMetRough) {
         if (verboseOutput) {
             fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
         }

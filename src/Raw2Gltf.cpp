@@ -624,12 +624,14 @@ ModelData *Raw2Gltf(
             float emissiveIntensity;
 
             const Vec3f dielectric(0.04f, 0.04f, 0.04f);
-            const float epsilon = 1e-6f;
 
             // acquire the texture of a specific RawTextureUsage as *TextData, or nullptr if none exists
             auto simpleTex = [&](RawTextureUsage usage) -> std::shared_ptr<TextureData> {
                 return (material.textures[usage] >= 0) ? getSimpleTexture(material.textures[usage], "simple") : nullptr;
             };
+
+            TextureData *normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
+            TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
 
             // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
             auto merge2Tex = [&](
@@ -656,19 +658,6 @@ ModelData *Raw2Gltf(
                 return getDerivedTexture(
                     { material.textures[u1], material.textures[u2], material.textures[u3] },
                     combine, tag, outputHasAlpha);
-            };
-
-            auto getMaxComponent = [&](const Vec3f &color) {
-                return fmax(color.x, fmax(color.y, color.z));
-            };
-            auto getPerceivedBrightness = [&](const Vec3f &color) {
-                return sqrt(0.299 * color.x * color.x + 0.587 * color.y * color.y + 0.114 * color.z * color.z);
-            };
-            auto toVec3f = [&](const pixel &pix) -> const Vec3f {
-                return Vec3f(pix[0], pix[1], pix[2]);
-            };
-            auto toVec4f = [&](const pixel &pix) -> const Vec4f {
-                return Vec4f(pix[0], pix[1], pix[2], pix[3]);
             };
 
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
@@ -701,212 +690,25 @@ ModelData *Raw2Gltf(
                     /**
                      * Traditional FBX Material -> PBR Met/Rough glTF.
                      *
-                     * Diffuse channel is used as base colour.
+                     * Diffuse channel is used as base colour. Simple constants for metallic and roughness.
                      */
                     const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
                     diffuseFactor = props->diffuseFactor;
-                    // TODO: make configurable on the command line, or do a better job guessing from other, supplied params
                     if (material.info->shadingModel == RAW_SHADING_MODEL_LAMBERT) {
-                        metallic  = 0.6f;
-                        roughness = 1.0f;
-                    } else {
                         metallic  = 0.2f;
+                        roughness = 0.8f;
+                    } else {
+                        metallic  = 0.4f;
                         roughness = 0.6f;
                     }
-                    auto solveMetallic = [&](float pDiff, float pSpec, float oneMinusSpecularStrength)
-                    {
-                        if (pSpec < dielectric.x) {
-                            return 0.0;
-                        }
+                    baseColorTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
 
-                        float a = dielectric.x;
-                        float b = pDiff * oneMinusSpecularStrength / (1 - dielectric.x) + pSpec - 2 * dielectric.x;
-                        float c = dielectric.x - pSpec;
-                        float D = fmax(b * b - 4 * a * c, 0);
-                        return fmax(0.0, fmin(1.0, (-b + sqrt(D)) / (2 * a)));
-                    };
-                    metRoughTex = merge3Tex("rough_met",
-                        RAW_TEXTURE_USAGE_SPECULAR, RAW_TEXTURE_USAGE_SHININESS, RAW_TEXTURE_USAGE_DIFFUSE,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            const Vec3f specular = Vec3f(0.4f, 0.4f, 0.4f) +
-                                0.2f * (pixels[0] ? toVec3f(*pixels[0]) : props->specularFactor);
-                            float shininess = pixels[1] ? (*pixels[1])[0] : props->shininess;
-                            const Vec4f diffuse = pixels[2] ? toVec4f(*pixels[2]) : props->diffuseFactor;
-
-                            float pixelMet = solveMetallic(
-                                getPerceivedBrightness(diffuse.xyz()),
-                                getPerceivedBrightness(specular),
-                                1 - getMaxComponent(specular));
-                            float pixelRough = 1 - shininess;
-
-                            return { 0, pixelRough, pixelMet, 0 };
-                    }, false);
-                    if (material.textures[RAW_TEXTURE_USAGE_DIFFUSE] >= 0) {
-                        const RawTexture &diffuseTex = raw.GetTexture(material.textures[RAW_TEXTURE_USAGE_DIFFUSE]);
-                        baseColorTex = merge2Tex("base_col", RAW_TEXTURE_USAGE_DIFFUSE, RAW_TEXTURE_USAGE_SPECULAR,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            const Vec4f diffuse = pixels[0] ? toVec4f(*pixels[0]) : props->diffuseFactor;
-                            const Vec3f specular = Vec3f(0.4f, 0.4f, 0.4f) +
-                                0.2f * (pixels[1] ? toVec3f(*pixels[1]) : props->specularFactor);
-
-                            float oneMinus = 1 - getMaxComponent(specular);
-
-                            float pixelMet = solveMetallic(
-                                getPerceivedBrightness(diffuse.xyz()),
-                                getPerceivedBrightness(specular),
-                                oneMinus);
-
-                            Vec3f fromDiffuse = diffuse.xyz() * (oneMinus / (1.0f - dielectric.x) / fmax(1.0f - pixelMet, epsilon));
-                            Vec3f fromSpecular = specular - dielectric * (1.0f - pixelMet) * (1.0f / fmax(pixelMet, epsilon));
-                            Vec3f baseColor = Vec3f::Lerp(fromDiffuse, fromSpecular, pixelMet * pixelMet);
-
-                            return { baseColor[0], baseColor[1], baseColor[2], diffuse[3] };
-                        }, diffuseTex.occlusion == RAW_TEXTURE_OCCLUSION_TRANSPARENT);
-                    }
                     emissiveFactor    = props->emissiveFactor;
                     emissiveIntensity = 1.0f;
                 }
                 pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), metRoughTex.get(), diffuseFactor, metallic, roughness));
             }
 
-            std::shared_ptr<PBRSpecularGlossiness> pbrSpecGloss;
-            if (options.usePBRSpecGloss) {
-                Vec4f                        diffuseFactor;
-                Vec3f                        specularFactor;
-                float                        glossiness;
-                std::shared_ptr<TextureData> specGlossTex;
-                std::shared_ptr<TextureData> diffuseTex;
-
-                const Vec3f dielectric(0.04f, 0.04f, 0.04f);
-                const float epsilon = 1e-6f;
-                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
-                    /**
-                     * PBR FBX Material -> PBR Spec/Gloss glTF.
-                     *
-                     * TODO: A complete mess. Low priority.
-                     */
-                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
-                    // we can estimate spec/gloss from met/rough by between Vec4f(0.04, 0.04, 0.04) and baseColor
-                    // according to metalness, and then taking gloss to be the inverse of roughness
-                    specGlossTex = merge3Tex("specgloss",
-                        RAW_TEXTURE_USAGE_ALBEDO, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            Vec3f baseColor(1.0f);
-                            if (pixels[0]) {
-                                baseColor.x = (*pixels[0])[0];
-                                baseColor.y = (*pixels[0])[1];
-                                baseColor.z = (*pixels[0])[2];
-                            }
-                            float metallic = pixels[1] ? (*pixels[1])[0] : 1.0f;
-                            float roughness = pixels[2] ? (*pixels[2])[0] : 1.0f;
-                            Vec3f spec = Vec3f::Lerp(dielectric, baseColor, metallic);
-                            return { spec[0], spec[1], spec[2], 1.0f - roughness };
-                         }, false);
-                    diffuseTex = merge2Tex("albedo",
-                        RAW_TEXTURE_USAGE_ALBEDO, RAW_TEXTURE_USAGE_METALLIC,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            Vec3f baseColor(1.0f);
-                            float alpha = 1.0f;
-                            if (pixels[0]) {
-                                baseColor[0] = (*pixels[0])[0];
-                                baseColor[1] = (*pixels[0])[1];
-                                baseColor[2] = (*pixels[0])[2];
-                                alpha = (*pixels[0])[3];
-                            }
-                            float metallic = pixels[1] ? (*pixels[1])[0] : 1.0f;
-                            Vec3f spec = Vec3f::Lerp(dielectric, baseColor, metallic);
-                            float maxSpecComp = fmax(fmax(spec.x, spec.y), spec.z);
-                            // attenuate baseColor to get specgloss-compliant diffuse; for details consult
-                            // https://github.com/KhronosGroup/glTF/tree/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness
-                            Vec3f diffuse = baseColor * (1 - dielectric[0]) * (1 - metallic) * fmax(1.0f - maxSpecComp, epsilon);
-                            return { diffuse[0], diffuse[1], diffuse[2], alpha };
-                         }, true);
-                    diffuseFactor = props->diffuseFactor;
-                    specularFactor = Vec3f::Lerp(dielectric, props->diffuseFactor.xyz(), props->metallic);
-                    glossiness = 1.0f - props->roughness;
-
-                } else {
-                    /**
-                     * Traditional FBX Material -> PBR Spec/Gloss glTF.
-                     *
-                     * TODO: A complete mess. Low priority.
-                     */
-                    // TODO: this section a ludicrous over-simplifictation; we can surely do better.
-                    const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
-                    specGlossTex = merge2Tex("specgloss",
-                        RAW_TEXTURE_USAGE_SPECULAR, RAW_TEXTURE_USAGE_SHININESS,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            const auto &spec = *(pixels[0]);
-                            const auto &shine = *(pixels[1]);
-                            return { spec[0], spec[1], spec[2], shine[0] };
-                        }, false);
-                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
-                    diffuseFactor = props->diffuseFactor;
-                    specularFactor = props->specularFactor;
-                    glossiness = props->shininess;
-                }
-
-                pbrSpecGloss.reset(
-                    new PBRSpecularGlossiness(
-                        diffuseTex.get(), diffuseFactor, specGlossTex.get(), specularFactor, glossiness));
-            }
-
-            TextureData *normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
-            TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
-
-            std::shared_ptr<KHRCommonMats> khrComMat;
-            if (options.useKHRMatCom) {
-                float                        shininess;
-                Vec3f                        ambientFactor, specularFactor;
-                Vec4f                        diffuseFactor;
-                std::shared_ptr<TextureData> diffuseTex;
-                auto                         type = KHRCommonMats::MaterialType::Constant;
-
-                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
-                    /**
-                     * PBR FBX Material -> KHR Common Materials glTF.
-                     *
-                     * TODO: We can use the specularFactor calculation below to generate a reasonable specular map, too.
-                     */
-                    const RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
-                    shininess = 1.0f - props->roughness;
-                    ambientFactor = Vec3f(0.0f, 0.0f, 0.0f);
-                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
-                    diffuseFactor = props->diffuseFactor;
-                    specularFactor = Vec3f::Lerp(Vec3f(0.04f, 0.04f, 0.04f), props->diffuseFactor.xyz(), props->metallic);
-                    // render as Phong if there's any specularity, otherwise Lambert
-                    type = (specularFactor.LengthSquared() > 1e-4) ?
-                        KHRCommonMats::MaterialType::Phong : KHRCommonMats::MaterialType::Lambert;
-                    // TODO: convert textures
-
-                } else {
-                    /**
-                     * Traditional FBX Material -> KHR Common Materials glTF.
-                     *
-                     * Should be in good shape. Essentially pass-through.
-                     */
-                    const RawTraditionalMatProps *props = (RawTraditionalMatProps *) material.info.get();
-                    shininess = props->shininess;
-                    ambientFactor = props->ambientFactor;
-                    diffuseTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
-                    diffuseFactor = props->diffuseFactor;
-                    specularFactor = props->specularFactor;
-
-                    if (material.info->shadingModel == RAW_SHADING_MODEL_LAMBERT) {
-                        type = KHRCommonMats::MaterialType::Lambert;
-                    } else if (material.info->shadingModel == RAW_SHADING_MODEL_BLINN) {
-                        type = KHRCommonMats::MaterialType::Blinn;
-                    } else if (material.info->shadingModel == RAW_SHADING_MODEL_PHONG) {
-                        type = KHRCommonMats::MaterialType::Phong;
-                    }
-                }
-                khrComMat.reset(
-                    new KHRCommonMats(type,
-                        simpleTex(RAW_TEXTURE_USAGE_SHININESS).get(), shininess,
-                        simpleTex(RAW_TEXTURE_USAGE_AMBIENT).get(), ambientFactor,
-                        diffuseTex.get(), diffuseFactor,
-                        simpleTex(RAW_TEXTURE_USAGE_SPECULAR).get(), specularFactor));
-            }
 
             std::shared_ptr<KHRCmnUnlitMaterial> khrCmnUnlitMat;
             if (options.useKHRMatUnlit) {
@@ -938,7 +740,7 @@ ModelData *Raw2Gltf(
                     material.name, isTransparent,
                     normalTexture, emissiveTexture,
                     emissiveFactor * emissiveIntensity,
-                    khrComMat, khrCmnUnlitMat, pbrMetRough, pbrSpecGloss));
+                    khrCmnUnlitMat, pbrMetRough));
             materialsByName[materialHash(material)] = mData;
         }
 
@@ -1209,20 +1011,8 @@ ModelData *Raw2Gltf(
 
     {
         std::vector<std::string> extensionsUsed, extensionsRequired;
-        if (options.useKHRMatCom) {
-            extensionsUsed.push_back(KHR_MATERIALS_COMMON);
-            if (!options.usePBRSpecGloss && !options.usePBRMetRough) {
-                extensionsRequired.push_back(KHR_MATERIALS_COMMON);
-            }
-        }
         if (options.useKHRMatUnlit) {
             extensionsUsed.push_back(KHR_MATERIALS_CMN_UNLIT);
-        }
-        if (options.usePBRSpecGloss) {
-            extensionsUsed.push_back(KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS);
-            if (!options.useKHRMatCom && !options.usePBRMetRough) {
-                extensionsRequired.push_back(KHR_MATERIALS_PBR_SPECULAR_GLOSSINESS);
-            }
         }
         if (options.useDraco) {
             extensionsUsed.push_back(KHR_DRACO_MESH_COMPRESSION);

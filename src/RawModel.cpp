@@ -337,6 +337,8 @@ void RawModel::TransformGeometry(ComputeNormalsOption normals)
         case BROKEN:
         case ALWAYS:
             size_t computedNormalsCount = this->CalculateNormals(normals == ComputeNormalsOption::BROKEN);
+            vertexAttributes |= RAW_VERTEX_ATTRIBUTE_NORMAL;
+
             if (verboseOutput) {
                 if (normals == ComputeNormalsOption::BROKEN) {
                     fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
@@ -572,13 +574,18 @@ Vec3f RawModel::getFaceNormal(int verts[3]) const
 
     const Vec3f e0 = vertices[verts[(index + 1) % 3]].position - vertices[verts[index]].position;
     const Vec3f e1 = vertices[verts[(index + 2) % 3]].position - vertices[verts[index]].position;
-
-    auto result = Vec3f::CrossProduct(e0, e1);
-    if (result.LengthSquared() < FLT_MIN) {
+    if (e0.LengthSquared() < FLT_MIN || e1.LengthSquared() < FLT_MIN) {
         return Vec3f { 0.0f };
     }
-    result.Normalize();
-    return result;
+    auto result = Vec3f::CrossProduct(e0, e1);
+    auto resultLengthSquared = result.LengthSquared();
+    if (resultLengthSquared < FLT_MIN) {
+        return Vec3f { 0.0f };
+    }
+    float edgeDot = std::max(-1.0f, std::min(1.0f, Vec3f::DotProduct(e0, e1)));
+    float angle = acos(edgeDot);
+    float area = resultLengthSquared / 2.0f;
+    return result.Normalized() * angle * area;
 }
 
 size_t RawModel::CalculateNormals(bool onlyBroken)

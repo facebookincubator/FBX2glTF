@@ -42,14 +42,10 @@ struct GltfOptions
     bool embedResources { false };
     /** Whether to use KHR_draco_mesh_compression to minimize static geometry size. */
     bool useDraco { false };
-    /** Whether to use KHR_materials_common to extend materials definitions. */
-    bool useKHRMatCom { false };
     /** Whether to use KHR_materials_unlit to extend materials definitions. */
     bool useKHRMatUnlit { false };
     /** Whether to populate the pbrMetallicRoughness substruct in materials. */
     bool usePBRMetRough { false };
-    /** Whether to use KHR_materials_pbrSpecularGlossiness to extend material definitions. */
-    bool usePBRSpecGloss { false };
     /** Whether to include blend shape normals, if present according to the SDK. */
     bool useBlendShapeNormals { false };
     /** Whether to include blend shape tangents, if present according to the SDK. */
