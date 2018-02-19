@@ -51,6 +51,7 @@ struct ComponentType {
 };
 
 const ComponentType CT_USHORT = {ComponentType::GL_UNSIGNED_SHORT, 2};
+const ComponentType CT_UINT   = {ComponentType::GL_UNSIGNED_INT, 4};
 const ComponentType CT_FLOAT  = {ComponentType::GL_FLOAT, 4};
 
 // Map our low-level data types for glTF output
@@ -64,7 +65,7 @@ struct GLType {
     unsigned int byteStride() const { return componentType.size * count; }
 
     void write(uint8_t *buf, const float scalar) const    { *((float *) buf)    = scalar; }
-    void write(uint8_t *buf, const uint16_t scalar) const { *((uint16_t *) buf) = scalar; }
+    void write(uint8_t *buf, const uint32_t scalar) const { *((uint32_t *) buf) = scalar; }
 
     template<class T, int d>
     void write(uint8_t *buf, const mathfu::Vector<T, d> &vector) const {
@@ -101,6 +102,7 @@ struct GLType {
 
 const GLType GLT_FLOAT  = {CT_FLOAT, 1, "SCALAR"};
 const GLType GLT_USHORT = {CT_USHORT, 1, "SCALAR"};
+const GLType GLT_UINT   = {CT_UINT, 1, "SCALAR"};
 const GLType GLT_VEC2F  = {CT_FLOAT, 2, "VEC2"};
 const GLType GLT_VEC3F  = {CT_FLOAT, 3, "VEC3"};
 const GLType GLT_VEC4F  = {CT_FLOAT, 4, "VEC4"};

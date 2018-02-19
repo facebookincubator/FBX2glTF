@@ -327,15 +327,15 @@ void RawModel::Condense()
 void RawModel::TransformGeometry(ComputeNormalsOption normals)
 {
     switch(normals) {
-        case NEVER:
+        case ComputeNormalsOption::NEVER:
             break;
-        case MISSING:
+        case ComputeNormalsOption::MISSING:
             if ((vertexAttributes & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
                 break;
             }
             // otherwise fall through
-        case BROKEN:
-        case ALWAYS:
+        case ComputeNormalsOption::BROKEN:
+        case ComputeNormalsOption::ALWAYS:
             size_t computedNormalsCount = this->CalculateNormals(normals == ComputeNormalsOption::BROKEN);
             vertexAttributes |= RAW_VERTEX_ATTRIBUTE_NORMAL;
 
@@ -395,7 +395,7 @@ struct TriangleModelSortNeg
 };
 
 void RawModel::CreateMaterialModels(
-    std::vector<RawModel> &materialModels, const int maxModelVertices, const int keepAttribs, const bool forceDiscrete) const
+    std::vector<RawModel> &materialModels, bool shortIndices, const int keepAttribs, const bool forceDiscrete) const
 {
     // Sort all triangles based on material first, then surface, then first vertex index.
     std::vector<RawTriangle> sortedTriangles;
@@ -467,7 +467,7 @@ void RawModel::CreateMaterialModels(
         }
 
         if (i == 0 ||
-            model->GetVertexCount() > maxModelVertices - 3 ||
+            (shortIndices && model->GetVertexCount() >= 0xFFFE) ||
             sortedTriangles[i].materialIndex != sortedTriangles[i - 1].materialIndex ||
             (sortedTriangles[i].surfaceIndex != sortedTriangles[i - 1].surfaceIndex &&
                 (forceDiscrete || surfaces[sortedTriangles[i].surfaceIndex].discrete ||

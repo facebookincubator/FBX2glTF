@@ -39,7 +39,7 @@
 #include "glTF/SkinData.h"
 #include "glTF/TextureData.h"
 
-typedef unsigned short TriangleIndex;
+typedef uint32_t TriangleIndex;
 
 extern bool verboseOutput;
 
@@ -290,7 +290,11 @@ ModelData *Raw2Gltf(
     }
 
     std::vector<RawModel> materialModels;
-    raw.CreateMaterialModels(materialModels, (1 << (sizeof(TriangleIndex) * 8)), options.keepAttribs, true);
+    raw.CreateMaterialModels(
+        materialModels,
+        options.useLongIndices == UseLongIndicesOptions::NEVER,
+        options.keepAttribs,
+        true);
 
     if (verboseOutput) {
         fmt::printf("%7d vertices\n", raw.GetVertexCount());
@@ -646,20 +650,6 @@ ModelData *Raw2Gltf(
                     combine, tag, outputHasAlpha);
             };
 
-            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
-            auto merge3Tex = [&](
-                const std::string tag,
-                RawTextureUsage u1,
-                RawTextureUsage u2,
-                RawTextureUsage u3,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
-                return getDerivedTexture(
-                    { material.textures[u1], material.textures[u2], material.textures[u3] },
-                    combine, tag, outputHasAlpha);
-            };
-
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
             if (options.usePBRMetRough) {
                 // albedo is a basic texture, no merging needed
@@ -744,16 +734,13 @@ ModelData *Raw2Gltf(
             materialsByName[materialHash(material)] = mData;
         }
 
-        for (size_t surfaceIndex = 0; surfaceIndex < materialModels.size(); surfaceIndex++) {
-            const RawModel &surfaceModel = materialModels[surfaceIndex];
-
+        for (const auto &surfaceModel : materialModels) {
             assert(surfaceModel.GetSurfaceCount() == 1);
-            const RawSurface  &rawSurface = surfaceModel.GetSurface(0);
-            const int surfaceId = rawSurface.id;
+            const RawSurface &rawSurface = surfaceModel.GetSurface(0);
+            const long surfaceId = rawSurface.id;
 
             const RawMaterial &rawMaterial = surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
             const MaterialData &mData = require(materialsByName, materialHash(rawMaterial));
-
 
             MeshData *mesh = nullptr;
             auto meshIter = meshBySurfaceId.find(surfaceId);
@@ -769,6 +756,11 @@ ModelData *Raw2Gltf(
                 meshBySurfaceId[surfaceId] = meshPtr;
                 mesh = meshPtr.get();
             }
+
+            bool useLongIndices =
+                (options.useLongIndices == UseLongIndicesOptions::ALWAYS)
+                || (options.useLongIndices == UseLongIndicesOptions::AUTO
+                    && surfaceModel.GetVertexCount() > 65535);
 
             std::shared_ptr<PrimitiveData> primitive;
             if (options.useDraco) {
@@ -786,13 +778,13 @@ ModelData *Raw2Gltf(
                     dracoMesh->SetFace(draco::FaceIndex(ii), face);
                 }
 
-                AccessorData &indexes = *gltf->accessors.hold(new AccessorData(GLT_USHORT));
+                AccessorData &indexes = *gltf->accessors.hold(new AccessorData(useLongIndices ? GLT_UINT : GLT_USHORT));
                 indexes.count = 3 * triangleCount;
                 primitive.reset(new PrimitiveData(indexes, mData, dracoMesh));
             } else {
                 const AccessorData &indexes = *gltf->AddAccessorWithView(
                     *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
-                    GLT_USHORT, getIndexArray(surfaceModel));
+                    useLongIndices ? GLT_UINT : GLT_USHORT, getIndexArray(surfaceModel));
                 primitive.reset(new PrimitiveData(indexes, mData));
             };
 
