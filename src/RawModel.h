@@ -17,11 +17,17 @@
 /**
  * The variuos situations in which the user may wish for us to (re-)compute normals for our vertices.
  */
-enum ComputeNormalsOption {
+enum class ComputeNormalsOption {
     NEVER,      // do not ever compute any normals (results in broken glTF for some sources)
     BROKEN,     // replace zero-length normals in any mesh that has a normal layer
     MISSING,    // if a mesh lacks normals, compute them all
     ALWAYS      // compute a new normal for every vertex, obliterating whatever may have been there before
+};
+
+enum class UseLongIndicesOptions {
+    NEVER,      // only ever use 16-bit indices
+    AUTO,       // use shorts or longs depending on vertex count
+    ALWAYS,     // only ever use 32-bit indices
 };
 
 /**
@@ -52,6 +58,8 @@ struct GltfOptions
     bool useBlendShapeTangents { false };
     /** When to compute vertex normals from geometry. */
     ComputeNormalsOption computeNormals = ComputeNormalsOption::BROKEN;
+    /** When to use 32-bit indices. */
+    UseLongIndicesOptions useLongIndices = UseLongIndicesOptions::AUTO;
 };
 
 enum RawVertexAttribute
@@ -470,7 +478,7 @@ public:
     // Multiple surfaces with the same material will turn into a single model.
     // However, surfaces that are marked as 'discrete' will turn into separate models.
     void CreateMaterialModels(
-        std::vector<RawModel> &materialModels, const int maxModelVertices, const int keepAttribs, const bool forceDiscrete) const;
+        std::vector<RawModel> &materialModels, bool shortIndices, const int keepAttribs, const bool forceDiscrete) const;
 
 private:
     Vec3f getFaceNormal(int verts[3]) const;

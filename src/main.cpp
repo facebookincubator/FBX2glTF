@@ -76,6 +76,9 @@ int main(int argc, char *argv[])
                    "blend-shape-tangents", "Include blend shape tangents, if reported present by the FBX SDK.",
                    cxxopts::value<bool>(gltfOptions.useBlendShapeTangents))
                (
+                   "long-indices", "Whether to use 32-bit indices (never|auto|always).",
+                   cxxopts::value<std::vector<std::string>>())
+               (
                    "compute-normals", "When to compute normals for vertices (never|broken|missing|always).",
                    cxxopts::value<std::vector<std::string>>())
                (
@@ -137,16 +140,30 @@ Copyright (c) 2016-2017 Oculus VR, LLC.
         fmt::printf("Suppressing --flip-v transformation of texture coordinates.\n");
     }
 
+    for (const std::string &choice : options["long-indices"].as<std::vector<std::string>>()) {
+        if (choice == "never") {
+            gltfOptions.useLongIndices = UseLongIndicesOptions::NEVER;
+        } else if (choice == "auto") {
+            gltfOptions.useLongIndices = UseLongIndicesOptions::AUTO;
+        } else if (choice == "always") {
+            gltfOptions.useLongIndices = UseLongIndicesOptions::ALWAYS;
+        } else {
+            fmt::printf("Unknown --long-indices: %s\n", choice);
+            fmt::printf(options.help());
+            return 1;
+        }
+    }
+
     if (options.count("compute-normals") > 0) {
         for (const std::string &choice : options["compute-normals"].as<std::vector<std::string>>()) {
             if (choice == "never") {
-                gltfOptions.computeNormals = NEVER;
+                gltfOptions.computeNormals = ComputeNormalsOption::NEVER;
             } else if (choice == "broken") {
-                gltfOptions.computeNormals = BROKEN;
+                gltfOptions.computeNormals = ComputeNormalsOption::BROKEN;
             } else if (choice == "missing") {
-                gltfOptions.computeNormals = MISSING;
+                gltfOptions.computeNormals = ComputeNormalsOption::MISSING;
             } else if (choice == "always") {
-                gltfOptions.computeNormals = ALWAYS;
+                gltfOptions.computeNormals = ComputeNormalsOption::ALWAYS;
             } else {
                 fmt::printf("Unknown --compute-normals: %s\n", choice);
                 fmt::printf(options.help());
