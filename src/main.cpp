@@ -58,8 +58,14 @@ int main(int argc, char *argv[])
                    "b,binary", "Output a single binary format .glb file.",
                    cxxopts::value<bool>(gltfOptions.outputBinary))
                (
+                   "long-indices", "Whether to use 32-bit indices (never|auto|always).",
+                   cxxopts::value<std::vector<std::string>>())
+               (
                    "d,draco", "Apply Draco mesh compression to geometries.",
                    cxxopts::value<bool>(gltfOptions.useDraco))
+               (
+                   "compute-normals", "When to compute normals for vertices (never|broken|missing|always).",
+                   cxxopts::value<std::vector<std::string>>())
                ("flip-u", "Flip all U texture coordinates.")
                ("flip-v", "Flip all V texture coordinates (default behaviour!)")
                ("no-flip-v", "Suppress the default flipping of V texture coordinates")
@@ -75,12 +81,6 @@ int main(int argc, char *argv[])
                (
                    "blend-shape-tangents", "Include blend shape tangents, if reported present by the FBX SDK.",
                    cxxopts::value<bool>(gltfOptions.useBlendShapeTangents))
-               (
-                   "long-indices", "Whether to use 32-bit indices (never|auto|always).",
-                   cxxopts::value<std::vector<std::string>>())
-               (
-                   "compute-normals", "When to compute normals for vertices (never|broken|missing|always).",
-                   cxxopts::value<std::vector<std::string>>())
                (
                    "k,keep-attribute", "Used repeatedly to build a limiting set of vertex attributes to keep.",
                    cxxopts::value<std::vector<std::string>>())
