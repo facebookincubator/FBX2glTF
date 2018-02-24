@@ -17,7 +17,7 @@ The tool can be invoked like so:
 
 Or perhaps, as part of a more complex pipeline:
 ```
- > FBX2glTF --binary --draco --khr-materials-common \
+ > FBX2glTF --binary --draco --verbose \
           --input ~/models/source/butterfly.fbx \
           --output ~/models/target/butterfly.glb
 ```
@@ -41,18 +41,18 @@ Usage:
                                 behaviour!)
       --no-flip-v               Suppress the default flipping of V texture
                                 coordinates
-      --khr-materials-common    (WIP) Use KHR_materials_common extensions to
-                                specify Unlit/Lambert/Blinn/Phong shaders.
-      --pbr-metallic-roughness  (WIP) Try to glean glTF 2.0 native PBR
-                                attributes from the FBX, or make a best effort
-                                to convert from traditional shader models.
-      --pbr-specular-glossiness
-                                (WIP) Very experimentally employ the
-                                KHR_materials_pbrSpecularGlossiness extension.
+      --pbr-metallic-roughness  Try to glean glTF 2.0 native PBR attributes
+                                from the FBX.
+      --khr-materials-unlit     Use KHR_materials_unlit extension to specify
+                                Unlit shader.
       --blend-shape-normals     Include blend shape normals, if reported
                                 present by the FBX SDK.
       --blend-shape-tangents    Include blend shape tangents, if reported
                                 present by the FBX SDK.
+      --long-indices arg        Whether to use 32-bit indices
+                                (never|auto|always).
+      --compute-normals arg     When to compute normals for vertices
+                                (never|broken|missing|always).
   -k, --keep-attribute arg      Used repeatedly to build a limiting set of
                                 vertex attributes to keep.
   -v, --verbose                 Enable verbose output.
@@ -73,6 +73,12 @@ Some of these switches are not obvious:
   Your FBX is likely constructed with the assumption that `(0, 0)` is bottom
   left, whereas glTF has `(0, 0)` as top left. To produce spec-compliant glTF,
   we must flip the texcoords. To request unflipped coordinates:
+- `--long-indices` lets you force the use of either 16-bit or 32-bit indices.
+  The default option is auto, which make the choice on a per-mesh-size basis.
+- `--compute-mormals` controls when automatic vertex normals should be computed
+  from the mesh. By default, empty normals (which are forbidden by glTF) are
+  replaced. A choice of 'missing' implies 'broken', but additionally creates
+  normals for models that lack them completely. 
 - `--no-flip-v` will actively disable v coordinat flipping. This can be useful
   if your textures are pre-flipped, or if for some other reason you were already
   in a glTF-centric texture coordinate system.
@@ -216,19 +222,15 @@ and additionally, with Blinn/Phong:
 
 (All these can be either constants or textures.)
 
-#### Exporting as Unlit/Lambert/Phong 
-If you have a model was constructed using the traditional workflow, you may
-choose to export it using the --khr-materials-common switch. This incurs a
-dependency on the glTF extension 'KHR_materials_common'; a client that accepts
-that extension is making a promise it'll do its best to render i.e. Lambert or
-Phong.
-
-You can use this flag even for PBR models, but the conversion is imperfect to
-say the least, and there is no reason why you would ever want to do such a
-thing.
+#### Exporting as Unlit
+If you have a model was constructed using an unlit workflow, e.g. a photogrammetry
+capture or a landscape with careful baked-in lighting, you may choose to export
+it using the --khr-materials-common switch. This incurs a dependency on the glTF
+extension 'KHR_materials_unlit; a client that accepts  that extension is making
+a promise it'll do its best to render pixel values without lighting calculations.
 
 **Note that at the time of writing, this glTF extension is still undergoing the
-ratification process, and is furthermore likely to change names.**
+ratification process**
 
 #### Exporting as Metallic-Roughness PBR
 Given the command line flag --pbr-metallic-roughness, we throw ourselves into
@@ -241,20 +243,6 @@ that route should be digested propertly by FBX2glTF.
 
 (A happy note: Allegorithmic's Susbstance Painter also exports Stingray PBS,
 when hooked up to Maya.)
-
-If your model is not a Stingray PBS one, but you still wish to export PBR
-(perhaps you want to generate only core glTF wirhout reliance on extensions),
-this converter will try its best to convert your old textures. It calculates, on
-a pixel by pixel basis, reasonable values for base colour, metallicness and
-roughness, using your model's diffuse, specular, and shinines textures.
-
-It should noted here that this process cannot ever be perfect; this is very much
-an apples and oranges situation.
-
-A note of gratitude here to Gary Hsu who developed the formulae we use for this
-process. They can be eyeballed
-[here](https://github.com/KhronosGroup/glTF/blob/master/extensions/Khronos/KHR_materials_pbrSpecularGlossiness/examples/convert-between-workflows/js/three.pbrUtilities.js)
-for the curious.
 
 ## Draco Compression
 The tool will optionally apply [Draco](https://github.com/google/draco)
