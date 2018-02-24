@@ -604,8 +604,11 @@ ModelData *Raw2Gltf(
                 }
             }
             if (!image) {
-                // fallback is tiny transparent gif
-                image = new ImageData(textureName, "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=");
+                // fallback is tiny transparent PNG
+                image = new ImageData(
+                    textureName,
+                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+                );
             }
 
             std::shared_ptr<TextureData> texDat = gltf->textures.hold(
