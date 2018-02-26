@@ -58,6 +58,11 @@ typedef mathfu::Matrix<float, 4>    Mat4f;
 typedef mathfu::Quaternion<float>   Quatf;
 typedef Bounds<float, 3>            Boundsf;
 
+const Vec3f VEC3F_ONE  = Vec3f {1.0f};
+const Vec3f VEC3F_ZERO = Vec3f {0.0f};
+const Vec4f VEC4F_ONE  = Vec4f {1.0f};
+const Vec4f VEC4F_ZERO = Vec4f {0.0f};
+
 template<class T, int d> static inline std::vector<T> toStdVec(const mathfu::Vector <T, d> &vec)
 {
     std::vector<T> result(d);
