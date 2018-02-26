@@ -13,15 +13,14 @@
 enum ImageOcclusion
 {
     IMAGE_OPAQUE,
-    IMAGE_PERFORATED,
     IMAGE_TRANSPARENT
 };
 
 struct ImageProperties
 {
-    int            width     = 0;
-    int            height    = 0;
-    ImageOcclusion occlusion = IMAGE_OPAQUE;
+    int            width;
+    int            height;
+    ImageOcclusion occlusion;
 };
 
 ImageProperties GetImageProperties(char const *filePath);
