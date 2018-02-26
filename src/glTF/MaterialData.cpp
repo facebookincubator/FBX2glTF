@@ -80,6 +80,7 @@ void to_json(json &j, const PBRMetallicRoughness &d)
 
 MaterialData::MaterialData(
     std::string name,  bool isTransparent, const TextureData *normalTexture,
+    const TextureData *occlusionTexture,
     const TextureData *emissiveTexture, const Vec3f & emissiveFactor,
     std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
     std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness)
@@ -87,6 +88,7 @@ MaterialData::MaterialData(
       name(std::move(name)),
       isTransparent(isTransparent),
       normalTexture(Tex::ref(normalTexture)),
+      occlusionTexture(Tex::ref(occlusionTexture)),
       emissiveTexture(Tex::ref(emissiveTexture)),
       emissiveFactor(clamp(emissiveFactor)),
       khrCmnConstantMaterial(khrCmnConstantMaterial),
@@ -101,6 +103,9 @@ json MaterialData::serialize() const
 
     if (normalTexture != nullptr) {
         result["normalTexture"] = *normalTexture;
+    }
+    if (occlusionTexture != nullptr) {
+        result["occlusionTexture"] = *occlusionTexture;
     }
     if (emissiveTexture != nullptr) {
         result["emissiveTexture"] = *emissiveTexture;

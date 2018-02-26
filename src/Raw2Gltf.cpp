@@ -635,8 +635,9 @@ ModelData *Raw2Gltf(
                 return (material.textures[usage] >= 0) ? getSimpleTexture(material.textures[usage], "simple") : nullptr;
             };
 
-            TextureData *normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
+            TextureData *normalTexture   = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
             TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
+            TextureData *occlusionTexture = nullptr;
 
             // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
             auto merge2Tex = [&](
@@ -651,10 +652,24 @@ ModelData *Raw2Gltf(
                     combine, tag, outputHasAlpha);
             };
 
+            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
+            auto merge3Tex = [&](
+                const std::string tag,
+                RawTextureUsage u1,
+                RawTextureUsage u2,
+                RawTextureUsage u3,
+                const pixel_merger &combine,
+                bool outputHasAlpha
+            ) -> std::shared_ptr<TextureData> {
+                return getDerivedTexture(
+                    { material.textures[u1], material.textures[u2], material.textures[u3] },
+                    combine, tag, outputHasAlpha);
+            };
+
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
             if (options.usePBRMetRough) {
                 // albedo is a basic texture, no merging needed
-                std::shared_ptr<TextureData> baseColorTex, metRoughTex;
+                std::shared_ptr<TextureData> baseColorTex, aoMetRoughTex;
 
                 Vec4f diffuseFactor;
                 float metallic, roughness;
@@ -667,9 +682,11 @@ ModelData *Raw2Gltf(
                      */
                     RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
                     // merge metallic into the blue channel and roughness into the green, of a new combinatory texture
-                    metRoughTex = merge2Tex("met_rough",
-                        RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
-                        [&](const std::vector<const pixel *> pixels) -> pixel { return { 0, (*pixels[1])[0], (*pixels[0])[0], 0 }; },
+                    aoMetRoughTex = merge3Tex("ao_met_rough",
+                        RAW_TEXTURE_USAGE_OCCLUSION, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
+                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                            return { (*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 0 };
+                        },
                         false);
                     baseColorTex      = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
                     diffuseFactor     = props->diffuseFactor;
@@ -677,6 +694,10 @@ ModelData *Raw2Gltf(
                     roughness         = props->roughness;
                     emissiveFactor    = props->emissiveFactor;
                     emissiveIntensity = props->emissiveIntensity;
+                    // add the occlusion texture only if actual occlusion pixels exist in the aoNetRough texture.
+                    if (material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0) {
+                       occlusionTexture  = aoMetRoughTex.get();
+                    }
                 } else {
                     /**
                      * Traditional FBX Material -> PBR Met/Rough glTF.
@@ -697,9 +718,8 @@ ModelData *Raw2Gltf(
                     emissiveFactor    = props->emissiveFactor;
                     emissiveIntensity = 1.0f;
                 }
-                pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), metRoughTex.get(), diffuseFactor, metallic, roughness));
+                pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), aoMetRoughTex.get(), diffuseFactor, metallic, roughness));
             }
-
 
             std::shared_ptr<KHRCmnUnlitMaterial> khrCmnUnlitMat;
             if (options.useKHRMatUnlit) {
@@ -725,13 +745,14 @@ ModelData *Raw2Gltf(
 
                 khrCmnUnlitMat.reset(new KHRCmnUnlitMaterial());
             }
+            if (!occlusionTexture) {
+                occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
+            }
 
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
-                    material.name, isTransparent,
-                    normalTexture, emissiveTexture,
-                    emissiveFactor * emissiveIntensity,
-                    khrCmnUnlitMat, pbrMetRough));
+                    material.name, isTransparent, normalTexture, occlusionTexture, emissiveTexture,
+                    emissiveFactor * emissiveIntensity, khrCmnUnlitMat, pbrMetRough));
             materialsByName[materialHash(material)] = mData;
         }
 
