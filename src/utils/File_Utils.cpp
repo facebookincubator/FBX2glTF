@@ -41,14 +41,14 @@ namespace FileUtils {
 
     std::string GetCurrentFolder()
     {
-        char cwd[Gltf::StringUtils::MAX_PATH_LENGTH];
+        char cwd[StringUtils::MAX_PATH_LENGTH];
         if (!_getcwd(cwd, sizeof(cwd))) {
             return std::string();
         }
         cwd[sizeof(cwd) - 1] = '\0';
-        Gltf::StringUtils::GetCleanPath(cwd, cwd, Gltf::StringUtils::PATH_UNIX);
+        StringUtils::GetCleanPath(cwd, cwd, StringUtils::PATH_UNIX);
         const size_t length = strlen(cwd);
-        if (cwd[length - 1] != '/' && length < Gltf::StringUtils::MAX_PATH_LENGTH - 1) {
+        if (cwd[length - 1] != '/' && length < StringUtils::MAX_PATH_LENGTH - 1) {
             cwd[length + 0] = '/';
             cwd[length + 1] = '\0';
         }
@@ -155,12 +155,12 @@ namespace FileUtils {
     bool CreatePath(const char *path)
     {
 #if defined( __unix__ ) || defined( __APPLE__ )
-        Gltf::StringUtils::PathSeparator separator = Gltf::StringUtils::PATH_UNIX;
+        StringUtils::PathSeparator separator = StringUtils::PATH_UNIX;
 #else
-        Gltf::StringUtils::PathSeparator separator = Gltf::StringUtils::PATH_WIN;
+        StringUtils::PathSeparator separator = StringUtils::PATH_WIN;
 #endif
-        std::string folder = Gltf::StringUtils::GetFolderString(path);
-        std::string clean = Gltf::StringUtils::GetCleanPathString(folder, separator);
+        std::string folder = StringUtils::GetFolderString(path);
+        std::string clean = StringUtils::GetCleanPathString(folder, separator);
         std::string build = clean;
         for (int i = 0; i < clean.length(); i ++) {
             if (clean[i] == separator && i > 0) {

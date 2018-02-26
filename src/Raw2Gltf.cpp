@@ -448,39 +448,39 @@ ModelData *Raw2Gltf(
             };
 
             int width = -1, height = -1;
-            std::string mergedName = tag;
             std::string mergedFilename = tag;
             std::vector<TexInfo> texes { };
             for (const int rawTexIx : rawTexIndices) {
                 TexInfo info(rawTexIx);
                 if (rawTexIx >= 0) {
-                    const RawTexture &rawTex = raw.GetTexture(rawTexIx);
+                    const RawTexture  &rawTex  = raw.GetTexture(rawTexIx);
                     const std::string &fileLoc = rawTex.fileLocation;
-                    const std::string &fileLocBase = Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc));
+                    const std::string &name    = StringUtils::GetFileBaseString(StringUtils::GetFileNameString(fileLoc));
                     if (!fileLoc.empty()) {
                         info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 0);
                         if (!info.pixels) {
                             fmt::printf("Warning: merge texture [%d](%s) could not be loaded.\n",
                                 rawTexIx,
-                                Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc)));
+                                name);
                         } else {
                             if (width < 0) {
                                 width = info.width;
                                 height = info.height;
                             } else if (width != info.width || height != info.height) {
                                 fmt::printf("Warning: texture %s (%d, %d) can't be merged with previous texture(s) of dimension (%d, %d)\n",
-                                    Gltf::StringUtils::GetFileBaseString(Gltf::StringUtils::GetFileNameString(fileLoc)),
+                                    name,
                                     info.width, info.height, width, height);
                                 // this is bad enough that we abort the whole merge
                                 return nullptr;
                             }
-                            mergedName += "_" + rawTex.fileName;
-                            mergedFilename += "_" + fileLocBase;
+                            mergedFilename += "_" + name;
                         }
                     }
                 }
                 texes.push_back(info);
             }
+            // at the moment, the best choice of filename is also the best choice of name
+            const std::string mergedName = mergedFilename;
 
             if (width < 0) {
                 // no textures to merge; bail
@@ -579,14 +579,14 @@ ModelData *Raw2Gltf(
             }
 
             const RawTexture  &rawTexture      = raw.GetTexture(rawTexIndex);
-            const std::string textureName      = Gltf::StringUtils::GetFileBaseString(rawTexture.name);
-            const std::string relativeFilename = Gltf::StringUtils::GetFileNameString(rawTexture.fileLocation);
+            const std::string textureName      = StringUtils::GetFileBaseString(rawTexture.name);
+            const std::string relativeFilename = StringUtils::GetFileNameString(rawTexture.fileLocation);
 
             ImageData *image = nullptr;
             if (options.outputBinary) {
                 auto bufferView = gltf->AddBufferViewForFile(buffer, rawTexture.fileLocation);
                 if (bufferView) {
-                    std::string suffix = Gltf::StringUtils::GetFileSuffixString(rawTexture.fileLocation);
+                    std::string suffix = StringUtils::GetFileSuffixString(rawTexture.fileLocation);
                     image = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
                 }
 

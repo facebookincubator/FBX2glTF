@@ -9,13 +9,11 @@
 
 #include "String_Utils.h"
 
-namespace Gltf {
-    namespace StringUtils {
+namespace StringUtils {
 
-        PathSeparator operator!(const PathSeparator &s)
-        {
-            return (s == PATH_WIN) ? PATH_UNIX : PATH_WIN;
-        }
-
+    PathSeparator operator!(const PathSeparator &s)
+    {
+        return (s == PATH_WIN) ? PATH_UNIX : PATH_WIN;
     }
-}// namespace Gltf
+
+}

@@ -91,7 +91,7 @@ int RawModel::AddTexture(const std::string &name, const std::string &fileName, c
         return -1;
     }
     for (size_t i = 0; i < textures.size(); i++) {
-        if (Gltf::StringUtils::CompareNoCase(textures[i].name, name) == 0 && textures[i].usage == usage) {
+        if (StringUtils::CompareNoCase(textures[i].name, name) == 0 && textures[i].usage == usage) {
             return (int) i;
         }
     }
@@ -159,7 +159,7 @@ int RawModel::AddMaterial(
 int RawModel::AddSurface(const RawSurface &surface)
 {
     for (size_t i = 0; i < surfaces.size(); i++) {
-        if (Gltf::StringUtils::CompareNoCase(surfaces[i].name, surface.name) == 0) {
+        if (StringUtils::CompareNoCase(surfaces[i].name, surface.name) == 0) {
             return (int) i;
         }
     }

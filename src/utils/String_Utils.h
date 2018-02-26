@@ -20,76 +20,72 @@
 #define strcasecmp _stricmp
 #endif
 
-namespace Gltf // TODO replace
-{
-    namespace StringUtils {
+namespace StringUtils {
 
-        static const unsigned int MAX_PATH_LENGTH = 1024;
+    static const unsigned int MAX_PATH_LENGTH = 1024;
 
-        enum PathSeparator
-        {
-            PATH_WIN  = '\\',
-            PATH_UNIX = '/'
-        };
+    enum PathSeparator
+    {
+        PATH_WIN  = '\\',
+        PATH_UNIX = '/'
+    };
 
-        PathSeparator operator!(const PathSeparator &s);
+    PathSeparator operator!(const PathSeparator &s);
 
-        inline const std::string GetCleanPathString(const std::string &path, const PathSeparator separator = PATH_WIN)
-        {
-            std::string cleanPath = path;
-            for (size_t s = cleanPath.find(!separator, 0); s != std::string::npos; s = cleanPath.find(!separator, s)) {
-                cleanPath[s] = separator;
-            }
-            return cleanPath;
+    inline const std::string GetCleanPathString(const std::string &path, const PathSeparator separator = PATH_WIN)
+    {
+        std::string cleanPath = path;
+        for (size_t s = cleanPath.find(!separator, 0); s != std::string::npos; s = cleanPath.find(!separator, s)) {
+            cleanPath[s] = separator;
         }
-        template<size_t size>
-        inline void GetCleanPath(char (&dest)[size], const char *path, const PathSeparator separator = PATH_WIN)
-        {
-            size_t len = size - 1;
-            strncpy(dest, path, len);
-            char *destPtr = dest;
-            while ((destPtr = strchr(destPtr, !separator)) != nullptr) {
-                *destPtr = separator;
-            }
+        return cleanPath;
+    }
+    template<size_t size>
+    inline void GetCleanPath(char (&dest)[size], const char *path, const PathSeparator separator = PATH_WIN)
+    {
+        size_t len = size - 1;
+        strncpy(dest, path, len);
+        char *destPtr = dest;
+        while ((destPtr = strchr(destPtr, !separator)) != nullptr) {
+            *destPtr = separator;
         }
+    }
 
-        inline const std::string GetFolderString(const std::string &path)
-        {
-            size_t s = path.rfind(PATH_WIN);
-            s = (s != std::string::npos) ? s : path.rfind(PATH_UNIX);
-            return path.substr(0, s + 1);
+    inline const std::string GetFolderString(const std::string &path)
+    {
+        size_t s = path.rfind(PATH_WIN);
+        s = (s != std::string::npos) ? s : path.rfind(PATH_UNIX);
+        return path.substr(0, s + 1);
+    }
+
+    inline const std::string GetFileNameString(const std::string &path)
+    {
+        size_t s = path.rfind(PATH_WIN);
+        s = (s != std::string::npos) ? s : path.rfind(PATH_UNIX);
+        return path.substr(s + 1, std::string::npos);
+    }
+
+    inline const std::string GetFileBaseString(const std::string &path)
+    {
+        const std::string fileName = GetFileNameString(path);
+        return fileName.substr(0, fileName.rfind('.')).c_str();
+    }
+
+    inline const std::string GetFileSuffixString(const std::string &path)
+    {
+        const std::string fileName = GetFileNameString(path);
+        unsigned long pos          = fileName.rfind('.');
+        if (pos == std::string::npos) {
+            return "";
         }
+        return fileName.substr(++pos);
+    }
 
-        inline const std::string GetFileNameString(const std::string &path)
-        {
-            size_t s = path.rfind(PATH_WIN);
-            s = (s != std::string::npos) ? s : path.rfind(PATH_UNIX);
-            return path.substr(s + 1, std::string::npos);
-        }
+    inline int CompareNoCase(const std::string &s1, const std::string &s2)
+    {
+        return strncasecmp(s1.c_str(), s2.c_str(), MAX_PATH_LENGTH);
+    }
 
-        inline const std::string GetFileBaseString(const std::string &path)
-        {
-            const std::string fileName = GetFileNameString(path);
-            return fileName.substr(0, fileName.rfind('.')).c_str();
-        }
-
-        inline const std::string GetFileSuffixString(const std::string &path)
-        {
-            const std::string fileName = GetFileNameString(path);
-            unsigned long pos          = fileName.rfind('.');
-            if (pos == std::string::npos) {
-                return "";
-            }
-            return fileName.substr(++pos);
-        }
-
-        inline int CompareNoCase(const std::string &s1, const std::string &s2)
-        {
-            return strncasecmp(s1.c_str(), s2.c_str(), MAX_PATH_LENGTH);
-        }
-
-    } // StringUtils
-
-}// namespace Gltf 
+} // StringUtils
 #endif // _STRING_UTILS_H__
 

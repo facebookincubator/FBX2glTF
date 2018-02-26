@@ -1319,22 +1319,22 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 static std::string GetInferredFileName(const std::string &fbxFileName, const std::string &directory, const std::vector<std::string> &directoryFileList)
 {
     // Get the file name with file extension.
-    const std::string fileName = Gltf::StringUtils::GetFileNameString(Gltf::StringUtils::GetCleanPathString(fbxFileName));
+    const std::string fileName = StringUtils::GetFileNameString(StringUtils::GetCleanPathString(fbxFileName));
 
     // Try to find a match with extension.
     for (const auto &file : directoryFileList) {
-        if (Gltf::StringUtils::CompareNoCase(fileName, file) == 0) {
+        if (StringUtils::CompareNoCase(fileName, file) == 0) {
             return std::string(directory) + file;
         }
     }
 
     // Get the file name without file extension.
-    const std::string fileBase = Gltf::StringUtils::GetFileBaseString(fileName);
+    const std::string fileBase = StringUtils::GetFileBaseString(fileName);
 
     // Try to find a match without file extension.
     for (const auto &file : directoryFileList) {
         // If the two extension-less base names match.
-        if (Gltf::StringUtils::CompareNoCase(fileBase, Gltf::StringUtils::GetFileBaseString(file)) == 0) {
+        if (StringUtils::CompareNoCase(fileBase, StringUtils::GetFileBaseString(file)) == 0) {
             // Return the name with extension of the file in the directory.
             return std::string(directory) + file;
         }
@@ -1357,10 +1357,10 @@ FindFbxTextures(
     FbxScene *pScene, const char *fbxFileName, const char *extensions, std::map<const FbxTexture *, FbxString> &textureLocations)
 {
     // Get the folder the FBX file is in.
-    const std::string folder = Gltf::StringUtils::GetFolderString(fbxFileName);
+    const std::string folder = StringUtils::GetFolderString(fbxFileName);
 
     // Check if there is a filename.fbm folder to which embedded textures were extracted.
-    const std::string fbmFolderName = folder + Gltf::StringUtils::GetFileBaseString(fbxFileName) + ".fbm/";
+    const std::string fbmFolderName = folder + StringUtils::GetFileBaseString(fbxFileName) + ".fbm/";
 
     // Search either in the folder with embedded textures or in the same folder as the FBX file.
     const std::string searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;
