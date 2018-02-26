@@ -45,6 +45,7 @@ struct MaterialData : Holdable
 {
     MaterialData(
         std::string name, bool isTransparent, const TextureData *normalTexture,
+        const TextureData *occlusionTexture,
         const TextureData *emissiveTexture, const Vec3f &emissiveFactor,
         std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
         std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness);
@@ -54,6 +55,7 @@ struct MaterialData : Holdable
     const std::string                name;
     const bool                       isTransparent;
     const std::unique_ptr<const Tex> normalTexture;
+    const std::unique_ptr<const Tex> occlusionTexture;
     const std::unique_ptr<const Tex> emissiveTexture;
     const Vec3f                      emissiveFactor;
 
