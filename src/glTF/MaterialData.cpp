@@ -36,14 +36,24 @@ void to_json(json &j, const KHRCmnUnlitMaterial &d)
 	j = json({});
 }
 
+inline float clamp(float d, float bottom = 0, float top = 1) {
+    return std::max(bottom, std::min(top, d));
+}
+inline Vec3f clamp(const Vec3f &vec, const Vec3f &bottom = VEC3F_ZERO, const Vec3f &top = VEC3F_ONE) {
+    return Vec3f::Max(bottom, Vec3f::Min(top, vec));
+}
+inline Vec4f clamp(const Vec4f &vec, const Vec4f &bottom = VEC4F_ZERO, const Vec4f &top = VEC4F_ONE) {
+    return Vec4f::Max(bottom, Vec4f::Min(top, vec));
+}
+
 PBRMetallicRoughness::PBRMetallicRoughness(
     const TextureData *baseColorTexture, const TextureData *metRoughTexture,
     const Vec4f &baseColorFactor, float metallic, float roughness)
     : baseColorTexture(Tex::ref(baseColorTexture)),
       metRoughTexture(Tex::ref(metRoughTexture)),
-      baseColorFactor(baseColorFactor),
-      metallic(metallic),
-      roughness(roughness)
+      baseColorFactor(clamp(baseColorFactor)),
+      metallic(clamp(metallic)),
+      roughness(clamp(roughness))
 {
 }
 
@@ -78,7 +88,7 @@ MaterialData::MaterialData(
       isTransparent(isTransparent),
       normalTexture(Tex::ref(normalTexture)),
       emissiveTexture(Tex::ref(emissiveTexture)),
-      emissiveFactor(emissiveFactor),
+      emissiveFactor(clamp(emissiveFactor)),
       khrCmnConstantMaterial(khrCmnConstantMaterial),
       pbrMetallicRoughness(pbrMetallicRoughness) {}
 
