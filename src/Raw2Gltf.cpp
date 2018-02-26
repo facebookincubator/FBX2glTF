@@ -996,7 +996,7 @@ ModelData *Raw2Gltf(
 
             auto iter = nodesById.find(cam.nodeId);
             if (iter == nodesById.end()) {
-                fmt::printf("Warning: Camera node id %s does not exist.\n", cam.nodeId);
+                fmt::printf("Warning: Camera node id %lu does not exist.\n", cam.nodeId);
                 continue;
             }
             iter->second->SetCamera(camera.ix);
