@@ -69,13 +69,13 @@ Some of these switches are not obvious:
   but it can be useful e.g. for loaders that don't understand the .glb format.
 - `--flip-u` and `--flip-v`, when enabled, will apply a `x -> (1.0 - x)`
   function to all `u` or `v` texture coordinates respectively. The `u` version
-  is perhaps not commonly used, but flipping `v` is **the default behaviour*.
+  is perhaps not commonly used, but flipping `v` is **the default behaviour**.
   Your FBX is likely constructed with the assumption that `(0, 0)` is bottom
   left, whereas glTF has `(0, 0)` as top left. To produce spec-compliant glTF,
   we must flip the texcoords. To request unflipped coordinates:
 - `--long-indices` lets you force the use of either 16-bit or 32-bit indices.
   The default option is auto, which make the choice on a per-mesh-size basis.
-- `--compute-mormals` controls when automatic vertex normals should be computed
+- `--compute-normals` controls when automatic vertex normals should be computed
   from the mesh. By default, empty normals (which are forbidden by glTF) are
   replaced. A choice of 'missing' implies 'broken', but additionally creates
   normals for models that lack them completely. 
