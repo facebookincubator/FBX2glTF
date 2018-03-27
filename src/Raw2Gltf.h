@@ -65,7 +65,19 @@ struct GLType {
     unsigned int byteStride() const { return componentType.size * count; }
 
     void write(uint8_t *buf, const float scalar) const    { *((float *) buf)    = scalar; }
-    void write(uint8_t *buf, const uint32_t scalar) const { *((uint32_t *) buf) = scalar; }
+    void write(uint8_t *buf, const uint32_t scalar) const {
+        switch(componentType.size) {
+            case 1:
+                *buf = (uint8_t)scalar;
+                break;
+            case 2:
+                *((uint16_t *) buf) = (uint16_t)scalar;
+                break;
+            case 4:
+                *((uint32_t *) buf) = scalar;
+                break;
+        }
+    }
 
     template<class T, int d>
     void write(uint8_t *buf, const mathfu::Vector<T, d> &vector) const {
