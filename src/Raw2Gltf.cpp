@@ -751,7 +751,8 @@ ModelData *Raw2Gltf(
 
             std::shared_ptr<MaterialData> mData = gltf->materials.hold(
                 new MaterialData(
-                    material.name, isTransparent, normalTexture, occlusionTexture, emissiveTexture,
+                    material.name, isTransparent, material.info->shadingModel,
+                    normalTexture, occlusionTexture, emissiveTexture,
                     emissiveFactor * emissiveIntensity, khrCmnUnlitMat, pbrMetRough));
             materialsByName[materialHash(material)] = mData;
         }

@@ -79,13 +79,14 @@ void to_json(json &j, const PBRMetallicRoughness &d)
 }
 
 MaterialData::MaterialData(
-    std::string name,  bool isTransparent, const TextureData *normalTexture,
-    const TextureData *occlusionTexture,
+    std::string name, bool isTransparent, const RawShadingModel shadingModel, 
+    const TextureData *normalTexture, const TextureData *occlusionTexture,
     const TextureData *emissiveTexture, const Vec3f & emissiveFactor,
     std::shared_ptr<KHRCmnUnlitMaterial> const khrCmnConstantMaterial,
     std::shared_ptr<PBRMetallicRoughness> const pbrMetallicRoughness)
     : Holdable(),
       name(std::move(name)),
+      shadingModel(shadingModel),
       isTransparent(isTransparent),
       normalTexture(Tex::ref(normalTexture)),
       occlusionTexture(Tex::ref(occlusionTexture)),
@@ -98,7 +99,13 @@ json MaterialData::serialize() const
 {
     json result = {
         { "name", name },
-        { "alphaMode", isTransparent ? "BLEND" : "OPAQUE" }
+        { "alphaMode", isTransparent ? "BLEND" : "OPAQUE" },
+        { "extras", {
+            { "fromFBX", {
+                { "shadingModel", Describe(shadingModel) },
+                { "isTruePBR", shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH }
+            }}
+        }}
     };
 
     if (normalTexture != nullptr) {
