@@ -13,6 +13,7 @@
 namespace FileUtils {
     std::string GetCurrentFolder();
 
+    bool FileExists(const std::string &folderPath);
     bool FolderExists(const std::string &folderPath);
 
     bool MatchExtension(const char *fileExtension, const char *matchExtensions);

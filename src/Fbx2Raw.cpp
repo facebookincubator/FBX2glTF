@@ -1323,6 +1323,9 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
 
 static std::string GetInferredFileName(const std::string &fbxFileName, const std::string &directory, const std::vector<std::string> &directoryFileList)
 {
+    if (FileUtils::FileExists(fbxFileName)) {
+        return fbxFileName;
+    }
     // Get the file name with file extension.
     const std::string fileName = StringUtils::GetFileNameString(StringUtils::GetCleanPathString(fbxFileName));
 

@@ -55,6 +55,12 @@ namespace FileUtils {
         return std::string(cwd);
     }
 
+    bool FileExists(const std::string &filePath)
+    {
+        std::ifstream stream(filePath);
+        return stream.good();
+    }
+
     bool FolderExists(const std::string &folderPath)
     {
 #if defined( __unix__ ) || defined( __APPLE__ )
