@@ -639,6 +639,16 @@ ModelData *Raw2Gltf(
             TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
             TextureData *occlusionTexture = nullptr;
 
+            // acquire derived texture of single RawTextureUsage as *TextData, or nullptr if it doesn't exist
+            auto merge1Tex = [&](
+                const std::string tag,
+                RawTextureUsage usage,
+                const pixel_merger &combine,
+                bool outputHasAlpha
+            ) -> std::shared_ptr<TextureData> {
+                return getDerivedTexture({ material.textures[usage] }, combine, tag, outputHasAlpha);
+            };
+
             // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
             auto merge2Tex = [&](
                 const std::string tag,
@@ -706,13 +716,41 @@ ModelData *Raw2Gltf(
                      */
                     const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
                     diffuseFactor = props->diffuseFactor;
-                    if (material.info->shadingModel == RAW_SHADING_MODEL_LAMBERT) {
+
+                    if (material.info->shadingModel == RAW_SHADING_MODEL_BLINN ||
+                        material.info->shadingModel == RAW_SHADING_MODEL_PHONG)
+                    {
+                        // blinn/phong hardcoded to 0.4 metallic
+                        metallic  = 0.4f;
+
+                        // fairly arbitrary formula chosen such that
+                        //   shininess 0 -> roughness 1
+                        //   shininess 5 -> roughness 0.5
+                        //   as shininess ==> oo, roughness ==> 0
+                        auto getRoughness = [&](float shininess) {
+                            return 1.0f / (1.0f + shininess/5);
+                        };
+                        aoMetRoughTex = merge1Tex("ao_met_rough",
+                            RAW_TEXTURE_USAGE_SHININESS,
+                            [&](const std::vector<const pixel *> pixels) -> pixel {
+                                // do not multiply with props->shininess; that doesn't work like the other factors.
+                                float shininess = (*pixels[0])[0];
+                                return { 0, getRoughness(shininess), metallic, 0 };
+                            },
+                            false);
+                        if (aoMetRoughTex != nullptr) {
+                            // if we successfully built a texture, factors are just multiplicative identity
+                            metallic = roughness = 1.0f;
+                        } else {
+                            // no shininess texture,
+                            roughness = getRoughness(props->shininess);
+                        }
+
+                    } else {
                         metallic  = 0.2f;
                         roughness = 0.8f;
-                    } else {
-                        metallic  = 0.4f;
-                        roughness = 0.6f;
                     }
+
                     baseColorTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
 
                     emissiveFactor    = props->emissiveFactor;
