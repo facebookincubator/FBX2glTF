@@ -74,7 +74,7 @@ namespace StringUtils {
     inline const std::string GetFileSuffixString(const std::string &path)
     {
         const std::string fileName = GetFileNameString(path);
-        unsigned long pos          = fileName.rfind('.');
+        size_t pos = fileName.rfind('.');
         if (pos == std::string::npos) {
             return "";
         }

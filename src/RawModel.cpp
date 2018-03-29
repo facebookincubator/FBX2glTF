@@ -594,7 +594,7 @@ size_t RawModel::CalculateNormals(bool onlyBroken)
     std::set<int> brokenVerts;
     for (int vertIx = 0; vertIx < vertices.size(); vertIx ++) {
         RawVertex &vertex = vertices[vertIx];
-        averagePos += (vertex.position / vertices.size());
+        averagePos += (vertex.position / (float)vertices.size());
         if (onlyBroken && (vertex.normal.LengthSquared() >= FLT_MIN)) {
             continue;
         }
