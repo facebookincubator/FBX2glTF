@@ -290,8 +290,10 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
         // the normal map can only ever be a map, ignore everything else
         std::tie(std::ignore, res->texNormal) = getSurfaceVector(FbxSurfaceMaterial::sNormalMap);
 
-        // shininess can be a map or a factor
-        std::tie(res->shininess, res->texShininess) = getSurfaceScalar(FbxSurfaceMaterial::sShininess);
+        // shininess can be a map or a factor; afaict the map is always 'ShininessExponent' and the
+        // value is always found in 'Shininess' but only sometimes in 'ShininessExponent'.
+        std::tie(std::ignore, res->texShininess) = getSurfaceScalar("ShininessExponent");
+        std::tie(res->shininess, std::ignore) = getSurfaceScalar("Shininess");
 
         // for transparency we just want a constant vector value;
         FbxVector4 transparency;

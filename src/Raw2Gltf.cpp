@@ -695,7 +695,7 @@ ModelData *Raw2Gltf(
                     aoMetRoughTex = merge3Tex("ao_met_rough",
                         RAW_TEXTURE_USAGE_OCCLUSION, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
                         [&](const std::vector<const pixel *> pixels) -> pixel {
-                            return { (*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 0 };
+                            return { (*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 1 };
                         },
                         false);
                     baseColorTex      = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
@@ -723,19 +723,22 @@ ModelData *Raw2Gltf(
                         // blinn/phong hardcoded to 0.4 metallic
                         metallic  = 0.4f;
 
-                        // fairly arbitrary formula chosen such that
+                        // fairly arbitrary conversion equation, with properties:
                         //   shininess 0 -> roughness 1
-                        //   shininess 5 -> roughness 0.5
+                        //   shininess 2 -> roughness ~0.7
+                        //   shininess 6 -> roughness 0.5
+                        //   shininess 16 -> roughness ~0.33
+
                         //   as shininess ==> oo, roughness ==> 0
                         auto getRoughness = [&](float shininess) {
-                            return 1.0f / (1.0f + shininess/5);
+                            return sqrtf(2.0f / (2.0f + shininess));
                         };
                         aoMetRoughTex = merge1Tex("ao_met_rough",
                             RAW_TEXTURE_USAGE_SHININESS,
                             [&](const std::vector<const pixel *> pixels) -> pixel {
                                 // do not multiply with props->shininess; that doesn't work like the other factors.
-                                float shininess = (*pixels[0])[0];
-                                return { 0, getRoughness(shininess), metallic, 0 };
+                                float shininess = props->shininess * (*pixels[0])[0];
+                                return { 0, getRoughness(shininess), metallic, 1 };
                             },
                             false);
                         if (aoMetRoughTex != nullptr) {
