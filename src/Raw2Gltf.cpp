@@ -53,7 +53,7 @@ const static std::string defaultSceneName = "Root Scene";
  * reference counting type, but generally speaking we pass around simple T& and T* types because the GLTFData
  * struct will, by design, outlive all other activity that takes place during in a single conversion run.
  */
-template<typename T>
+template <typename T>
 struct Holder
 {
     std::vector<std::shared_ptr<T>> ptrs;
@@ -76,7 +76,8 @@ struct GLTFData
     std::shared_ptr<BufferViewData> GetAlignedBufferView(BufferData &buffer, const BufferViewData::GL_ArrayType target)
     {
         unsigned long bufferSize = this->binary->size();
-        if ((bufferSize % 4) > 0) {
+        if ((bufferSize % 4) > 0)
+        {
             bufferSize += (4 - (bufferSize % 4));
             this->binary->resize(bufferSize);
         }
@@ -102,23 +103,30 @@ struct GLTFData
     {
         // see if we've already created a BufferViewData for this precise file
         auto iter = filenameToBufferView.find(filename);
-        if (iter != filenameToBufferView.end()) {
+        if (iter != filenameToBufferView.end())
+        {
             return iter->second;
         }
 
         std::shared_ptr<BufferViewData> result;
         std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        if (file) {
+        if (file)
+        {
             std::streamsize size = file.tellg();
             file.seekg(0, std::ios::beg);
 
             std::vector<char> fileBuffer(size);
-            if (file.read(fileBuffer.data(), size)) {
+            if (file.read(fileBuffer.data(), size))
+            {
                 result = AddRawBufferView(buffer, fileBuffer.data(), size);
-            } else {
+            }
+            else
+            {
                 fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping file.\n", size, filename);
             }
-        } else {
+        }
+        else
+        {
             fmt::printf("Warning: Couldn't open file %s, skipping file.\n", filename);
         }
         // note that we persist here not only success, but also failure, as nullptr
@@ -126,8 +134,7 @@ struct GLTFData
         return result;
     }
 
-
-    template<class T>
+    template <class T>
     std::shared_ptr<AccessorData> AddAccessorWithView(
         BufferViewData &bufferView, const GLType &type, const std::vector<T> &source)
     {
@@ -137,7 +144,7 @@ struct GLTFData
         return accessor;
     }
 
-    template<class T>
+    template <class T>
     std::shared_ptr<AccessorData> AddAccessorAndView(
         BufferData &buffer, const GLType &type, const std::vector<T> &source)
     {
@@ -145,7 +152,7 @@ struct GLTFData
         return AddAccessorWithView(*bufferView, type, source);
     }
 
-    template<class T>
+    template <class T>
     std::shared_ptr<AccessorData> AddAttributeToPrimitive(
         BufferData &buffer, const RawModel &surfaceModel, PrimitiveData &primitive,
         const AttributeDefinition<T> &attrDef)
@@ -155,12 +162,15 @@ struct GLTFData
         surfaceModel.GetAttributeArray<T>(attribArr, attrDef.rawAttributeIx);
 
         std::shared_ptr<AccessorData> accessor;
-        if (attrDef.dracoComponentType != draco::DT_INVALID && primitive.dracoMesh != nullptr) {
+        if (attrDef.dracoComponentType != draco::DT_INVALID && primitive.dracoMesh != nullptr)
+        {
             primitive.AddDracoAttrib(attrDef, attribArr);
 
             accessor = accessors.hold(new AccessorData(attrDef.glType));
             accessor->count = attribArr.size();
-        } else {
+        }
+        else
+        {
             auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
             accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr);
         }
@@ -168,12 +178,14 @@ struct GLTFData
         return accessor;
     };
 
-    template<class T>
+    template <class T>
     void serializeHolder(json &glTFJson, std::string key, const Holder<T> holder)
     {
-        if (!holder.ptrs.empty()) {
+        if (!holder.ptrs.empty())
+        {
             std::vector<json> bits;
-            for (const auto &ptr : holder.ptrs) {
+            for (const auto &ptr : holder.ptrs)
+            {
                 bits.push_back(ptr->serialize());
             }
             glTFJson[key] = bits;
@@ -182,19 +194,19 @@ struct GLTFData
 
     void serializeHolders(json &glTFJson)
     {
-      serializeHolder(glTFJson, "buffers", buffers);
-      serializeHolder(glTFJson, "bufferViews", bufferViews);
-      serializeHolder(glTFJson, "scenes", scenes);
-      serializeHolder(glTFJson, "accessors", accessors);
-      serializeHolder(glTFJson, "images", images);
-      serializeHolder(glTFJson, "samplers", samplers);
-      serializeHolder(glTFJson, "textures", textures);
-      serializeHolder(glTFJson, "materials", materials);
-      serializeHolder(glTFJson, "meshes", meshes);
-      serializeHolder(glTFJson, "skins", skins);
-      serializeHolder(glTFJson, "animations", animations);
-      serializeHolder(glTFJson, "cameras", cameras);
-      serializeHolder(glTFJson, "nodes", nodes);
+        serializeHolder(glTFJson, "buffers", buffers);
+        serializeHolder(glTFJson, "bufferViews", bufferViews);
+        serializeHolder(glTFJson, "scenes", scenes);
+        serializeHolder(glTFJson, "accessors", accessors);
+        serializeHolder(glTFJson, "images", images);
+        serializeHolder(glTFJson, "samplers", samplers);
+        serializeHolder(glTFJson, "textures", textures);
+        serializeHolder(glTFJson, "materials", materials);
+        serializeHolder(glTFJson, "meshes", meshes);
+        serializeHolder(glTFJson, "skins", skins);
+        serializeHolder(glTFJson, "animations", animations);
+        serializeHolder(glTFJson, "cameras", cameras);
+        serializeHolder(glTFJson, "nodes", nodes);
     }
 
     const bool isGlb;
@@ -202,28 +214,29 @@ struct GLTFData
     // cache BufferViewData instances that've already been created from a given filename
     std::map<std::string, std::shared_ptr<BufferViewData>> filenameToBufferView;
 
-    std::shared_ptr<std::vector<uint8_t> > binary;
+    std::shared_ptr<std::vector<uint8_t>> binary;
 
-
-    Holder<BufferData>     buffers;
+    Holder<BufferData> buffers;
     Holder<BufferViewData> bufferViews;
-    Holder<AccessorData>   accessors;
-    Holder<ImageData>      images;
-    Holder<SamplerData>    samplers;
-    Holder<TextureData>    textures;
-    Holder<MaterialData>   materials;
-    Holder<MeshData>       meshes;
-    Holder<SkinData>       skins;
-    Holder<AnimationData>  animations;
-    Holder<CameraData>     cameras;
-    Holder<NodeData>       nodes;
-    Holder<SceneData>      scenes;
+    Holder<AccessorData> accessors;
+    Holder<ImageData> images;
+    Holder<SamplerData> samplers;
+    Holder<TextureData> textures;
+    Holder<MaterialData> materials;
+    Holder<MeshData> meshes;
+    Holder<SkinData> skins;
+    Holder<AnimationData> animations;
+    Holder<CameraData> cameras;
+    Holder<NodeData> nodes;
+    Holder<SceneData> scenes;
 };
 
-static void WriteToVectorContext(void *context, void *data, int size) {
+static void WriteToVectorContext(void *context, void *data, int size)
+{
     auto *vec = static_cast<std::vector<char> *>(context);
-    for (int ii = 0; ii < size; ii ++) {
-        vec->push_back(((char *) data)[ii]);
+    for (int ii = 0; ii < size; ii++)
+    {
+        vec->push_back(((char *)data)[ii]);
     }
 }
 
@@ -232,7 +245,7 @@ static void WriteToVectorContext(void *context, void *data, int size) {
  * registered under that name. This is safe in the context of this tool, where all such data
  * classes are guaranteed to stick around for the duration of the process.
  */
-template<typename T>
+template <typename T>
 T &require(std::map<std::string, std::shared_ptr<T>> map, const std::string &key)
 {
     auto iter = map.find(key);
@@ -241,7 +254,7 @@ T &require(std::map<std::string, std::shared_ptr<T>> map, const std::string &key
     return result;
 }
 
-template<typename T>
+template <typename T>
 T &require(std::map<long, std::shared_ptr<T>> map, long key)
 {
     auto iter = map.find(key);
@@ -254,16 +267,18 @@ static const std::vector<TriangleIndex> getIndexArray(const RawModel &raw)
 {
     std::vector<TriangleIndex> result;
 
-    for (int i = 0; i < raw.GetTriangleCount(); i++) {
-        result.push_back((TriangleIndex) raw.GetTriangle(i).verts[0]);
-        result.push_back((TriangleIndex) raw.GetTriangle(i).verts[1]);
-        result.push_back((TriangleIndex) raw.GetTriangle(i).verts[2]);
+    for (int i = 0; i < raw.GetTriangleCount(); i++)
+    {
+        result.push_back((TriangleIndex)raw.GetTriangle(i).verts[0]);
+        result.push_back((TriangleIndex)raw.GetTriangle(i).verts[1]);
+        result.push_back((TriangleIndex)raw.GetTriangle(i).verts[2]);
     }
     return result;
 }
 
 // TODO: replace with a proper MaterialHasher class
-static const std::string materialHash(const RawMaterial &m) {
+static const std::string materialHash(const RawMaterial &m)
+{
     return m.name + "_" + std::to_string(m.type);
 }
 
@@ -271,17 +286,19 @@ ModelData *Raw2Gltf(
     std::ofstream &gltfOutStream,
     const std::string &outputFolder,
     const RawModel &raw,
-    const GltfOptions &options
-)
+    const GltfOptions &options)
 {
-    if (verboseOutput) {
+    if (verboseOutput)
+    {
         fmt::printf("Building render model...\n");
-        for (int i = 0; i < raw.GetMaterialCount(); i++) {
+        for (int i = 0; i < raw.GetMaterialCount(); i++)
+        {
             fmt::printf(
                 "Material %d: %s [shading: %s]\n", i, raw.GetMaterial(i).name.c_str(),
                 Describe(raw.GetMaterial(i).info->shadingModel));
         }
-        if (raw.GetVertexCount() > 2 * raw.GetTriangleCount()) {
+        if (raw.GetVertexCount() > 2 * raw.GetTriangleCount())
+        {
             fmt::printf(
                 "Warning: High vertex count. Make sure there are no unnecessary vertex attributes. (see -keepAttribute cmd-line option)");
         }
@@ -294,45 +311,46 @@ ModelData *Raw2Gltf(
         options.keepAttribs,
         true);
 
-    if (verboseOutput) {
+    if (verboseOutput)
+    {
         fmt::printf("%7d vertices\n", raw.GetVertexCount());
         fmt::printf("%7d triangles\n", raw.GetTriangleCount());
         fmt::printf("%7d textures\n", raw.GetTextureCount());
         fmt::printf("%7d nodes\n", raw.GetNodeCount());
-        fmt::printf("%7d surfaces\n", (int) materialModels.size());
+        fmt::printf("%7d surfaces\n", (int)materialModels.size());
         fmt::printf("%7d animations\n", raw.GetAnimationCount());
     }
 
     std::unique_ptr<GLTFData> gltf(new GLTFData(options.outputBinary));
 
-    std::map<long, std::shared_ptr<NodeData>>            nodesById;
+    std::map<long, std::shared_ptr<NodeData>> nodesById;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
-    std::map<std::string, std::shared_ptr<TextureData>>  textureByIndicesKey;
-    std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
+    std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
+    std::map<long, std::shared_ptr<MeshData>> meshBySurfaceId;
 
     // for now, we only have one buffer; data->binary points to the same vector as that BufferData does.
     BufferData &buffer = *gltf->buffers.hold(
-        options.outputBinary ?
-        new BufferData(gltf->binary) :
-        new BufferData(extBufferFilename, gltf->binary, options.embedResources));
+        options.outputBinary ? new BufferData(gltf->binary) : new BufferData(extBufferFilename, gltf->binary, options.embedResources));
     {
         //
         // nodes
         //
 
-        for (int i = 0; i < raw.GetNodeCount(); i++) {
+        for (int i = 0; i < raw.GetNodeCount(); i++)
+        {
             // assumption: RawNode index == NodeData index
             const RawNode &node = raw.GetNode(i);
 
             auto nodeData = gltf->nodes.hold(
                 new NodeData(node.name, node.translation, node.rotation, node.scale, node.isJoint));
 
-            for (const auto &childId : node.childIds) {
+            for (const auto &childId : node.childIds)
+            {
                 int childIx = raw.GetNodeById(childId);
                 assert(childIx >= 0);
                 nodeData->AddChildNode(childIx);
             }
-            
+
             nodesById.insert(std::make_pair(node.id, nodeData));
         }
 
@@ -340,28 +358,33 @@ ModelData *Raw2Gltf(
         // animations
         //
 
-        for (int i = 0; i < raw.GetAnimationCount(); i++) {
+        for (int i = 0; i < raw.GetAnimationCount(); i++)
+        {
             const RawAnimation &animation = raw.GetAnimation(i);
 
-            if (animation.channels.size() == 0) {
+            if (animation.channels.size() == 0)
+            {
                 fmt::printf("Warning: animation '%s' has zero channels. Skipping.\n", animation.name.c_str());
                 continue;
             }
 
             auto accessor = gltf->AddAccessorAndView(buffer, GLT_FLOAT, animation.times);
-            accessor->min = { *std::min_element(std::begin(animation.times), std::end(animation.times)) };
-            accessor->max = { *std::max_element(std::begin(animation.times), std::end(animation.times)) };
+            accessor->min = {*std::min_element(std::begin(animation.times), std::end(animation.times))};
+            accessor->max = {*std::max_element(std::begin(animation.times), std::end(animation.times))};
 
             AnimationData &aDat = *gltf->animations.hold(new AnimationData(animation.name, *accessor));
-            if (verboseOutput) {
+            if (verboseOutput)
+            {
                 fmt::printf("Animation '%s' has %lu channels:\n", animation.name.c_str(), animation.channels.size());
             }
 
-            for (size_t channelIx = 0; channelIx < animation.channels.size(); channelIx++) {
+            for (size_t channelIx = 0; channelIx < animation.channels.size(); channelIx++)
+            {
                 const RawChannel &channel = animation.channels[channelIx];
-                const RawNode    &node    = raw.GetNode(channel.nodeIndex);
+                const RawNode &node = raw.GetNode(channel.nodeIndex);
 
-                if (verboseOutput) {
+                if (verboseOutput)
+                {
                     fmt::printf(
                         "  Channel %lu (%s) has translations/rotations/scales/weights: [%lu, %lu, %lu, %lu]\n",
                         channelIx, node.name.c_str(), channel.translations.size(), channel.rotations.size(),
@@ -369,16 +392,20 @@ ModelData *Raw2Gltf(
                 }
 
                 NodeData &nDat = require(nodesById, node.id);
-                if (!channel.translations.empty()) {
+                if (!channel.translations.empty())
+                {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.translations), "translation");
                 }
-                if (!channel.rotations.empty()) {
+                if (!channel.rotations.empty())
+                {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_QUATF, channel.rotations), "rotation");
                 }
-                if (!channel.scales.empty()) {
+                if (!channel.scales.empty())
+                {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.scales), "scale");
                 }
-                if (!channel.weights.empty()) {
+                if (!channel.weights.empty())
+                {
                     aDat.AddNodeChannel(nDat, *gltf->AddAccessorAndView(buffer, {CT_FLOAT, 1, "SCALAR"}, channel.weights), "weights");
                 }
             }
@@ -399,7 +426,8 @@ ModelData *Raw2Gltf(
 
         auto texIndicesKey = [&](std::vector<int> ixVec, std::string tag) -> std::string {
             std::string result = tag;
-            for (int ix : ixVec) {
+            for (int ix : ixVec)
+            {
                 result += "_" + std::to_string(ix);
             }
             return result;
@@ -411,63 +439,77 @@ ModelData *Raw2Gltf(
          * by the provided `combine` function.
          */
         auto getDerivedTexture = [&](
-            std::vector<int> rawTexIndices,
-            const pixel_merger &combine,
-            const std::string &tag,
-            bool transparentOutput
-        ) -> std::shared_ptr<TextureData>
-        {
+                                     std::vector<int> rawTexIndices,
+                                     const pixel_merger &combine,
+                                     const std::string &tag,
+                                     bool transparentOutput) -> std::shared_ptr<TextureData> {
             const std::string key = texIndicesKey(rawTexIndices, tag);
             auto iter = textureByIndicesKey.find(key);
-            if (iter != textureByIndicesKey.end()) {
+            if (iter != textureByIndicesKey.end())
+            {
                 return iter->second;
             }
 
             auto describeChannel = [&](int channels) -> std::string {
-                switch(channels) {
-                    case 1: return "G";
-                    case 2: return "GA";
-                    case 3: return "RGB";
-                    case 4: return "RGBA";
-                    default:
-                        return fmt::format("?%d?", channels);
+                switch (channels)
+                {
+                case 1:
+                    return "G";
+                case 2:
+                    return "GA";
+                case 3:
+                    return "RGB";
+                case 4:
+                    return "RGBA";
+                default:
+                    return fmt::format("?%d?", channels);
                 }
             };
 
             // keep track of some texture data as we load them
-            struct TexInfo {
+            struct TexInfo
+            {
                 explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
 
                 const int rawTexIx;
-                int width {};
-                int height {};
-                int channels {};
-                uint8_t *pixels {};
+                int width{};
+                int height{};
+                int channels{};
+                uint8_t *pixels{};
             };
 
             int width = -1, height = -1;
             std::string mergedFilename = tag;
-            std::vector<TexInfo> texes { };
-            for (const int rawTexIx : rawTexIndices) {
+            std::vector<TexInfo> texes{};
+            for (const int rawTexIx : rawTexIndices)
+            {
                 TexInfo info(rawTexIx);
-                if (rawTexIx >= 0) {
-                    const RawTexture  &rawTex  = raw.GetTexture(rawTexIx);
+                if (rawTexIx >= 0)
+                {
+                    const RawTexture &rawTex = raw.GetTexture(rawTexIx);
                     const std::string &fileLoc = rawTex.fileLocation;
-                    const std::string &name    = StringUtils::GetFileBaseString(StringUtils::GetFileNameString(fileLoc));
-                    if (!fileLoc.empty()) {
+                    const std::string &name = StringUtils::GetFileBaseString(StringUtils::GetFileNameString(fileLoc));
+                    if (!fileLoc.empty())
+                    {
                         info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 0);
-                        if (!info.pixels) {
+                        if (!info.pixels)
+                        {
                             fmt::printf("Warning: merge texture [%d](%s) could not be loaded.\n",
-                                rawTexIx,
-                                name);
-                        } else {
-                            if (width < 0) {
+                                        rawTexIx,
+                                        name);
+                        }
+                        else
+                        {
+                            if (width < 0)
+                            {
                                 width = info.width;
                                 height = info.height;
-                            } else if (width != info.width || height != info.height) {
+                            }
+                            else if (width != info.width || height != info.height)
+                            {
                                 fmt::printf("Warning: texture %s (%d, %d) can't be merged with previous texture(s) of dimension (%d, %d)\n",
-                                    name,
-                                    info.width, info.height, width, height);
+                                            name,
+                                            info.width, info.height, width, height);
                                 // this is bad enough that we abort the whole merge
                                 return nullptr;
                             }
@@ -480,7 +522,8 @@ ModelData *Raw2Gltf(
             // at the moment, the best choice of filename is also the best choice of name
             const std::string mergedName = mergedFilename;
 
-            if (width < 0) {
+            if (width < 0)
+            {
                 // no textures to merge; bail
                 return nullptr;
             }
@@ -492,27 +535,34 @@ ModelData *Raw2Gltf(
             std::vector<uint8_t> mergedPixels(static_cast<size_t>(channels * width * height));
             std::vector<pixel> pixels(texes.size());
             std::vector<const pixel *> pixelPointers(texes.size());
-            for (int xx = 0; xx < width; xx ++) {
-                for (int yy = 0; yy < height; yy ++) {
+            for (int xx = 0; xx < width; xx++)
+            {
+                for (int yy = 0; yy < height; yy++)
+                {
                     pixels.clear();
-                    for (int jj = 0; jj < texes.size(); jj ++) {
+                    for (int jj = 0; jj < texes.size(); jj++)
+                    {
                         const TexInfo &tex = texes[jj];
                         // each texture's structure will depend on its channel count
-                        int ii = tex.channels * (xx + yy*width);
+                        int ii = tex.channels * (xx + yy * width);
                         int kk = 0;
-                        if (tex.pixels != nullptr) {
-                            for (; kk < tex.channels; kk ++) {
+                        if (tex.pixels != nullptr)
+                        {
+                            for (; kk < tex.channels; kk++)
+                            {
                                 pixels[jj][kk] = tex.pixels[ii++] / 255.0f;
                             }
                         }
-                        for (; kk < pixels[jj].size(); kk ++) {
+                        for (; kk < pixels[jj].size(); kk++)
+                        {
                             pixels[jj][kk] = 1.0f;
                         }
                         pixelPointers[jj] = &pixels[jj];
                     }
                     const pixel merged = combine(pixelPointers);
-                    int ii = channels * (xx + yy*width);
-                    for (int jj = 0; jj < channels; jj ++) {
+                    int ii = channels * (xx + yy * width);
+                    for (int jj = 0; jj < channels; jj++)
+                    {
                         mergedPixels[ii + jj] = static_cast<uint8_t>(fmax(0, fmin(255.0f, merged[jj] * 255.0f)));
                     }
                 }
@@ -523,39 +573,48 @@ ModelData *Raw2Gltf(
 
             std::vector<char> imgBuffer;
             int res;
-            if (png) {
+            if (png)
+            {
                 res = stbi_write_png_to_func(WriteToVectorContext, &imgBuffer,
-                    width, height, channels, mergedPixels.data(), width * channels);
-            } else {
-                res = stbi_write_jpg_to_func(WriteToVectorContext, &imgBuffer,
-                    width, height, channels, mergedPixels.data(), 80);
+                                             width, height, channels, mergedPixels.data(), width * channels);
             }
-            if (!res) {
+            else
+            {
+                res = stbi_write_jpg_to_func(WriteToVectorContext, &imgBuffer,
+                                             width, height, channels, mergedPixels.data(), 80);
+            }
+            if (!res)
+            {
                 fmt::printf("Warning: failed to generate merge texture '%s'.\n", mergedFilename);
                 return nullptr;
             }
 
             ImageData *image;
-            if (options.outputBinary) {
+            if (options.outputBinary)
+            {
                 const auto bufferView = gltf->AddRawBufferView(buffer, imgBuffer.data(), imgBuffer.size());
                 image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
-
-            } else {
+            }
+            else
+            {
                 const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
                 const std::string imagePath = outputFolder + imageFilename;
                 FILE *fp = fopen(imagePath.c_str(), "wb");
-                if (fp == nullptr) {
+                if (fp == nullptr)
+                {
                     fmt::printf("Warning:: Couldn't write file '%s' for writing.\n", imagePath);
                     return nullptr;
                 }
 
-                if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1) {
+                if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1)
+                {
                     fmt::printf("Warning: Failed to write %lu bytes to file '%s'.\n", imgBuffer.size(), imagePath);
                     fclose(fp);
                     return nullptr;
                 }
                 fclose(fp);
-                if (verboseOutput) {
+                if (verboseOutput)
+                {
                     fmt::printf("Wrote %lu bytes to texture '%s'.\n", imgBuffer.size(), imagePath);
                 }
 
@@ -570,43 +629,53 @@ ModelData *Raw2Gltf(
 
         /** Create a new TextureData for the given RawTexture index, or return a previously created one. */
         auto getSimpleTexture = [&](int rawTexIndex, const std::string &tag) {
-            const std::string key = texIndicesKey({ rawTexIndex }, tag);
+            const std::string key = texIndicesKey({rawTexIndex}, tag);
             auto iter = textureByIndicesKey.find(key);
-            if (iter != textureByIndicesKey.end()) {
+            if (iter != textureByIndicesKey.end())
+            {
                 return iter->second;
             }
 
-            const RawTexture  &rawTexture      = raw.GetTexture(rawTexIndex);
-            const std::string textureName      = StringUtils::GetFileBaseString(rawTexture.name);
+            const RawTexture &rawTexture = raw.GetTexture(rawTexIndex);
+            const std::string textureName = StringUtils::GetFileBaseString(rawTexture.name);
             const std::string relativeFilename = StringUtils::GetFileNameString(rawTexture.fileLocation);
 
             ImageData *image = nullptr;
-            if (options.outputBinary) {
+            if (options.outputBinary)
+            {
                 auto bufferView = gltf->AddBufferViewForFile(buffer, rawTexture.fileLocation);
-                if (bufferView) {
+                if (bufferView)
+                {
                     std::string suffix = StringUtils::GetFileSuffixString(rawTexture.fileLocation);
                     image = new ImageData(relativeFilename, *bufferView, suffixToMimeType(suffix));
                 }
-
-            } else if (!relativeFilename.empty()) {
+            }
+            else if (!relativeFilename.empty())
+            {
                 image = new ImageData(relativeFilename, relativeFilename);
-                std::string outputPath = outputFolder + relativeFilename;
-                if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath)) {
-                    if (verboseOutput) {
+
+                std::string outputPath = outputFolder + StringUtils::NormalizePath(relativeFilename);
+
+                if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true))
+                {
+                    if (verboseOutput)
+                    {
                         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
                     }
-                } else {
+                }
+                else
+                {
                     // no point commenting further on read/write error; CopyFile() does enough of that, and we
                     // certainly want to to add an image struct to the glTF JSON, with the correct relative path
                     // reference, even if the copy failed.
                 }
             }
-            if (!image) {
+            if (!image)
+            {
                 // fallback is tiny transparent PNG
                 image = new ImageData(
                     textureName,
-                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-                );
+                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
             }
 
             std::shared_ptr<TextureData> texDat = gltf->textures.hold(
@@ -619,11 +688,12 @@ ModelData *Raw2Gltf(
         // materials
         //
 
-        for (int materialIndex = 0; materialIndex < raw.GetMaterialCount(); materialIndex++) {
+        for (int materialIndex = 0; materialIndex < raw.GetMaterialCount(); materialIndex++)
+        {
             const RawMaterial &material = raw.GetMaterial(materialIndex);
             const bool isTransparent =
-                           material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
-                           material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
+                material.type == RAW_MATERIAL_TYPE_TRANSPARENT ||
+                material.type == RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT;
 
             Vec3f emissiveFactor;
             float emissiveIntensity;
@@ -635,93 +705,95 @@ ModelData *Raw2Gltf(
                 return (material.textures[usage] >= 0) ? getSimpleTexture(material.textures[usage], "simple") : nullptr;
             };
 
-            TextureData *normalTexture   = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
+            TextureData *normalTexture = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
             TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
             TextureData *occlusionTexture = nullptr;
 
             // acquire derived texture of single RawTextureUsage as *TextData, or nullptr if it doesn't exist
             auto merge1Tex = [&](
-                const std::string tag,
-                RawTextureUsage usage,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
-                return getDerivedTexture({ material.textures[usage] }, combine, tag, outputHasAlpha);
+                                 const std::string tag,
+                                 RawTextureUsage usage,
+                                 const pixel_merger &combine,
+                                 bool outputHasAlpha) -> std::shared_ptr<TextureData> {
+                return getDerivedTexture({material.textures[usage]}, combine, tag, outputHasAlpha);
             };
 
             // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
             auto merge2Tex = [&](
-                const std::string tag,
-                RawTextureUsage u1,
-                RawTextureUsage u2,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
+                                 const std::string tag,
+                                 RawTextureUsage u1,
+                                 RawTextureUsage u2,
+                                 const pixel_merger &combine,
+                                 bool outputHasAlpha) -> std::shared_ptr<TextureData> {
                 return getDerivedTexture(
-                    { material.textures[u1], material.textures[u2] },
+                    {material.textures[u1], material.textures[u2]},
                     combine, tag, outputHasAlpha);
             };
 
             // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
             auto merge3Tex = [&](
-                const std::string tag,
-                RawTextureUsage u1,
-                RawTextureUsage u2,
-                RawTextureUsage u3,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
+                                 const std::string tag,
+                                 RawTextureUsage u1,
+                                 RawTextureUsage u2,
+                                 RawTextureUsage u3,
+                                 const pixel_merger &combine,
+                                 bool outputHasAlpha) -> std::shared_ptr<TextureData> {
                 return getDerivedTexture(
-                    { material.textures[u1], material.textures[u2], material.textures[u3] },
+                    {material.textures[u1], material.textures[u2], material.textures[u3]},
                     combine, tag, outputHasAlpha);
             };
 
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
-            if (options.usePBRMetRough) {
+            if (options.usePBRMetRough)
+            {
                 // albedo is a basic texture, no merging needed
                 std::shared_ptr<TextureData> baseColorTex, aoMetRoughTex;
 
                 Vec4f diffuseFactor;
                 float metallic, roughness;
-                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH)
+                {
                     /**
                      * PBR FBX Material -> PBR Met/Rough glTF.
                      *
                      * METALLIC and ROUGHNESS textures are packed in G and B channels of a rough/met texture.
                      * Other values translate directly.
                      */
-                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                    RawMetRoughMatProps *props = (RawMetRoughMatProps *)material.info.get();
                     // merge metallic into the blue channel and roughness into the green, of a new combinatory texture
                     aoMetRoughTex = merge3Tex("ao_met_rough",
-                        RAW_TEXTURE_USAGE_OCCLUSION, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
-                            return { (*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 1 };
-                        },
-                        false);
-                    baseColorTex      = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
-                    diffuseFactor     = props->diffuseFactor;
-                    metallic          = props->metallic;
-                    roughness         = props->roughness;
-                    emissiveFactor    = props->emissiveFactor;
+                                              RAW_TEXTURE_USAGE_OCCLUSION, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
+                                              [&](const std::vector<const pixel *> pixels) -> pixel {
+                                                  return {(*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 1};
+                                              },
+                                              false);
+                    baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+                    diffuseFactor = props->diffuseFactor;
+                    metallic = props->metallic;
+                    roughness = props->roughness;
+                    emissiveFactor = props->emissiveFactor;
                     emissiveIntensity = props->emissiveIntensity;
                     // add the occlusion texture only if actual occlusion pixels exist in the aoNetRough texture.
-                    if (material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0) {
-                       occlusionTexture  = aoMetRoughTex.get();
+                    if (material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0)
+                    {
+                        occlusionTexture = aoMetRoughTex.get();
                     }
-                } else {
+                }
+                else
+                {
                     /**
                      * Traditional FBX Material -> PBR Met/Rough glTF.
                      *
                      * Diffuse channel is used as base colour. Simple constants for metallic and roughness.
                      */
-                    const RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
+                    const RawTraditionalMatProps *props = ((RawTraditionalMatProps *)material.info.get());
                     diffuseFactor = props->diffuseFactor;
 
                     if (material.info->shadingModel == RAW_SHADING_MODEL_BLINN ||
                         material.info->shadingModel == RAW_SHADING_MODEL_PHONG)
                     {
                         // blinn/phong hardcoded to 0.4 metallic
-                        metallic  = 0.4f;
+                        metallic = 0.4f;
 
                         // fairly arbitrary conversion equation, with properties:
                         //   shininess 0 -> roughness 1
@@ -734,36 +806,41 @@ ModelData *Raw2Gltf(
                             return sqrtf(2.0f / (2.0f + shininess));
                         };
                         aoMetRoughTex = merge1Tex("ao_met_rough",
-                            RAW_TEXTURE_USAGE_SHININESS,
-                            [&](const std::vector<const pixel *> pixels) -> pixel {
-                                // do not multiply with props->shininess; that doesn't work like the other factors.
-                                float shininess = props->shininess * (*pixels[0])[0];
-                                return { 0, getRoughness(shininess), metallic, 1 };
-                            },
-                            false);
-                        if (aoMetRoughTex != nullptr) {
+                                                  RAW_TEXTURE_USAGE_SHININESS,
+                                                  [&](const std::vector<const pixel *> pixels) -> pixel {
+                                                      // do not multiply with props->shininess; that doesn't work like the other factors.
+                                                      float shininess = props->shininess * (*pixels[0])[0];
+                                                      return {0, getRoughness(shininess), metallic, 1};
+                                                  },
+                                                  false);
+                        if (aoMetRoughTex != nullptr)
+                        {
                             // if we successfully built a texture, factors are just multiplicative identity
                             metallic = roughness = 1.0f;
-                        } else {
+                        }
+                        else
+                        {
                             // no shininess texture,
                             roughness = getRoughness(props->shininess);
                         }
-
-                    } else {
-                        metallic  = 0.2f;
+                    }
+                    else
+                    {
+                        metallic = 0.2f;
                         roughness = 0.8f;
                     }
 
                     baseColorTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
 
-                    emissiveFactor    = props->emissiveFactor;
+                    emissiveFactor = props->emissiveFactor;
                     emissiveIntensity = 1.0f;
                 }
                 pbrMetRough.reset(new PBRMetallicRoughness(baseColorTex.get(), aoMetRoughTex.get(), diffuseFactor, metallic, roughness));
             }
 
             std::shared_ptr<KHRCmnUnlitMaterial> khrCmnUnlitMat;
-            if (options.useKHRMatUnlit) {
+            if (options.useKHRMatUnlit)
+            {
                 normalTexture = nullptr;
 
                 emissiveTexture = nullptr;
@@ -772,12 +849,15 @@ ModelData *Raw2Gltf(
                 Vec4f diffuseFactor;
                 std::shared_ptr<TextureData> baseColorTex;
 
-                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
-                    RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
+                if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH)
+                {
+                    RawMetRoughMatProps *props = (RawMetRoughMatProps *)material.info.get();
                     diffuseFactor = props->diffuseFactor;
                     baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
-                } else {
-                    RawTraditionalMatProps *props = ((RawTraditionalMatProps *) material.info.get());
+                }
+                else
+                {
+                    RawTraditionalMatProps *props = ((RawTraditionalMatProps *)material.info.get());
                     diffuseFactor = props->diffuseFactor;
                     baseColorTex = simpleTex(RAW_TEXTURE_USAGE_DIFFUSE);
                 }
@@ -786,7 +866,8 @@ ModelData *Raw2Gltf(
 
                 khrCmnUnlitMat.reset(new KHRCmnUnlitMaterial());
             }
-            if (!occlusionTexture) {
+            if (!occlusionTexture)
+            {
                 occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
             }
 
@@ -798,7 +879,8 @@ ModelData *Raw2Gltf(
             materialsByName[materialHash(material)] = mData;
         }
 
-        for (const auto &surfaceModel : materialModels) {
+        for (const auto &surfaceModel : materialModels)
+        {
             assert(surfaceModel.GetSurfaceCount() == 1);
             const RawSurface &rawSurface = surfaceModel.GetSurface(0);
             const long surfaceId = rawSurface.id;
@@ -808,12 +890,15 @@ ModelData *Raw2Gltf(
 
             MeshData *mesh = nullptr;
             auto meshIter = meshBySurfaceId.find(surfaceId);
-            if (meshIter != meshBySurfaceId.end()) {
+            if (meshIter != meshBySurfaceId.end())
+            {
                 mesh = meshIter->second.get();
-
-            } else {
+            }
+            else
+            {
                 std::vector<float> defaultDeforms;
-                for (const auto &channel : rawSurface.blendChannels) {
+                for (const auto &channel : rawSurface.blendChannels)
+                {
                     defaultDeforms.push_back(channel.defaultDeform);
                 }
                 auto meshPtr = gltf->meshes.hold(new MeshData(rawSurface.name, defaultDeforms));
@@ -822,19 +907,19 @@ ModelData *Raw2Gltf(
             }
 
             bool useLongIndices =
-                (options.useLongIndices == UseLongIndicesOptions::ALWAYS)
-                || (options.useLongIndices == UseLongIndicesOptions::AUTO
-                    && surfaceModel.GetVertexCount() > 65535);
+                (options.useLongIndices == UseLongIndicesOptions::ALWAYS) || (options.useLongIndices == UseLongIndicesOptions::AUTO && surfaceModel.GetVertexCount() > 65535);
 
             std::shared_ptr<PrimitiveData> primitive;
-            if (options.useDraco) {
+            if (options.useDraco)
+            {
                 int triangleCount = surfaceModel.GetTriangleCount();
 
                 // initialize Draco mesh with vertex index information
                 auto dracoMesh(std::make_shared<draco::Mesh>());
                 dracoMesh->SetNumFaces(static_cast<size_t>(triangleCount));
 
-                for (uint32_t ii = 0; ii < triangleCount; ii++) {
+                for (uint32_t ii = 0; ii < triangleCount; ii++)
+                {
                     draco::Mesh::Face face;
                     face[0] = surfaceModel.GetTriangle(ii).verts[0];
                     face[1] = surfaceModel.GetTriangle(ii).verts[1];
@@ -845,7 +930,9 @@ ModelData *Raw2Gltf(
                 AccessorData &indexes = *gltf->accessors.hold(new AccessorData(useLongIndices ? GLT_UINT : GLT_USHORT));
                 indexes.count = 3 * triangleCount;
                 primitive.reset(new PrimitiveData(indexes, mData, dracoMesh));
-            } else {
+            }
+            else
+            {
                 const AccessorData &indexes = *gltf->AddAccessorWithView(
                     *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
                     useLongIndices ? GLT_UINT : GLT_USHORT, getIndexArray(surfaceModel));
@@ -856,52 +943,61 @@ ModelData *Raw2Gltf(
             // surface vertices
             //
             {
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_POSITION) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_POSITION) != 0)
+                {
                     const AttributeDefinition<Vec3f> ATTR_POSITION("POSITION", &RawVertex::position,
-                        GLT_VEC3F, draco::GeometryAttribute::POSITION, draco::DT_FLOAT32);
+                                                                   GLT_VEC3F, draco::GeometryAttribute::POSITION, draco::DT_FLOAT32);
                     auto accessor = gltf->AddAttributeToPrimitive<Vec3f>(
                         buffer, surfaceModel, *primitive, ATTR_POSITION);
 
                     accessor->min = toStdVec(rawSurface.bounds.min);
                     accessor->max = toStdVec(rawSurface.bounds.max);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0)
+                {
                     const AttributeDefinition<Vec3f> ATTR_NORMAL("NORMAL", &RawVertex::normal,
-                        GLT_VEC3F, draco::GeometryAttribute::NORMAL, draco::DT_FLOAT32);
+                                                                 GLT_VEC3F, draco::GeometryAttribute::NORMAL, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_TANGENT) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_TANGENT) != 0)
+                {
                     const AttributeDefinition<Vec4f> ATTR_TANGENT("TANGENT", &RawVertex::tangent, GLT_VEC4F);
                     gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_TANGENT);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0)
+                {
                     const AttributeDefinition<Vec4f> ATTR_COLOR("COLOR_0", &RawVertex::color, GLT_VEC4F,
-                        draco::GeometryAttribute::COLOR, draco::DT_FLOAT32);
+                                                                draco::GeometryAttribute::COLOR, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_COLOR);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV0) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV0) != 0)
+                {
                     const AttributeDefinition<Vec2f> ATTR_TEXCOORD_0("TEXCOORD_0", &RawVertex::uv0,
-                        GLT_VEC2F, draco::GeometryAttribute::TEX_COORD, draco::DT_FLOAT32);
+                                                                     GLT_VEC2F, draco::GeometryAttribute::TEX_COORD, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_0);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV1) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV1) != 0)
+                {
                     const AttributeDefinition<Vec2f> ATTR_TEXCOORD_1("TEXCOORD_1", &RawVertex::uv1,
-                        GLT_VEC2F, draco::GeometryAttribute::TEX_COORD, draco::DT_FLOAT32);
+                                                                     GLT_VEC2F, draco::GeometryAttribute::TEX_COORD, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0)
+                {
                     const AttributeDefinition<Vec4i> ATTR_JOINTS("JOINTS_0", &RawVertex::jointIndices,
-                        GLT_VEC4I, draco::GeometryAttribute::GENERIC, draco::DT_UINT16);
+                                                                 GLT_VEC4I, draco::GeometryAttribute::GENERIC, draco::DT_UINT16);
                     gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
                 }
-                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
+                if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0)
+                {
                     const AttributeDefinition<Vec4f> ATTR_WEIGHTS("WEIGHTS_0", &RawVertex::jointWeights,
-                        GLT_VEC4F, draco::GeometryAttribute::GENERIC, draco::DT_FLOAT32);
+                                                                  GLT_VEC4F, draco::GeometryAttribute::GENERIC, draco::DT_FLOAT32);
                     gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
                 }
 
                 // each channel present in the mesh always ends up a target in the primitive
-                for (int channelIx = 0; channelIx < rawSurface.blendChannels.size(); channelIx ++) {
+                for (int channelIx = 0; channelIx < rawSurface.blendChannels.size(); channelIx++)
+                {
                     const auto &channel = rawSurface.blendChannels[channelIx];
 
                     // track the bounds of each shape channel
@@ -909,14 +1005,17 @@ ModelData *Raw2Gltf(
 
                     std::vector<Vec3f> positions, normals;
                     std::vector<Vec4f> tangents;
-                    for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj ++) {
+                    for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj++)
+                    {
                         auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
                         shapeBounds.AddPoint(blendVertex.position);
                         positions.push_back(blendVertex.position);
-                        if (options.useBlendShapeTangents && channel.hasNormals) {
+                        if (options.useBlendShapeTangents && channel.hasNormals)
+                        {
                             normals.push_back(blendVertex.normal);
                         }
-                        if (options.useBlendShapeTangents && channel.hasTangents) {
+                        if (options.useBlendShapeTangents && channel.hasTangents)
+                        {
                             tangents.push_back(blendVertex.tangent);
                         }
                     }
@@ -927,14 +1026,16 @@ ModelData *Raw2Gltf(
                     pAcc->max = toStdVec(shapeBounds.max);
 
                     std::shared_ptr<AccessorData> nAcc;
-                    if (!normals.empty()) {
+                    if (!normals.empty())
+                    {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC3F, normals);
                     }
 
                     std::shared_ptr<AccessorData> tAcc;
-                    if (!tangents.empty()) {
+                    if (!tangents.empty())
+                    {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                             GLT_VEC4F, tangents);
@@ -943,7 +1044,8 @@ ModelData *Raw2Gltf(
                     primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
                 }
             }
-            if (options.useDraco) {
+            if (options.useDraco)
+            {
                 // Set up the encoder.
                 draco::Encoder encoder;
 
@@ -956,7 +1058,7 @@ ModelData *Raw2Gltf(
                 encoder.SetAttributeQuantization(draco::GeometryAttribute::GENERIC, 8);
 
                 draco::EncoderBuffer dracoBuffer;
-                draco::Status        status = encoder.EncodeMeshToBuffer(*primitive->dracoMesh, &dracoBuffer);
+                draco::Status status = encoder.EncodeMeshToBuffer(*primitive->dracoMesh, &dracoBuffer);
                 assert(status.code() == draco::Status::OK);
 
                 auto view = gltf->AddRawBufferView(buffer, dracoBuffer.data(), dracoBuffer.size());
@@ -969,7 +1071,8 @@ ModelData *Raw2Gltf(
         // Assign meshes to node
         //
 
-        for (int i = 0; i < raw.GetNodeCount(); i++) {
+        for (int i = 0; i < raw.GetNodeCount(); i++)
+        {
 
             const RawNode &node = raw.GetNode(i);
             auto nodeData = gltf->nodes.ptrs[i];
@@ -988,16 +1091,20 @@ ModelData *Raw2Gltf(
                 //
                 // surface skin
                 //
-                if (!rawSurface.jointIds.empty()) {
-                    if (nodeData->skin == -1) {
+                if (!rawSurface.jointIds.empty())
+                {
+                    if (nodeData->skin == -1)
+                    {
                         // glTF uses column-major matrices
                         std::vector<Mat4f> inverseBindMatrices;
-                        for (const auto &inverseBindMatrice : rawSurface.inverseBindMatrices) {
+                        for (const auto &inverseBindMatrice : rawSurface.inverseBindMatrices)
+                        {
                             inverseBindMatrices.push_back(inverseBindMatrice.Transpose());
                         }
 
                         std::vector<uint32_t> jointIndexes;
-                        for (const auto &jointId : rawSurface.jointIds) {
+                        for (const auto &jointId : rawSurface.jointIds)
+                        {
                             jointIndexes.push_back(require(nodesById, jointId).ix);
                         }
 
@@ -1016,28 +1123,33 @@ ModelData *Raw2Gltf(
         // cameras
         //
 
-        for (int i = 0; i < raw.GetCameraCount(); i++) {
-            const RawCamera &cam    = raw.GetCamera(i);
-            CameraData      &camera = *gltf->cameras.hold(new CameraData());
+        for (int i = 0; i < raw.GetCameraCount(); i++)
+        {
+            const RawCamera &cam = raw.GetCamera(i);
+            CameraData &camera = *gltf->cameras.hold(new CameraData());
             camera.name = cam.name;
 
-            if (cam.mode == RawCamera::CAMERA_MODE_PERSPECTIVE) {
-                camera.type        = "perspective";
+            if (cam.mode == RawCamera::CAMERA_MODE_PERSPECTIVE)
+            {
+                camera.type = "perspective";
                 camera.aspectRatio = cam.perspective.aspectRatio;
-                camera.yfov        = cam.perspective.fovDegreesY * ((float) M_PI / 180.0f);
-                camera.znear       = cam.perspective.nearZ;
-                camera.zfar        = cam.perspective.farZ;
-            } else {
-                camera.type  = "orthographic";
-                camera.xmag  = cam.orthographic.magX;
-                camera.ymag  = cam.orthographic.magY;
+                camera.yfov = cam.perspective.fovDegreesY * ((float)M_PI / 180.0f);
+                camera.znear = cam.perspective.nearZ;
+                camera.zfar = cam.perspective.farZ;
+            }
+            else
+            {
+                camera.type = "orthographic";
+                camera.xmag = cam.orthographic.magX;
+                camera.ymag = cam.orthographic.magY;
                 camera.znear = cam.orthographic.nearZ;
-                camera.zfar  = cam.orthographic.farZ;
+                camera.zfar = cam.orthographic.farZ;
             }
             // Add the camera to the node hierarchy.
 
             auto iter = nodesById.find(cam.nodeId);
-            if (iter == nodesById.end()) {
+            if (iter == nodesById.end())
+            {
                 fmt::printf("Warning: Camera node id %lu does not exist.\n", cam.nodeId);
                 continue;
             }
@@ -1045,15 +1157,16 @@ ModelData *Raw2Gltf(
         }
     }
 
-    NodeData        &rootNode  = require(nodesById, raw.GetRootNode());
+    NodeData &rootNode = require(nodesById, raw.GetRootNode());
     const SceneData &rootScene = *gltf->scenes.hold(new SceneData(defaultSceneName, rootNode));
 
-    if (options.outputBinary) {
+    if (options.outputBinary)
+    {
         // note: glTF binary is little-endian
         const char glbHeader[] = {
-            'g', 'l', 'T', 'F',        // magic
-            0x02, 0x00, 0x00, 0x00,        // version
-            0x00, 0x00, 0x00, 0x00,        // total length: written in later
+            'g', 'l', 'T', 'F',     // magic
+            0x02, 0x00, 0x00, 0x00, // version
+            0x00, 0x00, 0x00, 0x00, // total length: written in later
         };
         gltfOutStream.write(glbHeader, 12);
 
@@ -1067,39 +1180,42 @@ ModelData *Raw2Gltf(
 
     {
         std::vector<std::string> extensionsUsed, extensionsRequired;
-        if (options.useKHRMatUnlit) {
+        if (options.useKHRMatUnlit)
+        {
             extensionsUsed.push_back(KHR_MATERIALS_CMN_UNLIT);
         }
-        if (options.useDraco) {
+        if (options.useDraco)
+        {
             extensionsUsed.push_back(KHR_DRACO_MESH_COMPRESSION);
             extensionsRequired.push_back(KHR_DRACO_MESH_COMPRESSION);
         }
 
-        json glTFJson {
-          { "asset", {
-              { "generator", "FBX2glTF" },
-              { "version", "2.0" }}},
-          { "scene", rootScene.ix }
-        };
-        if (!extensionsUsed.empty()) {
+        json glTFJson{
+            {"asset", {{"generator", "FBX2glTF"}, {"version", "2.0"}}},
+            {"scene", rootScene.ix}};
+        if (!extensionsUsed.empty())
+        {
             glTFJson["extensionsUsed"] = extensionsUsed;
         }
-        if (!extensionsRequired.empty()) {
+        if (!extensionsRequired.empty())
+        {
             glTFJson["extensionsRequired"] = extensionsRequired;
         }
 
         gltf->serializeHolders(glTFJson);
         gltfOutStream << glTFJson.dump(options.outputBinary ? 0 : 4);
     }
-    if (options.outputBinary) {
-        uint32_t jsonLength = (uint32_t) gltfOutStream.tellp() - 20;
+    if (options.outputBinary)
+    {
+        uint32_t jsonLength = (uint32_t)gltfOutStream.tellp() - 20;
         // the binary body must begin on a 4-aligned address, so pad json with spaces if necessary
-        while ((jsonLength % 4) != 0) {
+        while ((jsonLength % 4) != 0)
+        {
             gltfOutStream.put(' ');
             jsonLength++;
         }
 
-        uint32_t binHeader = (uint32_t) gltfOutStream.tellp();
+        uint32_t binHeader = (uint32_t)gltfOutStream.tellp();
         // binary glTF 2.0 has a sub-header for each of the JSON and BIN chunks
         const char glb2BinaryHeader[] = {
             0x00, 0x00, 0x00, 0x00, // chunk length: written in later
@@ -1109,12 +1225,13 @@ ModelData *Raw2Gltf(
 
         // append binary buffer directly to .glb file
         uint32_t binaryLength = gltf->binary->size();
-        gltfOutStream.write((const char *) &(*gltf->binary)[0], binaryLength);
-        while ((binaryLength % 4) != 0) {
+        gltfOutStream.write((const char *)&(*gltf->binary)[0], binaryLength);
+        while ((binaryLength % 4) != 0)
+        {
             gltfOutStream.put('\0');
             binaryLength++;
         }
-        uint32_t totalLength = (uint32_t) gltfOutStream.tellp();
+        uint32_t totalLength = (uint32_t)gltfOutStream.tellp();
 
         // seek back to sub-header for json chunk
         gltfOutStream.seekp(8);

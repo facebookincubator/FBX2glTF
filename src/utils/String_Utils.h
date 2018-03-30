@@ -32,6 +32,10 @@ namespace StringUtils {
 
     PathSeparator operator!(const PathSeparator &s);
 
+    PathSeparator GetPathSeparator();
+
+    const std::string NormalizePath(const std::string &path);
+
     inline const std::string GetCleanPathString(const std::string &path, const PathSeparator separator = PATH_WIN)
     {
         std::string cleanPath = path;

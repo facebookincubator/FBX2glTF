@@ -182,7 +182,7 @@ namespace FileUtils {
         return true;
     }
 
-    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename) {
+    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename, bool createPath = false) {
         std::ifstream srcFile(srcFilename, std::ios::binary);
         if (!srcFile) {
             fmt::printf("Warning: Couldn't open file %s for reading.\n", srcFilename);
@@ -193,9 +193,14 @@ namespace FileUtils {
         std::streamsize srcSize = srcFile.tellg();
         srcFile.seekg(0, std::ios::beg);
 
+        if (createPath && !CreatePath(dstFilename.c_str())) {
+            fmt::printf("Warning: Couldn't create directory %s.\n", dstFilename);
+            return false;
+        }
+
         std::ofstream dstFile(dstFilename, std::ios::binary | std::ios::trunc);
         if (!dstFile) {
-            fmt::printf("Warning: Couldn't open file %s for writing.\n", srcFilename);
+            fmt::printf("Warning: Couldn't open file %s for writing.\n", dstFilename);
             return false;
         }
         dstFile << srcFile.rdbuf();

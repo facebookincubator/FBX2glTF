@@ -38,12 +38,11 @@ function convert(srcFile, destFile, opts = []) {
         throw new Error(`Unsupported file extension: ${destFile}`);
       }
 
-      let srcPath = fs.realpathSync(srcFile);
-      let destDir = fs.realpathSync(path.dirname(destFile));
+      let destDir = path.dirname(destFile);
       let destPath = path.join(destDir, path.basename(destFile, destExt));
 
       let args = opts.slice(0);
-      args.push('--input', srcPath, '--output', destPath);
+      args.push('--input', srcFile, '--output', destPath);
       let child = childProcess.spawn(tool, args);
 
       let output = '';
@@ -52,7 +51,7 @@ function convert(srcFile, destFile, opts = []) {
       child.on('error', reject);
       child.on('close', code => {
         // the FBX SDK may create an .fbm dir during conversion; delete!
-        let fbmCruft = srcPath.replace(/.fbx$/i, '.fbm');
+        let fbmCruft = srcFile.replace(/.fbx$/i, '.fbm');
         // don't stick a fork in things if this fails, just log a warning
         const onError = error =>
           error && console.warn(`Failed to delete ${fbmCruft}: ${error}`);
@@ -67,6 +66,11 @@ function convert(srcFile, destFile, opts = []) {
           reject(new Error(`Converter output:\n` +
                            (output.length ? output : "<none>")));
         } else {
+
+          if (destExt === ".gltf") {
+            destPath = path.join(destPath + "_out", path.basename(destFile, destExt));
+          }
+
           resolve(destPath + destExt);
         }
       });
