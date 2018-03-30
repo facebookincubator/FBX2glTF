@@ -3,3 +3,6 @@ npm/bin/Linux/FBX2glTF
 npm/bin/Windows_NT/FBX2glTF.exe
 npm/node_modules/
 sdk/
+build/
+CMakeFiles/
+.DS_Store
