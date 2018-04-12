@@ -31,7 +31,8 @@ struct PrimitiveData
 
     void AddAttrib(std::string name, const AccessorData &accessor);
 
-    void AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents);
+    void AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents,
+                   const std::string &name);
 
     template<class T>
     void AddDracoAttrib(const AttributeDefinition<T> attribute, const std::vector<T> &attribArr)
@@ -62,6 +63,7 @@ struct PrimitiveData
     const MeshMode     mode;
 
     std::vector<std::tuple<int, int, int>> targetAccessors {};
+    std::vector<std::string> targetNames {};
 
     std::map<std::string, int> attributes;
     std::map<std::string, int> dracoAttributes;

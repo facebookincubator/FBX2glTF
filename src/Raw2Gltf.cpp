@@ -940,7 +940,7 @@ ModelData *Raw2Gltf(
                             GLT_VEC4F, tangents);
                     }
 
-                    primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
+                    primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get(), channel.name);
                 }
             }
             if (options.useDraco) {

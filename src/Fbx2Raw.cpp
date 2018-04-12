@@ -787,6 +787,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
                 static_cast<float>(blendShapes.GetBlendChannel(channelIx).deformPercent),
                 shape.normals.LayerPresent(),
                 shape.tangents.LayerPresent(),
+                shape.shape->GetName()
             });
         }
     }
