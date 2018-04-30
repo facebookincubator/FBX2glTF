@@ -401,12 +401,14 @@ public:
         for (int deformerIndex = 0; deformerIndex < pMesh->GetDeformerCount(); deformerIndex++) {
             FbxSkin *skin = reinterpret_cast< FbxSkin * >( pMesh->GetDeformer(deformerIndex, FbxDeformer::eSkin));
             if (skin != nullptr) {
+                const int clusterCount = skin->GetClusterCount();
+                if (clusterCount == 0) {
+                    continue;
+                }
                 int controlPointCount = pMesh->GetControlPointsCount();
-
                 vertexJointIndices.resize(controlPointCount, Vec4i(0, 0, 0, 0));
                 vertexJointWeights.resize(controlPointCount, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
 
-                const int clusterCount = skin->GetClusterCount();
                 for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++) {
                     FbxCluster   *cluster        = skin->GetCluster(clusterIndex);
                     const int    indexCount      = cluster->GetControlPointIndicesCount();

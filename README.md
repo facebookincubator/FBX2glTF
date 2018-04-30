@@ -236,12 +236,12 @@ ratification process**
 Given the command line flag --pbr-metallic-roughness, we throw ourselves into
 the warm embrace of glTF 2.0's PBR preference.
 
-As mentioned above, there is lilttle consensus in the world on how PBR should be
+As mentioned above, there is little consensus in the world on how PBR should be
 represented in FBX. At present, we support only one format: Stingray PBS. This
-is a featue that comes bundled with Maya, and any PBR model exported through
+is a feature that comes bundled with Maya, and any PBR model exported through
 that route should be digested propertly by FBX2glTF.
 
-(A happy note: Allegorithmic's Susbstance Painter also exports Stingray PBS,
+(A happy note: Allegorithmic's Substance Painter also exports Stingray PBS,
 when hooked up to Maya.)
 
 ## Draco Compression
