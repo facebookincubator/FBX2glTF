@@ -350,7 +350,9 @@ void RawModel::TransformGeometry(ComputeNormalsOption normals)
 
             if (verboseOutput) {
                 if (normals == ComputeNormalsOption::BROKEN) {
-                    fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
+                    if (computedNormalsCount > 0) {
+                        fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
+                    }
                 } else {
                     fmt::printf("Computed %lu normals.\n", computedNormalsCount);
                 }
