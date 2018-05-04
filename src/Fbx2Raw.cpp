@@ -1263,7 +1263,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                         for (int targetIx = 0; targetIx < targetCount; targetIx++) {
                             if (curve) {
                                 float result = findInInterval(influence, targetIx-1);
-                                if (!isnan(result)) {
+                                if (!std::isnan(result)) {
                                     // we're transitioning into targetIx
                                     channel.weights.push_back(result);
                                     hasMorphs = true;
@@ -1271,7 +1271,7 @@ static void ReadAnimations(RawModel &raw, FbxScene *pScene)
                                 }
                                 if (targetIx != targetCount-1) {
                                     result = findInInterval(influence, targetIx);
-                                    if (!isnan(result)) {
+                                    if (!std::isnan(result)) {
                                         // we're transitioning AWAY from targetIx
                                         channel.weights.push_back(1.0f - result);
                                         hasMorphs = true;

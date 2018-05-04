@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
 {
     cxxopts::Options options(
         "FBX2glTF",
-        "FBX2glTF 2.0: Generate a glTF 2.0 representation of an FBX model.");
+        fmt::sprintf("FBX2glTF %s: Generate a glTF 2.0 representation of an FBX model.", FBX2GLTF_VERSION)
+    );
 
     std::string inputPath;
     std::string outputPath;
@@ -98,11 +99,7 @@ int main(int argc, char *argv[])
     }
 
     if (options.count("version")) {
-        fmt::printf(
-            R"(
-FBX2glTF version 2.0
-Copyright (c) 2016-2017 Oculus VR, LLC.
-)");
+        fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2017 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
         return 0;
     }
 
