@@ -1077,7 +1077,7 @@ ModelData *Raw2Gltf(
 
         json glTFJson {
           { "asset", {
-              { "generator", "FBX2glTF" },
+              { "generator", "FBX2glTF v" + FBX2GLTF_VERSION },
               { "version", "2.0" }}},
           { "scene", rootScene.ix }
         };

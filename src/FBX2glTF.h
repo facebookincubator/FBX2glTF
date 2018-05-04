@@ -18,6 +18,8 @@
 #include <Windows.h>
 #endif
 
+const std::string FBX2GLTF_VERSION = "0.9.5";
+
 #include <fmt/printf.h>
 #include <fbxsdk.h>
 
