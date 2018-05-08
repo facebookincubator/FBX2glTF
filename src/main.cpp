@@ -63,7 +63,25 @@ int main(int argc, char *argv[])
                    cxxopts::value<std::vector<std::string>>())
                (
                    "d,draco", "Apply Draco mesh compression to geometries.",
-                   cxxopts::value<bool>(gltfOptions.useDraco))
+                   cxxopts::value<bool>(gltfOptions.draco.enabled))
+               (
+                   "draco-compression-level", "The compression level to tune Draco to, from 0 to 10. (default: 7)",
+                   cxxopts::value<int>(gltfOptions.draco.compressionLevel))
+               (
+                   "draco-bits-for-positions", "How many bits to quantize position to. (default: 14)",
+                   cxxopts::value<int>(gltfOptions.draco.quantBitsPosition))
+               (
+                   "draco-bits-for-uv", "How many bits to quantize UV coordinates to. (default: 10)",
+                   cxxopts::value<int>(gltfOptions.draco.quantBitsTexCoord))
+               (
+                   "draco-bits-for-normals", "How many bits to quantize normals to. (default: 10)",
+                   cxxopts::value<int>(gltfOptions.draco.quantBitsNormal))
+               (
+                   "draco-bits-for-colors", "How many bits to quantize color to. (default: 8)",
+                   cxxopts::value<int>(gltfOptions.draco.quantBitsColor))
+               (
+                   "draco-bits-for-other", "How many bits to quantize other vertex attributes to to. (default: 8)",
+                   cxxopts::value<int>(gltfOptions.draco.quantBitsGeneric))
                (
                    "compute-normals", "When to compute normals for vertices (never|broken|missing|always).",
                    cxxopts::value<std::vector<std::string>>())
@@ -123,6 +141,12 @@ int main(int argc, char *argv[])
             fmt::printf("Defaulting to --pbr-metallic-roughness material support.\n");
         }
         gltfOptions.usePBRMetRough = true;
+    }
+
+    if (gltfOptions.draco.compressionLevel != -1 &&
+        (gltfOptions.draco.compressionLevel < 1 || gltfOptions.draco.compressionLevel > 10)) {
+        fmt::printf("Draco compression level must lie in [1, 10].\n");
+        return 0;
     }
 
     if (options.count("flip-u") > 0) {

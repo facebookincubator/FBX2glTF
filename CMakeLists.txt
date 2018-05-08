@@ -27,7 +27,7 @@ endif()
 # DRACO
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
-  GIT_TAG 1.2.5
+  GIT_TAG 1.3.1
   PREFIX draco
   INSTALL_DIR
   CMAKE_ARGS
