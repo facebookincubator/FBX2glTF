@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cassert>
+#include <cmath>
 
 #include "FBX2glTF.h"
 #include "utils/File_Utils.h"
