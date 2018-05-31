@@ -195,7 +195,7 @@ There are three future enhancements we hope to see for animations:
 
 ### Materials
 
-With glTF 2.0, we leaped headlong into physically-based rendering (BPR), where
+With glTF 2.0, we leaped headlong into physically-based rendering (PBR), where
 the canonical way of expressing what a mesh looks like is by describing its
 visible material in fundamental attributes like "how rough is this surface".
 
