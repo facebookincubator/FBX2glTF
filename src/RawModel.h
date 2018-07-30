@@ -201,7 +201,7 @@ static inline std::string Describe(RawTextureUsage usage)
         case RAW_TEXTURE_USAGE_AMBIENT:     return "ambient";
         case RAW_TEXTURE_USAGE_DIFFUSE:     return "diffuse";
         case RAW_TEXTURE_USAGE_NORMAL:      return "normal";
-        case RAW_TEXTURE_USAGE_SPECULAR:    return "specuar";
+        case RAW_TEXTURE_USAGE_SPECULAR:    return "specular";
         case RAW_TEXTURE_USAGE_SHININESS:   return "shininess";
         case RAW_TEXTURE_USAGE_EMISSIVE:    return "emissive";
         case RAW_TEXTURE_USAGE_REFLECTION:  return "reflection";
