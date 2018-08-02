@@ -27,7 +27,7 @@ endif()
 # DRACO
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
-  GIT_TAG 1.2.5
+  GIT_TAG 1.3.1
   PREFIX draco
   INSTALL_DIR
   CMAKE_ARGS
@@ -130,28 +130,48 @@ if (APPLE)
 endif()
 
 set(SOURCE_FILES
-        src/utils/File_Utils.cpp
-        src/utils/Image_Utils.cpp
-        src/utils/String_Utils.cpp
-        src/main.cpp
+        src/FBX2glTF.h
         src/Fbx2Raw.cpp
+        src/Fbx2Raw.h
         src/Raw2Gltf.cpp
+        src/Raw2Gltf.h
         src/RawModel.cpp
-        src/glTF/BufferData.cpp
-        src/glTF/MaterialData.cpp
-        src/glTF/MeshData.cpp
-        src/glTF/NodeData.cpp
-        src/glTF/PrimitiveData.cpp
-        src/glTF/BufferViewData.cpp
-        src/glTF/BufferViewData.h
+        src/RawModel.h
         src/glTF/AccessorData.cpp
         src/glTF/AccessorData.h
-        src/glTF/ImageData.cpp
-        src/glTF/TextureData.cpp
-        src/glTF/SkinData.cpp
         src/glTF/AnimationData.cpp
+        src/glTF/AnimationData.h
+        src/glTF/BufferData.cpp
+        src/glTF/BufferData.h
+        src/glTF/BufferViewData.cpp
+        src/glTF/BufferViewData.h
         src/glTF/CameraData.cpp
+        src/glTF/CameraData.h
+        src/glTF/ImageData.cpp
+        src/glTF/ImageData.h
+        src/glTF/MaterialData.cpp
+        src/glTF/MaterialData.h
+        src/glTF/MeshData.cpp
+        src/glTF/MeshData.h
+        src/glTF/NodeData.cpp
+        src/glTF/NodeData.h
+        src/glTF/PrimitiveData.cpp
+        src/glTF/PrimitiveData.h
+        src/glTF/SamplerData.h
         src/glTF/SceneData.cpp
+        src/glTF/SceneData.h
+        src/glTF/SkinData.cpp
+        src/glTF/SkinData.h
+        src/glTF/TextureData.cpp
+        src/glTF/TextureData.h
+        src/main.cpp
+        src/mathfu.h
+        src/utils/File_Utils.cpp
+        src/utils/File_Utils.h
+        src/utils/Image_Utils.cpp
+        src/utils/Image_Utils.h
+        src/utils/String_Utils.cpp
+        src/utils/String_Utils.h
 )
 
 add_executable(FBX2glTF ${SOURCE_FILES})

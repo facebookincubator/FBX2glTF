@@ -269,11 +269,20 @@ void RawModel::Condense()
 
         surfaces.clear();
 
+        std::set<int> survivingSurfaceIds;
         for (auto &triangle : triangles) {
+            int oldSurfaceIndex = triangle.surfaceIndex;
             const RawSurface &surface = oldSurfaces[triangle.surfaceIndex];
             const int surfaceIndex = AddSurface(surface.name.c_str(), surface.id);
             surfaces[surfaceIndex] = surface;
             triangle.surfaceIndex = surfaceIndex;
+            survivingSurfaceIds.emplace(surface.id);
+        }
+        // clear out references to meshes that no longer exist
+        for (auto &node : nodes) {
+            if (node.surfaceId != 0 && survivingSurfaceIds.find(node.surfaceId) == survivingSurfaceIds.end()) {
+                node.surfaceId = 0;
+            }
         }
     }
 
@@ -341,7 +350,9 @@ void RawModel::TransformGeometry(ComputeNormalsOption normals)
 
             if (verboseOutput) {
                 if (normals == ComputeNormalsOption::BROKEN) {
-                    fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
+                    if (computedNormalsCount > 0) {
+                        fmt::printf("Repaired %lu empty normals.\n", computedNormalsCount);
+                    }
                 } else {
                     fmt::printf("Computed %lu normals.\n", computedNormalsCount);
                 }

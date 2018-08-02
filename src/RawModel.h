@@ -46,8 +46,18 @@ struct GltfOptions
     bool outputBinary { false };
     /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
     bool embedResources { false };
-    /** Whether to use KHR_draco_mesh_compression to minimize static geometry size. */
-    bool useDraco { false };
+
+    /** Whether and how to use KHR_draco_mesh_compression to minimize static geometry size. */
+    struct {
+        bool enabled = false;
+        int compressionLevel = -1;
+        int quantBitsPosition = -1;
+        int quantBitsTexCoord = -1;
+        int quantBitsNormal = -1;
+        int quantBitsColor = -1;
+        int quantBitsGeneric = -1;
+    } draco;
+
     /** Whether to use KHR_materials_unlit to extend materials definitions. */
     bool useKHRMatUnlit { false };
     /** Whether to populate the pbrMetallicRoughness substruct in materials. */

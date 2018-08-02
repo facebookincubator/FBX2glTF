@@ -11,15 +11,20 @@
 #define __FBX2GLTF_H__
 
 #if defined ( _WIN32 )
-// This can be a macro under Windows, confusing FMT
-#undef isnan
 // Tell Windows not to define min() and max() macros
 #define NOMINMAX
 #include <Windows.h>
 #endif
 
+const std::string FBX2GLTF_VERSION = "0.9.5";
+
 #include <fmt/printf.h>
 #include <fbxsdk.h>
+
+#if defined ( _WIN32 )
+// this is defined in fbxmath.h
+#undef isnan
+#endif
 
 #include "mathfu.h"
 
