@@ -172,6 +172,9 @@ if (NOT MSVC)
   target_compile_options(FBX2glTF PRIVATE
     "-Wno-null-dereference"
     "-Wunused"
+    # need to add this to stop cppcodec, a dependency here, from failing to build
+    # @ref: https://stackoverflow.com/questions/20302595/how-to-disable-narrowing-conversion-warnings
+    "-Wno-narrowing"
     )
 endif()
 
