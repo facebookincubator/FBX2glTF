@@ -39,13 +39,16 @@ void PrimitiveData::NoteDracoBuffer(const BufferViewData &data)
     dracoBufferView = data.ix;
 }
 
-void PrimitiveData::AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents)
+void PrimitiveData::AddTarget(const AccessorData *positions, const AccessorData *normals, const AccessorData *tangents,
+                              const std::string &shape_name)
 {
     targetAccessors.push_back(std::make_tuple(
         positions->ix,
         normals ? normals->ix : -1,
         tangents ? tangents ->ix : -1
     ));
+
+    targetNames.push_back(shape_name);
 }
 
 void to_json(json &j, const PrimitiveData &d) {
@@ -69,6 +72,15 @@ void to_json(json &j, const PrimitiveData &d) {
             targets.push_back(target);
         }
         j["targets"] = targets;
+    }
+    if (!d.targetNames.empty()) {
+        json extras {};
+        json names {};
+        for (const auto &name : d.targetNames) {
+            names.push_back(name);
+        }
+        extras["target_names"] = names;
+        j["extras"] = extras;
     }
     if (!d.dracoAttributes.empty()) {
         j["extensions"] = {

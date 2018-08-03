@@ -330,6 +330,7 @@ struct RawBlendChannel
     float defaultDeform;
     bool hasNormals;
     bool hasTangents;
+    std::string name;
 };
 
 struct RawSurface
