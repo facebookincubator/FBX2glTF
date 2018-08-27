@@ -7,8 +7,9 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#ifndef __FBX2GLTF_H__
-#define __FBX2GLTF_H__
+#pragma once
+
+#include <string>
 
 #if defined ( _WIN32 )
 // Tell Windows not to define min() and max() macros
@@ -16,7 +17,7 @@
 #include <Windows.h>
 #endif
 
-const std::string FBX2GLTF_VERSION = "0.9.5";
+#define FBX2GLTF_VERSION std::string("0.9.5")
 
 #include <fmt/printf.h>
 #include <fbxsdk.h>
@@ -26,6 +27,6 @@ const std::string FBX2GLTF_VERSION = "0.9.5";
 #undef isnan
 #endif
 
-#include "mathfu.h"
+#include "mathfu.hpp"
 
-#endif // !__FBX2GLTF_H__
+extern bool verboseOutput;
