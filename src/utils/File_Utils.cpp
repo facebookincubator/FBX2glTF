@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include "File_Utils.hpp"
+
 #include <string>
 #include <vector>
 #include <fstream>
@@ -35,7 +37,7 @@
 #include <sys/stat.h>
 
 #include "FBX2glTF.h"
-#include "String_Utils.h"
+#include "String_Utils.hpp"
 
 namespace FileUtils {
 
