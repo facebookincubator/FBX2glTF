@@ -32,7 +32,7 @@ For example:
 
 ```js
 const convert = require('fbx2gltf');
-convert('path/to/some.fbx', 'path/to/target.glb', ['--khr-materials-common']).then(
+convert('path/to/some.fbx', 'path/to/target.glb', ['--khr-materials-unlit']).then(
   destPath => {
     // yay, do what we will with our shiny new GLB file!
   },
