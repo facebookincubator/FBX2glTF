@@ -653,7 +653,10 @@ private:
                     std::vector<TargetShape> targetShapes;
                     const double *fullWeights = fbxChannel->GetTargetShapeFullWeights();
                     std::string name = std::string(fbxChannel->GetName());
-                    fmt::printf("extractChannels; channel name: %s\n", name);
+
+                    if (verboseOutput) {
+                        fmt::printf("\rblendshape channel: %s\n", name);
+                    }
 
                     for (int targetIx = 0; targetIx < fbxChannel->GetTargetShapeCount(); targetIx ++) {
                         FbxShape *fbxShape = fbxChannel->GetTargetShape(targetIx);
