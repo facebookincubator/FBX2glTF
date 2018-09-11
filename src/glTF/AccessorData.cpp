@@ -10,12 +10,13 @@
 #include "AccessorData.h"
 #include "BufferViewData.h"
 
-AccessorData::AccessorData(const BufferViewData &bufferView, GLType type)
+AccessorData::AccessorData(const BufferViewData &bufferView, GLType type, std::string name)
     : Holdable(),
       bufferView(bufferView.ix),
       type(std::move(type)),
       byteOffset(0),
-      count(0)
+      count(0),
+      name(name)
 {
 }
 
@@ -44,6 +45,9 @@ json AccessorData::serialize() const
     }
     if (!max.empty()) {
         result["max"] = max;
+    }
+    if (name.length() > 0) {
+        result["name"] = name;
     }
     return result;
 }

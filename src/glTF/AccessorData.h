@@ -14,7 +14,7 @@
 
 struct AccessorData : Holdable
 {
-    AccessorData(const BufferViewData &bufferView, GLType type);
+    AccessorData(const BufferViewData &bufferView, GLType type, std::string name);
     explicit AccessorData(GLType type);
 
     json serialize() const override;
@@ -43,6 +43,7 @@ struct AccessorData : Holdable
     unsigned int       count;
     std::vector<float> min;
     std::vector<float> max;
+    std::string        name;
 };
 
 #endif //FBX2GLTF_ACCESSORDATA_H

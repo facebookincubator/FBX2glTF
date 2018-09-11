@@ -596,12 +596,14 @@ public:
             const unsigned int blendShapeIx,
             const unsigned int channelIx,
             const FbxDouble deformPercent,
-            const std::vector<TargetShape> &targetShapes
+            const std::vector<TargetShape> &targetShapes,
+            const std::string name
         ) : mesh(mesh),
             blendShapeIx(blendShapeIx),
             channelIx(channelIx),
             deformPercent(deformPercent),
-            targetShapes(targetShapes)
+            targetShapes(targetShapes),
+            name(name)
         {}
 
         FbxAnimCurve *ExtractAnimation(unsigned int animIx) const {
@@ -615,6 +617,7 @@ public:
         const unsigned int blendShapeIx;
         const unsigned int channelIx;
         const std::vector<TargetShape> targetShapes;
+        const std::string name;
 
         const FbxDouble deformPercent;
     };
@@ -649,11 +652,14 @@ private:
                 if (fbxChannel->GetTargetShapeCount() > 0) {
                     std::vector<TargetShape> targetShapes;
                     const double *fullWeights = fbxChannel->GetTargetShapeFullWeights();
+                    std::string name = std::string(fbxChannel->GetName());
+                    fmt::printf("extractChannels; channel name: %s\n", name);
+
                     for (int targetIx = 0; targetIx < fbxChannel->GetTargetShapeCount(); targetIx ++) {
                         FbxShape *fbxShape = fbxChannel->GetTargetShape(targetIx);
                         targetShapes.push_back(TargetShape(fbxShape, fullWeights[targetIx]));
                     }
-                    channels.push_back(BlendChannel(mesh, shapeIx, channelIx, fbxChannel->DeformPercent * 0.01, targetShapes));
+                    channels.push_back(BlendChannel(mesh, shapeIx, channelIx, fbxChannel->DeformPercent * 0.01, targetShapes, name));
                 }
             }
         }
@@ -785,11 +791,13 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(channelIx); targetIx ++) {
             const FbxBlendShapesAccess::TargetShape &shape = blendShapes.GetTargetShape(channelIx, targetIx);
             targetShapes.push_back(&shape);
+            auto &blendChannel = blendShapes.GetBlendChannel(channelIx);
 
             rawSurface.blendChannels.push_back(RawBlendChannel {
-                static_cast<float>(blendShapes.GetBlendChannel(channelIx).deformPercent),
+                static_cast<float>(blendChannel.deformPercent),
                 shape.normals.LayerPresent(),
                 shape.tangents.LayerPresent(),
+                blendChannel.name
             });
         }
     }
