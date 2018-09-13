@@ -197,12 +197,12 @@ endif()
 
 target_link_libraries(FBX2glTF
   ${FRAMEWORKS}
-  ${CMAKE_DL_LIBS}
-  ${CMAKE_THREAD_LIBS_INIT}
   ${DRACO_LIB}
   ${FMT_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
+  ${CMAKE_DL_LIBS}
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 target_include_directories(FBX2glTF PUBLIC
