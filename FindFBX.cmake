@@ -21,7 +21,9 @@ else()
   set(ARCH_32 OFF)
 endif()
 
-set(FBXSDK_VERSION "2018.1.1" CACHE STRING "Precise version string of FBX SDK to use.")
+if (NOT DEFINED FBXSDK_VERSION)
+  set(FBXSDK_VERSION "2018.1.1")
+endif()
 
 set(_fbxsdk_vstudio_version "vs2015")
 

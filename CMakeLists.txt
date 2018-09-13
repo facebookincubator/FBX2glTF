@@ -14,14 +14,19 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
 # FBX
-find_package(FBX REQUIRED)
+foreach (FBXSDK_VERSION "2019.0" "2018.1.1")
+  find_package(FBX)
+  if (FBXSDK_FOUND)
+    break()
+  endif()
+endforeach(FBXSDK_VERSION)
 if (NOT FBXSDK_FOUND)
   message(FATAL_ERROR
     "Can't find FBX SDK in either:\n"
     " - Mac OS X: ${FBXSDK_APPLE_ROOT}\n"
     " - Windows: ${FBXSDK_WINDOWS_ROOT}\n"
     " - Linux: ${FBXSDK_LINUX_ROOT}"
-)
+  )
 endif()
 
 # DRACO
