@@ -64,7 +64,8 @@ public:
             const unsigned int blendShapeIx,
             const unsigned int channelIx,
             const FbxDouble deformPercent,
-            const std::vector<TargetShape> &targetShapes
+            const std::vector<TargetShape> &targetShapes,
+            const std::string name
         );
 
         FbxAnimCurve *ExtractAnimation(unsigned int animIx) const;
@@ -74,6 +75,7 @@ public:
         const unsigned int                  blendShapeIx;
         const unsigned int                  channelIx;
         const std::vector<TargetShape> targetShapes;
+        const std::string name;
 
         const FbxDouble deformPercent;
     };

@@ -27,11 +27,12 @@ FbxAnimCurve *FbxBlendShapesAccess::BlendChannel::ExtractAnimation(unsigned int 
 
 FbxBlendShapesAccess::BlendChannel::BlendChannel(
     FbxMesh *mesh, const unsigned int blendShapeIx, const unsigned int channelIx, const FbxDouble deformPercent,
-    const std::vector<FbxBlendShapesAccess::TargetShape> &targetShapes) : mesh(mesh),
+    const std::vector<FbxBlendShapesAccess::TargetShape> &targetShapes, std::string name) : mesh(mesh),
                                                                           blendShapeIx(blendShapeIx),
                                                                           channelIx(channelIx),
                                                                           deformPercent(deformPercent),
-                                                                          targetShapes(targetShapes)
+                                                                          targetShapes(targetShapes),
+                                                                          name(name)
 {}
 
 std::vector<FbxBlendShapesAccess::BlendChannel> FbxBlendShapesAccess::extractChannels(FbxMesh *mesh) const
@@ -46,11 +47,17 @@ std::vector<FbxBlendShapesAccess::BlendChannel> FbxBlendShapesAccess::extractCha
             if (fbxChannel->GetTargetShapeCount() > 0) {
                 std::vector<TargetShape> targetShapes;
                 const double *fullWeights = fbxChannel->GetTargetShapeFullWeights();
+                std::string name = std::string(fbxChannel->GetName());
+
+                if (verboseOutput) {
+                    fmt::printf("\rblendshape channel: %s\n", name);
+                }
+
                 for (int targetIx = 0; targetIx < fbxChannel->GetTargetShapeCount(); targetIx ++) {
                     FbxShape *fbxShape = fbxChannel->GetTargetShape(targetIx);
                     targetShapes.emplace_back(fbxShape, fullWeights[targetIx]);
                 }
-                channels.emplace_back(mesh, shapeIx, channelIx, fbxChannel->DeformPercent * 0.01, targetShapes);
+                channels.emplace_back(mesh, shapeIx, channelIx, fbxChannel->DeformPercent * 0.01, targetShapes, name);
             }
         }
     }
