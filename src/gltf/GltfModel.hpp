@@ -97,7 +97,7 @@ struct GltfModel
 
     template<class T>
     std::shared_ptr<AccessorData> AddAccessorWithView(
-        BufferViewData &bufferView, const GLType &type, const std::vector<T> &source)
+        BufferViewData &bufferView, const GLType &type, const std::vector<T> &source, std::string name)
     {
         auto accessor = accessors.hold(new AccessorData(bufferView, type));
         accessor->appendAsBinaryArray(source, *binary);
@@ -110,7 +110,15 @@ struct GltfModel
         BufferData &buffer, const GLType &type, const std::vector<T> &source)
     {
         auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
-        return AddAccessorWithView(*bufferView, type, source);
+        return AddAccessorWithView(*bufferView, type, source, std::string(""));
+    }
+
+    template<class T>
+    std::shared_ptr<AccessorData> AddAccessorAndView(
+        BufferData &buffer, const GLType &type, const std::vector<T> &source, std::string name)
+    {
+        auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
+        return AddAccessorWithView(*bufferView, type, source, name);
     }
 
     template<class T>

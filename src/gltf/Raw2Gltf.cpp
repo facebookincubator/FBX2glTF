@@ -124,12 +124,22 @@ struct GLTFData
         return result;
     }
 
-
     template<class T>
     std::shared_ptr<AccessorData> AddAccessorWithView(
         BufferViewData &bufferView, const GLType &type, const std::vector<T> &source)
     {
-        auto accessor = accessors.hold(new AccessorData(bufferView, type));
+        auto accessor = accessors.hold(new AccessorData(bufferView, type, std::string("")));
+        accessor->appendAsBinaryArray(source, *binary);
+        bufferView.byteLength = accessor->byteLength();
+        return accessor;
+    }
+
+
+    template<class T>
+    std::shared_ptr<AccessorData> AddAccessorWithView(
+        BufferViewData &bufferView, const GLType &type, const std::vector<T> &source, std::string name)
+    {
+        auto accessor = accessors.hold(new AccessorData(bufferView, type, name));
         accessor->appendAsBinaryArray(source, *binary);
         bufferView.byteLength = accessor->byteLength();
         return accessor;
@@ -920,7 +930,7 @@ ModelData *Raw2Gltf(
                     }
                     std::shared_ptr<AccessorData> pAcc = gltf->AddAccessorWithView(
                         *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
-                        GLT_VEC3F, positions);
+                        GLT_VEC3F, positions, channel.name);
                     pAcc->min = toStdVec(shapeBounds.min);
                     pAcc->max = toStdVec(shapeBounds.max);
 
@@ -928,14 +938,14 @@ ModelData *Raw2Gltf(
                     if (!normals.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
-                            GLT_VEC3F, normals);
+                            GLT_VEC3F, normals, channel.name);
                     }
 
                     std::shared_ptr<AccessorData> tAcc;
                     if (!tangents.empty()) {
                         nAcc = gltf->AddAccessorWithView(
                             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
-                            GLT_VEC4F, tangents);
+                            GLT_VEC4F, tangents, channel.name);
                     }
 
                     primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());

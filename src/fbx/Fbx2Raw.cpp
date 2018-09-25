@@ -155,11 +155,13 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         for (size_t targetIx = 0; targetIx < blendShapes.GetTargetShapeCount(channelIx); targetIx ++) {
             const FbxBlendShapesAccess::TargetShape &shape = blendShapes.GetTargetShape(channelIx, targetIx);
             targetShapes.push_back(&shape);
+            auto &blendChannel = blendShapes.GetBlendChannel(channelIx);
 
             rawSurface.blendChannels.push_back(RawBlendChannel {
-                static_cast<float>(blendShapes.GetBlendChannel(channelIx).deformPercent),
+                static_cast<float>(blendChannel.deformPercent),
                 shape.normals.LayerPresent(),
                 shape.tangents.LayerPresent(),
+                blendChannel.name
             });
         }
     }
