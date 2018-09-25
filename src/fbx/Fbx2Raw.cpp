@@ -801,7 +801,7 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
     FbxAxisSystem::MayaYUp.ConvertScene(pScene);
 
     // FBX's internal unscaled unit is centimetres, and if you choose not to work in that unit,
-    // you will find scaling transfgrms on all the children of the root node. Those transforms are
+    // you will find scaling transforms on all the children of the root node. Those transforms are
     // superfluous and cause a lot of people a lot of trouble. Luckily we can get rid of them by
     // converting to CM here (which just gets rid of the scaling), and then we pre-multiply the
     // scale factor into every vertex position (and related attributes) instead.
