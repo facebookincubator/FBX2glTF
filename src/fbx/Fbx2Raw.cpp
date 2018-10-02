@@ -44,14 +44,16 @@ static bool TriangleTexturePolarity(const Vec2f &uv0, const Vec2f &uv1, const Ve
 static RawMaterialType
 GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], const bool vertexTransparency, const bool skinned)
 {
-    // If diffusely texture, determine material type based on texture occlusion.
-    if (textures[RAW_TEXTURE_USAGE_DIFFUSE] >= 0) {
-        switch (raw.GetTexture(textures[RAW_TEXTURE_USAGE_DIFFUSE]).occlusion) {
-            case RAW_TEXTURE_OCCLUSION_OPAQUE:
-                return skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE;
-            case RAW_TEXTURE_OCCLUSION_TRANSPARENT:
-                return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-        }
+    // DIFFUSE and ALBEDO are different enough to represent distinctly, but they both help determine transparency.
+    int diffuseTexture = textures[RAW_TEXTURE_USAGE_DIFFUSE];
+    if (diffuseTexture < 0) {
+        diffuseTexture = textures[RAW_TEXTURE_USAGE_ALBEDO];
+    }
+    // determine material type based on texture occlusion.
+    if (diffuseTexture >= 0) {
+        return (raw.GetTexture(diffuseTexture).occlusion == RAW_TEXTURE_OCCLUSION_OPAQUE)
+            ? (skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE)
+            : (skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT);
     }
 
 	// else if there is any vertex transparency, treat whole mesh as transparent
