@@ -20,6 +20,7 @@
 #include "utils/String_Utils.hpp"
 #include "utils/Image_Utils.hpp"
 #include <utils/File_Utils.hpp>
+
 #include "raw/RawModel.hpp"
 
 #include "gltf/properties/AccessorData.hpp"
@@ -37,203 +38,12 @@
 #include "gltf/properties/SkinData.hpp"
 #include "gltf/properties/TextureData.hpp"
 
+#include "TextureBuilder.hpp"
+#include "GltfModel.hpp"
+
 typedef uint32_t TriangleIndex;
 
 #define DEFAULT_SCENE_NAME "Root Scene"
-
-/**
- * glTF 2.0 is based on the idea that data structs within a file are referenced by index; an accessor will
- * point to the n:th buffer view, and so on. The Holder class takes a freshly instantiated class, and then
- * creates, stored, and returns a shared_ptr<T> for it.
- *
- * The idea is that every glTF resource in the file will live as long as the Holder does, and the Holders
- * are all kept in the GLTFData struct. Clients may certainly cnhoose to perpetuate the full shared_ptr<T>
- * reference counting type, but generally speaking we pass around simple T& and T* types because the GLTFData
- * struct will, by design, outlive all other activity that takes place during in a single conversion run.
- */
-template<typename T>
-struct Holder
-{
-    std::vector<std::shared_ptr<T>> ptrs;
-    std::shared_ptr<T> hold(T *ptr)
-    {
-        ptr->ix = ptrs.size();
-        ptrs.emplace_back(ptr);
-        return ptrs.back();
-    }
-};
-
-struct GLTFData
-{
-    explicit GLTFData(bool _isGlb)
-        : binary(new std::vector<uint8_t>),
-          isGlb(_isGlb)
-    {
-    }
-
-    std::shared_ptr<BufferViewData> GetAlignedBufferView(BufferData &buffer, const BufferViewData::GL_ArrayType target)
-    {
-        unsigned long bufferSize = this->binary->size();
-        if ((bufferSize % 4) > 0) {
-            bufferSize += (4 - (bufferSize % 4));
-            this->binary->resize(bufferSize);
-        }
-        return this->bufferViews.hold(new BufferViewData(buffer, bufferSize, target));
-    }
-
-    // add a bufferview on the fly and copy data into it
-    std::shared_ptr<BufferViewData> AddRawBufferView(BufferData &buffer, const char *source, uint32_t bytes)
-    {
-        auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
-        bufferView->byteLength = bytes;
-
-        // make space for the new bytes (possibly moving the underlying data)
-        unsigned long bufferSize = this->binary->size();
-        this->binary->resize(bufferSize + bytes);
-
-        // and copy them into place
-        memcpy(&(*this->binary)[bufferSize], source, bytes);
-        return bufferView;
-    }
-
-    std::shared_ptr<BufferViewData> AddBufferViewForFile(BufferData &buffer, const std::string &filename)
-    {
-        // see if we've already created a BufferViewData for this precise file
-        auto iter = filenameToBufferView.find(filename);
-        if (iter != filenameToBufferView.end()) {
-            return iter->second;
-        }
-
-        std::shared_ptr<BufferViewData> result;
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        if (file) {
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-
-            std::vector<char> fileBuffer(size);
-            if (file.read(fileBuffer.data(), size)) {
-                result = AddRawBufferView(buffer, fileBuffer.data(), size);
-            } else {
-                fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping file.\n", size, filename);
-            }
-        } else {
-            fmt::printf("Warning: Couldn't open file %s, skipping file.\n", filename);
-        }
-        // note that we persist here not only success, but also failure, as nullptr
-        filenameToBufferView[filename] = result;
-        return result;
-    }
-
-    template<class T>
-    std::shared_ptr<AccessorData> AddAccessorWithView(
-        BufferViewData &bufferView, const GLType &type, const std::vector<T> &source)
-    {
-        auto accessor = accessors.hold(new AccessorData(bufferView, type, std::string("")));
-        accessor->appendAsBinaryArray(source, *binary);
-        bufferView.byteLength = accessor->byteLength();
-        return accessor;
-    }
-
-
-    template<class T>
-    std::shared_ptr<AccessorData> AddAccessorWithView(
-        BufferViewData &bufferView, const GLType &type, const std::vector<T> &source, std::string name)
-    {
-        auto accessor = accessors.hold(new AccessorData(bufferView, type, name));
-        accessor->appendAsBinaryArray(source, *binary);
-        bufferView.byteLength = accessor->byteLength();
-        return accessor;
-    }
-
-    template<class T>
-    std::shared_ptr<AccessorData> AddAccessorAndView(
-        BufferData &buffer, const GLType &type, const std::vector<T> &source)
-    {
-        auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
-        return AddAccessorWithView(*bufferView, type, source);
-    }
-
-    template<class T>
-    std::shared_ptr<AccessorData> AddAttributeToPrimitive(
-        BufferData &buffer, const RawModel &surfaceModel, PrimitiveData &primitive,
-        const AttributeDefinition<T> &attrDef)
-    {
-        // copy attribute data into vector
-        std::vector<T> attribArr;
-        surfaceModel.GetAttributeArray<T>(attribArr, attrDef.rawAttributeIx);
-
-        std::shared_ptr<AccessorData> accessor;
-        if (attrDef.dracoComponentType != draco::DT_INVALID && primitive.dracoMesh != nullptr) {
-            primitive.AddDracoAttrib(attrDef, attribArr);
-
-            accessor = accessors.hold(new AccessorData(attrDef.glType));
-            accessor->count = attribArr.size();
-        } else {
-            auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
-            accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr);
-        }
-        primitive.AddAttrib(attrDef.gltfName, *accessor);
-        return accessor;
-    };
-
-    template<class T>
-    void serializeHolder(json &glTFJson, std::string key, const Holder<T> holder)
-    {
-        if (!holder.ptrs.empty()) {
-            std::vector<json> bits;
-            for (const auto &ptr : holder.ptrs) {
-                bits.push_back(ptr->serialize());
-            }
-            glTFJson[key] = bits;
-        }
-    }
-
-    void serializeHolders(json &glTFJson)
-    {
-      serializeHolder(glTFJson, "buffers", buffers);
-      serializeHolder(glTFJson, "bufferViews", bufferViews);
-      serializeHolder(glTFJson, "scenes", scenes);
-      serializeHolder(glTFJson, "accessors", accessors);
-      serializeHolder(glTFJson, "images", images);
-      serializeHolder(glTFJson, "samplers", samplers);
-      serializeHolder(glTFJson, "textures", textures);
-      serializeHolder(glTFJson, "materials", materials);
-      serializeHolder(glTFJson, "meshes", meshes);
-      serializeHolder(glTFJson, "skins", skins);
-      serializeHolder(glTFJson, "animations", animations);
-      serializeHolder(glTFJson, "cameras", cameras);
-      serializeHolder(glTFJson, "nodes", nodes);
-    }
-
-    const bool isGlb;
-
-    // cache BufferViewData instances that've already been created from a given filename
-    std::map<std::string, std::shared_ptr<BufferViewData>> filenameToBufferView;
-
-    std::shared_ptr<std::vector<uint8_t> > binary;
-
-
-    Holder<BufferData>     buffers;
-    Holder<BufferViewData> bufferViews;
-    Holder<AccessorData>   accessors;
-    Holder<ImageData>      images;
-    Holder<SamplerData>    samplers;
-    Holder<TextureData>    textures;
-    Holder<MaterialData>   materials;
-    Holder<MeshData>       meshes;
-    Holder<SkinData>       skins;
-    Holder<AnimationData>  animations;
-    Holder<CameraData>     cameras;
-    Holder<NodeData>       nodes;
-    Holder<SceneData>      scenes;
-};
-
-static void WriteToVectorContext(void *context, void *data, int size) {
-    auto *vec = static_cast<std::vector<char> *>(context);
-    for (int ii = 0; ii < size; ii ++) {
-        vec->push_back(((char *) data)[ii]);
-    }
-}
 
 /**
  * This method sanity-checks existance and then returns a *reference* to the *Data instance
@@ -311,7 +121,7 @@ ModelData *Raw2Gltf(
         fmt::printf("%7d animations\n", raw.GetAnimationCount());
     }
 
-    std::unique_ptr<GLTFData> gltf(new GLTFData(options.outputBinary));
+    std::unique_ptr<GltfModel> gltf(new GltfModel(options));
 
     std::map<long, std::shared_ptr<NodeData>>            nodesById;
     std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
@@ -319,10 +129,7 @@ ModelData *Raw2Gltf(
     std::map<long, std::shared_ptr<MeshData>>            meshBySurfaceId;
 
     // for now, we only have one buffer; data->binary points to the same vector as that BufferData does.
-    BufferData &buffer = *gltf->buffers.hold(
-        options.outputBinary ?
-        new BufferData(gltf->binary) :
-        new BufferData(extBufferFilename, gltf->binary, options.embedResources));
+    BufferData &buffer = *gltf->defaultBuffer;
     {
         //
         // nodes
@@ -398,232 +205,10 @@ ModelData *Raw2Gltf(
         // samplers
         //
 
-        SamplerData &defaultSampler = *gltf->samplers.hold(new SamplerData());
-
-        //
         // textures
         //
 
-        using pixel = std::array<float, 4>; // pixel components are floats in [0, 1]
-        using pixel_merger = std::function<pixel(const std::vector<const pixel *>)>;
-
-        auto texIndicesKey = [&](std::vector<int> ixVec, std::string tag) -> std::string {
-            std::string result = tag;
-            for (int ix : ixVec) {
-                result += "_" + std::to_string(ix);
-            }
-            return result;
-        };
-
-        /**
-         * Create a new derived TextureData for the two given RawTexture indexes, or return a previously created one.
-         * Each pixel in the derived texture will be determined from its equivalent in each source pixels, as decided
-         * by the provided `combine` function.
-         */
-        auto getDerivedTexture = [&](
-            std::vector<int> rawTexIndices,
-            const pixel_merger &combine,
-            const std::string &tag,
-            bool transparentOutput
-        ) -> std::shared_ptr<TextureData>
-        {
-            const std::string key = texIndicesKey(rawTexIndices, tag);
-            auto iter = textureByIndicesKey.find(key);
-            if (iter != textureByIndicesKey.end()) {
-                return iter->second;
-            }
-
-            auto describeChannel = [&](int channels) -> std::string {
-                switch(channels) {
-                    case 1: return "G";
-                    case 2: return "GA";
-                    case 3: return "RGB";
-                    case 4: return "RGBA";
-                    default:
-                        return fmt::format("?%d?", channels);
-                }
-            };
-
-            // keep track of some texture data as we load them
-            struct TexInfo {
-                explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
-
-                const int rawTexIx;
-                int width {};
-                int height {};
-                int channels {};
-                uint8_t *pixels {};
-            };
-
-            int width = -1, height = -1;
-            std::string mergedFilename = tag;
-            std::vector<TexInfo> texes { };
-            for (const int rawTexIx : rawTexIndices) {
-                TexInfo info(rawTexIx);
-                if (rawTexIx >= 0) {
-                    const RawTexture  &rawTex  = raw.GetTexture(rawTexIx);
-                    const std::string &fileLoc = rawTex.fileLocation;
-                    const std::string &name    = StringUtils::GetFileBaseString(StringUtils::GetFileNameString(fileLoc));
-                    if (!fileLoc.empty()) {
-                        info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 0);
-                        if (!info.pixels) {
-                            fmt::printf("Warning: merge texture [%d](%s) could not be loaded.\n",
-                                rawTexIx,
-                                name);
-                        } else {
-                            if (width < 0) {
-                                width = info.width;
-                                height = info.height;
-                            } else if (width != info.width || height != info.height) {
-                                fmt::printf("Warning: texture %s (%d, %d) can't be merged with previous texture(s) of dimension (%d, %d)\n",
-                                    name,
-                                    info.width, info.height, width, height);
-                                // this is bad enough that we abort the whole merge
-                                return nullptr;
-                            }
-                            mergedFilename += "_" + name;
-                        }
-                    }
-                }
-                texes.push_back(info);
-            }
-            // at the moment, the best choice of filename is also the best choice of name
-            const std::string mergedName = mergedFilename;
-
-            if (width < 0) {
-                // no textures to merge; bail
-                return nullptr;
-            }
-            // TODO: which channel combinations make sense in input files?
-
-            // write 3 or 4 channels depending on whether or not we need transparency
-            int channels = transparentOutput ? 4 : 3;
-
-            std::vector<uint8_t> mergedPixels(static_cast<size_t>(channels * width * height));
-            std::vector<pixel> pixels(texes.size());
-            std::vector<const pixel *> pixelPointers(texes.size());
-            for (int xx = 0; xx < width; xx ++) {
-                for (int yy = 0; yy < height; yy ++) {
-                    pixels.clear();
-                    for (int jj = 0; jj < texes.size(); jj ++) {
-                        const TexInfo &tex = texes[jj];
-                        // each texture's structure will depend on its channel count
-                        int ii = tex.channels * (xx + yy*width);
-                        int kk = 0;
-                        if (tex.pixels != nullptr) {
-                            for (; kk < tex.channels; kk ++) {
-                                pixels[jj][kk] = tex.pixels[ii++] / 255.0f;
-                            }
-                        }
-                        for (; kk < pixels[jj].size(); kk ++) {
-                            pixels[jj][kk] = 1.0f;
-                        }
-                        pixelPointers[jj] = &pixels[jj];
-                    }
-                    const pixel merged = combine(pixelPointers);
-                    int ii = channels * (xx + yy*width);
-                    for (int jj = 0; jj < channels; jj ++) {
-                        mergedPixels[ii + jj] = static_cast<uint8_t>(fmax(0, fmin(255.0f, merged[jj] * 255.0f)));
-                    }
-                }
-            }
-
-            // write a .png iff we need transparency in the destination texture
-            bool png = transparentOutput;
-
-            std::vector<char> imgBuffer;
-            int res;
-            if (png) {
-                res = stbi_write_png_to_func(WriteToVectorContext, &imgBuffer,
-                    width, height, channels, mergedPixels.data(), width * channels);
-            } else {
-                res = stbi_write_jpg_to_func(WriteToVectorContext, &imgBuffer,
-                    width, height, channels, mergedPixels.data(), 80);
-            }
-            if (!res) {
-                fmt::printf("Warning: failed to generate merge texture '%s'.\n", mergedFilename);
-                return nullptr;
-            }
-
-            ImageData *image;
-            if (options.outputBinary) {
-                const auto bufferView = gltf->AddRawBufferView(buffer, imgBuffer.data(), imgBuffer.size());
-                image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
-
-            } else {
-                const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
-                const std::string imagePath = outputFolder + imageFilename;
-                FILE *fp = fopen(imagePath.c_str(), "wb");
-                if (fp == nullptr) {
-                    fmt::printf("Warning:: Couldn't write file '%s' for writing.\n", imagePath);
-                    return nullptr;
-                }
-
-                if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1) {
-                    fmt::printf("Warning: Failed to write %lu bytes to file '%s'.\n", imgBuffer.size(), imagePath);
-                    fclose(fp);
-                    return nullptr;
-                }
-                fclose(fp);
-                if (verboseOutput) {
-                    fmt::printf("Wrote %lu bytes to texture '%s'.\n", imgBuffer.size(), imagePath);
-                }
-
-                image = new ImageData(mergedName, imageFilename);
-            }
-
-            std::shared_ptr<TextureData> texDat = gltf->textures.hold(
-                new TextureData(mergedName, defaultSampler, *gltf->images.hold(image)));
-            textureByIndicesKey.insert(std::make_pair(key, texDat));
-            return texDat;
-        };
-
-        /** Create a new TextureData for the given RawTexture index, or return a previously created one. */
-        auto getSimpleTexture = [&](int rawTexIndex, const std::string &tag) {
-            const std::string key = texIndicesKey({ rawTexIndex }, tag);
-            auto iter = textureByIndicesKey.find(key);
-            if (iter != textureByIndicesKey.end()) {
-                return iter->second;
-            }
-
-            const RawTexture  &rawTexture      = raw.GetTexture(rawTexIndex);
-            const std::string textureName      = StringUtils::GetFileBaseString(rawTexture.name);
-            const std::string relativeFilename = StringUtils::GetFileNameString(rawTexture.fileLocation);
-
-            ImageData *image = nullptr;
-            if (options.outputBinary) {
-                auto bufferView = gltf->AddBufferViewForFile(buffer, rawTexture.fileLocation);
-                if (bufferView) {
-                    std::string suffix = StringUtils::GetFileSuffixString(rawTexture.fileLocation);
-                    image = new ImageData(relativeFilename, *bufferView, ImageUtils::suffixToMimeType(suffix));
-                }
-
-            } else if (!relativeFilename.empty()) {
-                image = new ImageData(relativeFilename, relativeFilename);
-                std::string outputPath = outputFolder + relativeFilename;
-                if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath)) {
-                    if (verboseOutput) {
-                        fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
-                    }
-                } else {
-                    // no point commenting further on read/write error; CopyFile() does enough of that, and we
-                    // certainly want to to add an image struct to the glTF JSON, with the correct relative path
-                    // reference, even if the copy failed.
-                }
-            }
-            if (!image) {
-                // fallback is tiny transparent PNG
-                image = new ImageData(
-                    textureName,
-                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-                );
-            }
-
-            std::shared_ptr<TextureData> texDat = gltf->textures.hold(
-                new TextureData(textureName, defaultSampler, *gltf->images.hold(image)));
-            textureByIndicesKey.insert(std::make_pair(key, texDat));
-            return texDat;
-        };
+        TextureBuilder textureBuilder(raw, options, outputFolder, *gltf);
 
         //
         // materials
@@ -638,53 +223,14 @@ ModelData *Raw2Gltf(
             Vec3f emissiveFactor;
             float emissiveIntensity;
 
-            const Vec3f dielectric(0.04f, 0.04f, 0.04f);
-
             // acquire the texture of a specific RawTextureUsage as *TextData, or nullptr if none exists
             auto simpleTex = [&](RawTextureUsage usage) -> std::shared_ptr<TextureData> {
-                return (material.textures[usage] >= 0) ? getSimpleTexture(material.textures[usage], "simple") : nullptr;
+                return (material.textures[usage] >= 0) ? textureBuilder.simple(material.textures[usage], "simple") : nullptr;
             };
 
             TextureData *normalTexture   = simpleTex(RAW_TEXTURE_USAGE_NORMAL).get();
             TextureData *emissiveTexture = simpleTex(RAW_TEXTURE_USAGE_EMISSIVE).get();
             TextureData *occlusionTexture = nullptr;
-
-            // acquire derived texture of single RawTextureUsage as *TextData, or nullptr if it doesn't exist
-            auto merge1Tex = [&](
-                const std::string tag,
-                RawTextureUsage usage,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
-                return getDerivedTexture({ material.textures[usage] }, combine, tag, outputHasAlpha);
-            };
-
-            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
-            auto merge2Tex = [&](
-                const std::string tag,
-                RawTextureUsage u1,
-                RawTextureUsage u2,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
-                return getDerivedTexture(
-                    { material.textures[u1], material.textures[u2] },
-                    combine, tag, outputHasAlpha);
-            };
-
-            // acquire derived texture of two RawTextureUsage as *TextData, or nullptr if neither exists
-            auto merge3Tex = [&](
-                const std::string tag,
-                RawTextureUsage u1,
-                RawTextureUsage u2,
-                RawTextureUsage u3,
-                const pixel_merger &combine,
-                bool outputHasAlpha
-            ) -> std::shared_ptr<TextureData> {
-                return getDerivedTexture(
-                    { material.textures[u1], material.textures[u2], material.textures[u3] },
-                    combine, tag, outputHasAlpha);
-            };
 
             std::shared_ptr<PBRMetallicRoughness> pbrMetRough;
             if (options.usePBRMetRough) {
@@ -702,12 +248,18 @@ ModelData *Raw2Gltf(
                      */
                     RawMetRoughMatProps *props = (RawMetRoughMatProps *) material.info.get();
                     // merge metallic into the blue channel and roughness into the green, of a new combinatory texture
-                    aoMetRoughTex = merge3Tex("ao_met_rough",
-                        RAW_TEXTURE_USAGE_OCCLUSION, RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS,
-                        [&](const std::vector<const pixel *> pixels) -> pixel {
+                    aoMetRoughTex = textureBuilder.combine(
+                        {
+                            material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
+                            material.textures[RAW_TEXTURE_USAGE_METALLIC],
+                            material.textures[RAW_TEXTURE_USAGE_ROUGHNESS],
+                        },
+                        "ao_met_rough",
+                        [&](const std::vector<const TextureBuilder::pixel *> pixels) -> TextureBuilder::pixel {
                             return { {(*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 1} };
                         },
                         false);
+
                     baseColorTex      = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
                     diffuseFactor     = props->diffuseFactor;
                     metallic          = props->metallic;
@@ -738,19 +290,21 @@ ModelData *Raw2Gltf(
                         //   shininess 2 -> roughness ~0.7
                         //   shininess 6 -> roughness 0.5
                         //   shininess 16 -> roughness ~0.33
-
                         //   as shininess ==> oo, roughness ==> 0
                         auto getRoughness = [&](float shininess) {
                             return sqrtf(2.0f / (2.0f + shininess));
                         };
-                        aoMetRoughTex = merge1Tex("ao_met_rough",
-                            RAW_TEXTURE_USAGE_SHININESS,
-                            [&](const std::vector<const pixel *> pixels) -> pixel {
+
+                        aoMetRoughTex = textureBuilder.combine(
+                            { material.textures[RAW_TEXTURE_USAGE_SHININESS], },
+                            "ao_met_rough",
+                            [&](const std::vector<const TextureBuilder::pixel *> pixels) -> TextureBuilder::pixel {
                                 // do not multiply with props->shininess; that doesn't work like the other factors.
                                 float shininess = props->shininess * (*pixels[0])[0];
                                 return { {0, getRoughness(shininess), metallic, 1} };
                             },
                             false);
+
                         if (aoMetRoughTex != nullptr) {
                             // if we successfully built a texture, factors are just multiplicative identity
                             metallic = roughness = 1.0f;
@@ -858,7 +412,7 @@ ModelData *Raw2Gltf(
             } else {
                 const AccessorData &indexes = *gltf->AddAccessorWithView(
                     *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
-                    useLongIndices ? GLT_UINT : GLT_USHORT, getIndexArray(surfaceModel));
+                    useLongIndices ? GLT_UINT : GLT_USHORT, getIndexArray(surfaceModel), std::string(""));
                 primitive.reset(new PrimitiveData(indexes, mData));
             };
 
@@ -992,7 +546,6 @@ ModelData *Raw2Gltf(
         //
 
         for (int i = 0; i < raw.GetNodeCount(); i++) {
-
             const RawNode &node = raw.GetNode(i);
             auto nodeData = gltf->nodes.ptrs[i];
 

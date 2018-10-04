@@ -14,7 +14,10 @@
 
 #include <utils/Image_Utils.hpp>
 #include <utils/String_Utils.hpp>
+#include <utils/File_Utils.hpp>
+
 #include <gltf/properties/ImageData.hpp>
+#include <gltf/properties/TextureData.hpp>
 
 // keep track of some texture data as we load them
 struct TexInfo {
@@ -30,7 +33,8 @@ struct TexInfo {
 std::shared_ptr<TextureData> TextureBuilder::combine(
     const std::vector<int> &ixVec,
     const std::string &tag,
-    const pixel_merger &computePixel)
+    const pixel_merger &computePixel,
+    bool includeAlphaChannel)
 {
     const std::string key = texIndicesKey(ixVec, tag);
     auto iter = textureByIndicesKey.find(key);
@@ -80,7 +84,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
     // TODO: which channel combinations make sense in input files?
 
     // write 3 or 4 channels depending on whether or not we need transparency
-    int channels = transparentOutput ? 4 : 3;
+    int channels = includeAlphaChannel ? 4 : 3;
 
     std::vector<uint8_t> mergedPixels(static_cast<size_t>(channels * width * height));
     std::vector<pixel> pixels(texes.size());
@@ -112,7 +116,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
     }
 
     // write a .png iff we need transparency in the destination texture
-    bool png = transparentOutput;
+    bool png = includeAlphaChannel;
 
     std::vector<char> imgBuffer;
     int res;
@@ -130,31 +134,32 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
 
     ImageData *image;
     if (options.outputBinary) {
-        const auto bufferView = gltf->AddRawBufferView(buffer, imgBuffer.data(), imgBuffer.size());
-        return std::make_unique<ImageData>(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
-    }
-    const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
-    const std::string imagePath = outputFolder + imageFilename;
-    FILE *fp = fopen(imagePath.c_str(), "wb");
-    if (fp == nullptr) {
-        fmt::printf("Warning:: Couldn't write file '%s' for writing.\n", imagePath);
-        return nullptr;
-    }
+        const auto bufferView = gltf.AddRawBufferView(*gltf.defaultBuffer, imgBuffer.data(), imgBuffer.size());
+        image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
+    } else {
+        const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
+        const std::string imagePath = outputFolder + imageFilename;
+        FILE *fp = fopen(imagePath.c_str(), "wb");
+        if (fp == nullptr) {
+            fmt::printf("Warning:: Couldn't write file '%s' for writing.\n", imagePath);
+            return nullptr;
+        }
 
-    if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1) {
-        fmt::printf("Warning: Failed to write %lu bytes to file '%s'.\n", imgBuffer.size(), imagePath);
+        if (fwrite(imgBuffer.data(), imgBuffer.size(), 1, fp) != 1) {
+            fmt::printf("Warning: Failed to write %lu bytes to file '%s'.\n", imgBuffer.size(), imagePath);
+            fclose(fp);
+            return nullptr;
+        }
         fclose(fp);
-        return nullptr;
+        if (verboseOutput) {
+            fmt::printf("Wrote %lu bytes to texture '%s'.\n", imgBuffer.size(), imagePath);
+        }
+        image = new ImageData(mergedName, imageFilename);
     }
-    fclose(fp);
-    if (verboseOutput) {
-        fmt::printf("Wrote %lu bytes to texture '%s'.\n", imgBuffer.size(), imagePath);
-    }
-    std::shared_ptr<TextureData> texDat = gltf->textures.hold(
-        new TextureData(mergedName, defaultSampler, *image));
+    std::shared_ptr<TextureData> texDat = gltf.textures.hold(
+        new TextureData(mergedName, *gltf.defaultSampler, *gltf.images.hold(image)));
     textureByIndicesKey.insert(std::make_pair(key, texDat));
-
-    return std::make_unique<TextureData>(mergedName, imageFilename);
+    return texDat;
 }
 
 /** Create a new TextureData for the given RawTexture index, or return a previously created one. */
@@ -171,7 +176,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
 
     ImageData *image = nullptr;
     if (options.outputBinary) {
-        auto bufferView = gltf->AddBufferViewForFile(buffer, rawTexture.fileLocation);
+        auto bufferView = gltf.AddBufferViewForFile(*gltf.defaultBuffer, rawTexture.fileLocation);
         if (bufferView) {
             std::string suffix = StringUtils::GetFileSuffixString(rawTexture.fileLocation);
             image = new ImageData(relativeFilename, *bufferView, ImageUtils::suffixToMimeType(suffix));
@@ -198,8 +203,8 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
         );
     }
 
-    std::shared_ptr<TextureData> texDat = gltf->textures.hold(
-        new TextureData(textureName, defaultSampler, *gltf->images.hold(image)));
+    std::shared_ptr<TextureData> texDat = gltf.textures.hold(
+        new TextureData(textureName, *gltf.defaultSampler, *gltf.images.hold(image)));
     textureByIndicesKey.insert(std::make_pair(key, texDat));
     return texDat;
 

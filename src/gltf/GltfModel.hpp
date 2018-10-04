@@ -9,7 +9,24 @@
 
 #pragma once
 
+#include <fstream>
+
 #include "FBX2glTF.h"
+
+#include "gltf/properties/AccessorData.hpp"
+#include "gltf/properties/AnimationData.hpp"
+#include "gltf/properties/BufferData.hpp"
+#include "gltf/properties/BufferViewData.hpp"
+#include "gltf/properties/CameraData.hpp"
+#include "gltf/properties/ImageData.hpp"
+#include "gltf/properties/MaterialData.hpp"
+#include "gltf/properties/MeshData.hpp"
+#include "gltf/properties/NodeData.hpp"
+#include "gltf/properties/PrimitiveData.hpp"
+#include "gltf/properties/SamplerData.hpp"
+#include "gltf/properties/SceneData.hpp"
+#include "gltf/properties/SkinData.hpp"
+#include "gltf/properties/TextureData.hpp"
 
 /**
 * glTF 2.0 is based on the idea that data structs within a file are referenced by index; an accessor will
@@ -22,84 +39,39 @@
 * struct will, by design, outlive all other activity that takes place during in a single conversion run.
 */
 template<typename T>
-struct Holder
+class Holder
 {
-    std::vector<std::shared_ptr<T>> ptrs;
+public:
     std::shared_ptr<T> hold(T *ptr)
     {
         ptr->ix = ptrs.size();
         ptrs.emplace_back(ptr);
         return ptrs.back();
     }
+    std::vector<std::shared_ptr<T>> ptrs;
 };
 
-struct GltfModel
+class GltfModel
 {
-    explicit GltfModel(bool _isGlb)
-        : binary(new std::vector<uint8_t>),
-        isGlb(_isGlb)
+public:
+    explicit GltfModel(const GltfOptions &options)
+        : binary(new std::vector<uint8_t>)
+        , isGlb(options.outputBinary)
+        , defaultSampler(nullptr)
+        , defaultBuffer(buffers.hold(buildDefaultBuffer(options)))
     {
+        defaultSampler = samplers.hold(buildDefaultSampler());
     }
 
-    std::shared_ptr<BufferViewData> GetAlignedBufferView(BufferData &buffer, const BufferViewData::GL_ArrayType target)
-    {
-        unsigned long bufferSize = this->binary->size();
-        if ((bufferSize % 4) > 0) {
-            bufferSize += (4 - (bufferSize % 4));
-            this->binary->resize(bufferSize);
-        }
-        return this->bufferViews.hold(new BufferViewData(buffer, bufferSize, target));
-    }
-
-    // add a bufferview on the fly and copy data into it
-    std::shared_ptr<BufferViewData> AddRawBufferView(BufferData &buffer, const char *source, uint32_t bytes)
-    {
-        auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
-        bufferView->byteLength = bytes;
-
-        // make space for the new bytes (possibly moving the underlying data)
-        unsigned long bufferSize = this->binary->size();
-        this->binary->resize(bufferSize + bytes);
-
-        // and copy them into place
-        memcpy(&(*this->binary)[bufferSize], source, bytes);
-        return bufferView;
-    }
-
-    std::shared_ptr<BufferViewData> AddBufferViewForFile(BufferData &buffer, const std::string &filename)
-    {
-        // see if we've already created a BufferViewData for this precise file
-        auto iter = filenameToBufferView.find(filename);
-        if (iter != filenameToBufferView.end()) {
-            return iter->second;
-        }
-
-        std::shared_ptr<BufferViewData> result;
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        if (file) {
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-
-            std::vector<char> fileBuffer(size);
-            if (file.read(fileBuffer.data(), size)) {
-                result = AddRawBufferView(buffer, fileBuffer.data(), size);
-            } else {
-                fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping file.\n", size, filename);
-            }
-        } else {
-            fmt::printf("Warning: Couldn't open file %s, skipping file.\n", filename);
-        }
-        // note that we persist here not only success, but also failure, as nullptr
-        filenameToBufferView[filename] = result;
-        return result;
-    }
-
+    std::shared_ptr<BufferViewData> GetAlignedBufferView(BufferData &buffer, const BufferViewData::GL_ArrayType target);
+    std::shared_ptr<BufferViewData> AddRawBufferView(BufferData &buffer, const char *source, uint32_t bytes);
+    std::shared_ptr<BufferViewData> AddBufferViewForFile(BufferData &buffer, const std::string &filename);
 
     template<class T>
     std::shared_ptr<AccessorData> AddAccessorWithView(
         BufferViewData &bufferView, const GLType &type, const std::vector<T> &source, std::string name)
     {
-        auto accessor = accessors.hold(new AccessorData(bufferView, type));
+        auto accessor = accessors.hold(new AccessorData(bufferView, type, name));
         accessor->appendAsBinaryArray(source, *binary);
         bufferView.byteLength = accessor->byteLength();
         return accessor;
@@ -138,7 +110,7 @@ struct GltfModel
             accessor->count = attribArr.size();
         } else {
             auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
-            accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr);
+			accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));
         }
         primitive.AddAttrib(attrDef.gltfName, *accessor);
         return accessor;
@@ -156,30 +128,14 @@ struct GltfModel
         }
     }
 
-    void serializeHolders(json &glTFJson)
-    {
-        serializeHolder(glTFJson, "buffers", buffers);
-        serializeHolder(glTFJson, "bufferViews", bufferViews);
-        serializeHolder(glTFJson, "scenes", scenes);
-        serializeHolder(glTFJson, "accessors", accessors);
-        serializeHolder(glTFJson, "images", images);
-        serializeHolder(glTFJson, "samplers", samplers);
-        serializeHolder(glTFJson, "textures", textures);
-        serializeHolder(glTFJson, "materials", materials);
-        serializeHolder(glTFJson, "meshes", meshes);
-        serializeHolder(glTFJson, "skins", skins);
-        serializeHolder(glTFJson, "animations", animations);
-        serializeHolder(glTFJson, "cameras", cameras);
-        serializeHolder(glTFJson, "nodes", nodes);
-    }
+    void serializeHolders(json &glTFJson);
 
     const bool isGlb;
 
     // cache BufferViewData instances that've already been created from a given filename
     std::map<std::string, std::shared_ptr<BufferViewData>> filenameToBufferView;
 
-    std::shared_ptr<std::vector<uint8_t> > binary;
-
+    std::shared_ptr<std::vector<uint8_t>> binary;
 
     Holder<BufferData>     buffers;
     Holder<BufferViewData> bufferViews;
@@ -194,4 +150,17 @@ struct GltfModel
     Holder<CameraData>     cameras;
     Holder<NodeData>       nodes;
     Holder<SceneData>      scenes;
+
+    std::shared_ptr<SamplerData> defaultSampler;
+    std::shared_ptr<BufferData> defaultBuffer;
+
+private:
+    SamplerData *buildDefaultSampler() {
+        return new SamplerData();
+    }
+    BufferData *buildDefaultBuffer(const GltfOptions &options) {
+        return options.outputBinary ?
+            new BufferData(binary) :
+            new BufferData(extBufferFilename, binary, options.embedResources);
+    }
 };

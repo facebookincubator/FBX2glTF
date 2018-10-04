@@ -120,7 +120,7 @@ ExternalProject_Add(Fmt
   GIT_TAG 4.0.0
   CMAKE_CACHE_ARGS  "-DFMT_DOC:BOOL=OFF" "-DFMT_INSTALL:BOOL=ON" "-DFMT_TEST:BOOL=OFF"
   CMAKE_ARGS
-	-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 )
 set(FMT_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fmt/include")
 if (WIN32)
@@ -139,13 +139,24 @@ set(LIB_SOURCE_FILES
         src/FBX2glTF.h
         src/fbx/Fbx2Raw.cpp
         src/fbx/Fbx2Raw.hpp
-        src/fbx/FbxLayerElementAccess.hpp
+        src/fbx/FbxBlendShapesAccess.cpp
         src/fbx/FbxBlendShapesAccess.hpp
+        src/fbx/FbxLayerElementAccess.hpp
         src/fbx/FbxMaterialInfo.hpp
+        src/fbx/FbxMaterialsAccess.cpp
+        src/fbx/FbxMaterialsAccess.hpp
+        src/fbx/FbxRoughMetMaterialInfo.cpp
+        src/fbx/FbxRoughMetMaterialInfo.hpp
+        src/fbx/FbxSkinningAccess.cpp
+        src/fbx/FbxSkinningAccess.hpp
+        src/fbx/FbxTraditionalMaterialInfo.cpp
+        src/fbx/FbxTraditionalMaterialInfo.hpp
         src/gltf/Raw2Gltf.cpp
         src/gltf/Raw2Gltf.hpp
-        src/raw/RawModel.cpp
-        src/raw/RawModel.hpp
+        src/gltf/GltfModel.cpp
+        src/gltf/GltfModel.hpp
+        src/gltf/TextureBuilder.cpp
+        src/gltf/TextureBuilder.hpp
         src/gltf/properties/AccessorData.cpp
         src/gltf/properties/AccessorData.hpp
         src/gltf/properties/AnimationData.cpp
@@ -174,23 +185,14 @@ set(LIB_SOURCE_FILES
         src/gltf/properties/TextureData.cpp
         src/gltf/properties/TextureData.hpp
         src/mathfu.hpp
+        src/raw/RawModel.cpp
+        src/raw/RawModel.hpp
         src/utils/File_Utils.cpp
         src/utils/File_Utils.hpp
         src/utils/Image_Utils.cpp
         src/utils/Image_Utils.hpp
         src/utils/String_Utils.cpp
         src/utils/String_Utils.hpp
-        src/fbx/FbxBlendShapesAccess.cpp
-        src/fbx/FbxBlendShapesAccess.hpp
-        src/fbx/FbxLayerElementAccess.hpp
-        src/fbx/FbxMaterialsAccess.cpp
-        src/fbx/FbxMaterialsAccess.hpp
-        src/fbx/FbxRoughMetMaterialInfo.cpp
-        src/fbx/FbxRoughMetMaterialInfo.hpp
-        src/fbx/FbxSkinningAccess.cpp
-        src/fbx/FbxSkinningAccess.hpp
-        src/fbx/FbxTraditionalMaterialInfo.cpp
-        src/fbx/FbxTraditionalMaterialInfo.hpp
 )
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})

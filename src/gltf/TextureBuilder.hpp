@@ -15,14 +15,18 @@
 
 #include <gltf/properties/ImageData.hpp>
 
-using pixel = std::array<float, 4>; // pixel components are floats in [0, 1]
-using pixel_merger = std::function<pixel(const std::vector<const pixel *>)>;
+#include "GltfModel.hpp"
 
 class TextureBuilder
 {
 public:
-    TextureBuilder(const RawModel &raw, GltfModel &gltf)
+    using pixel = std::array<float, 4>; // pixel components are floats in [0, 1]
+    using pixel_merger = std::function<pixel(const std::vector<const pixel *>)>;
+
+    TextureBuilder(const RawModel &raw, const GltfOptions &options, const std::string &outputFolder, GltfModel &gltf)
         : raw(raw)
+        , options(options)
+        , outputFolder(outputFolder)
         , gltf(gltf)
     {}
     ~TextureBuilder() {}
@@ -30,7 +34,8 @@ public:
     std::shared_ptr<TextureData> combine(
         const std::vector<int> &ixVec,
         const std::string &tag,
-        const pixel_merger &mergeFunction
+        const pixel_merger &mergeFunction,
+        bool transparency
     );
 
     std::shared_ptr<TextureData> simple(int rawTexIndex, const std::string &tag);
@@ -63,6 +68,9 @@ public:
 
 private:
     const RawModel &raw;
+    const GltfOptions &options;
+    const std::string outputFolder;
     GltfModel &gltf;
+
     std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
 };

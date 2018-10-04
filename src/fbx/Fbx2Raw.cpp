@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include "Fbx2Raw.hpp"
+
 #include <algorithm>
 #include <vector>
 #include <unordered_map>
@@ -24,7 +26,6 @@
 #include "utils/File_Utils.hpp"
 #include "utils/String_Utils.hpp"
 #include "raw/RawModel.hpp"
-#include "Fbx2Raw.hpp"
 
 #include "FbxBlendShapesAccess.hpp"
 #include "FbxLayerElementAccess.hpp"

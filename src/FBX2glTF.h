@@ -17,7 +17,7 @@
 #include <Windows.h>
 #endif
 
-#define FBX2GLTF_VERSION std::string("0.9.5")
+#define FBX2GLTF_VERSION std::string("0.9.6")
 
 #include <fmt/printf.h>
 #include <fbxsdk.h>
@@ -39,3 +39,61 @@ using workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<
 using json = nlohmann::basic_json<workaround_fifo_map>;
 
 extern bool verboseOutput;
+
+/**
+* The variuos situations in which the user may wish for us to (re-)compute normals for our vertices.
+*/
+enum class ComputeNormalsOption {
+    NEVER,      // do not ever compute any normals (results in broken glTF for some sources)
+    BROKEN,     // replace zero-length normals in any mesh that has a normal layer
+    MISSING,    // if a mesh lacks normals, compute them all
+    ALWAYS      // compute a new normal for every vertex, obliterating whatever may have been there before
+};
+
+enum class UseLongIndicesOptions {
+    NEVER,      // only ever use 16-bit indices
+    AUTO,       // use shorts or longs depending on vertex count
+    ALWAYS,     // only ever use 32-bit indices
+};
+
+/**
+* User-supplied options that dictate the nature of the glTF being generated.
+*/
+struct GltfOptions
+{
+    /**
+    * If negative, disabled. Otherwise, a bitfield of RawVertexAttributes that
+    * specify the largest set of attributes that'll ever be kept for a vertex.
+    * The special bit RAW_VERTEX_ATTRIBUTE_AUTO triggers smart mode, where the
+    * attributes to keep are inferred from which textures are supplied.
+    */
+    int  keepAttribs { -1 };
+    /** Whether to output a .glb file, the binary format of glTF. */
+    bool outputBinary { false };
+    /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
+    bool embedResources { false };
+
+    /** Whether and how to use KHR_draco_mesh_compression to minimize static geometry size. */
+    struct {
+        bool enabled = false;
+        int compressionLevel = -1;
+        int quantBitsPosition = -1;
+        int quantBitsTexCoord = -1;
+        int quantBitsNormal = -1;
+        int quantBitsColor = -1;
+        int quantBitsGeneric = -1;
+    } draco;
+
+    /** Whether to use KHR_materials_unlit to extend materials definitions. */
+    bool useKHRMatUnlit { false };
+    /** Whether to populate the pbrMetallicRoughness substruct in materials. */
+    bool usePBRMetRough { false };
+    /** Whether to include blend shape normals, if present according to the SDK. */
+    bool useBlendShapeNormals { false };
+    /** Whether to include blend shape tangents, if present according to the SDK. */
+    bool useBlendShapeTangents { false };
+    /** When to compute vertex normals from geometry. */
+    ComputeNormalsOption computeNormals = ComputeNormalsOption::BROKEN;
+    /** When to use 32-bit indices. */
+    UseLongIndicesOptions useLongIndices = UseLongIndicesOptions::AUTO;
+};

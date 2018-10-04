@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#pragma once
+
 #include "gltf/Raw2Gltf.hpp"
 
 struct SceneData : Holdable
