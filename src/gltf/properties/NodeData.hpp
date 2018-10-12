@@ -32,4 +32,5 @@ struct NodeData : Holdable
     int32_t                  camera;
     int32_t                  skin;
     std::vector<std::string> skeletons;
+    std::vector<std::string> userProperties;
 };
