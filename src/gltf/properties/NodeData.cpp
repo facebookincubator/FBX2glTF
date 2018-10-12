@@ -85,5 +85,17 @@ json NodeData::serialize() const
             result["camera"] = camera;
         }
     }
+
+    for (const auto& i : userProperties)
+    {
+        auto& prop_map = result["extras"]["fromFBX"]["userProperties"];
+
+        json j = json::parse(i);
+        for (const auto& k : json::iterator_wrapper(j))
+        {
+            prop_map[k.key()] = k.value();
+        }
+    }
+
     return result;
 }

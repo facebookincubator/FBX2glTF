@@ -404,6 +404,7 @@ struct RawNode
     Quatf                    rotation;
     Vec3f                    scale;
     long                     surfaceId;
+    std::vector<std::string> userProperties;
 };
 
 class RawModel

@@ -335,6 +335,8 @@ ModelData *Raw2Gltf(
             auto nodeData = gltf->nodes.hold(
                 new NodeData(node.name, node.translation, node.rotation, node.scale, node.isJoint));
 
+            nodeData->userProperties = node.userProperties;
+
             for (const auto &childId : node.childIds) {
                 int childIx = raw.GetNodeById(childId);
                 assert(childIx >= 0);
