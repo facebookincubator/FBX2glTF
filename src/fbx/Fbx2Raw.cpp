@@ -19,7 +19,7 @@
 #include <cassert>
 #include <cmath>
 
-#include "gltf/Raw2Gltf.hpp"
+#include "FBX2glTF.h"
 
 #include "utils/File_Utils.hpp"
 #include "utils/String_Utils.hpp"

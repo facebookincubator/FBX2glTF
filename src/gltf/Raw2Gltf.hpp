@@ -16,14 +16,6 @@
 #undef ERROR
 #include <draco/compression/encode.h>
 
-#include <json.hpp>
-#include <fifo_map.hpp>
-
-template<class K, class V, class ignore, class A>
-using workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
-
-using json = nlohmann::basic_json<workaround_fifo_map>;
-
 #include "FBX2glTF.h"
 #include "raw/RawModel.hpp"
 
