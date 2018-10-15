@@ -1,3 +1,5 @@
+# Copyright (c) 2014-present, Facebook, Inc.
+# All rights reserved.
 #
 # Helper function for finding the FBX SDK.
 # Cribbed & tweaked from https://github.com/floooh/fbxc/

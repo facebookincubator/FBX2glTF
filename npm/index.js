@@ -1,3 +1,8 @@
+/**
+* Copyright (c) 2014-present, Facebook, Inc.
+* All rights reserved.
+*/
+
 const childProcess = require('child_process');
 const fs = require('fs');
 const os = require('os');
