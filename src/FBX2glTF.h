@@ -84,6 +84,9 @@ struct GltfOptions
         int quantBitsGeneric = -1;
     } draco;
 
+    /** Whether to include FBX User Properties as 'extras' metadata in glTF nodes. */
+    bool enableUserProperties { false };
+
     /** Whether to use KHR_materials_unlit to extend materials definitions. */
     bool useKHRMatUnlit { false };
     /** Whether to populate the pbrMetallicRoughness substruct in materials. */

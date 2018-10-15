@@ -95,6 +95,9 @@ int main(int argc, char *argv[])
                    "khr-materials-unlit", "Use KHR_materials_unlit extension to specify Unlit shader.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatUnlit))
                (
+                   "user-properties", "Transcribe FBX User Properties into glTF node 'extras'.",
+                   cxxopts::value<bool>(gltfOptions.enableUserProperties))
+               (
                    "blend-shape-normals", "Include blend shape normals, if reported present by the FBX SDK.",
                    cxxopts::value<bool>(gltfOptions.useBlendShapeNormals))
                (
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
     }
 
     if (options.count("version")) {
-        fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2017 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
+        fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2018 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
         return 0;
     }
 
