@@ -381,6 +381,14 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
             (float) pCamera->OrthoZoom, (float) pCamera->OrthoZoom,
             (float) pCamera->FarPlane, (float) pCamera->NearPlane);
     }
+
+    // Cameras in FBX coordinate space face +X when rotation is (0,0,0)
+    // We need to adjust this to face glTF specified -Z
+    auto nodeIdx = raw.GetNodeById(pNode->GetUniqueID());
+    auto& rawNode = raw.GetNode(nodeIdx);
+
+    auto r = Quatf::FromAngleAxis(-90 * ((float) M_PI / 180.0f), {0.0, 1.0, 0.0});
+    rawNode.rotation = rawNode.rotation * r;
 }
 
 static void ReadNodeProperty(RawModel &raw, FbxNode *pNode, FbxProperty &prop)

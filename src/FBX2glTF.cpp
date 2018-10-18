@@ -293,15 +293,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    const unsigned char *binaryData = &(*data_render_model->binary)[0];
-    unsigned long       binarySize  = data_render_model->binary->size();
-    if (fwrite(binaryData, binarySize, 1, fp) != 1) {
-        fmt::fprintf(stderr, "ERROR: Failed to write %lu bytes to file '%s'.\n", binarySize, binaryPath);
+    if (data_render_model->binary->empty() == false)
+    {
+        const unsigned char *binaryData = &(*data_render_model->binary)[0];
+        unsigned long       binarySize  = data_render_model->binary->size();
+        if (fwrite(binaryData, binarySize, 1, fp) != 1) {
+            fmt::fprintf(stderr, "ERROR: Failed to write %lu bytes to file '%s'.\n", binarySize, binaryPath);
+            fclose(fp);
+            return 1;
+        }
         fclose(fp);
-        return 1;
+        fmt::printf("Wrote %lu bytes of binary data to %s.\n", binarySize, binaryPath);
     }
-    fclose(fp);
-    fmt::printf("Wrote %lu bytes of binary data to %s.\n", binarySize, binaryPath);
 
     delete data_render_model;
     return 0;
