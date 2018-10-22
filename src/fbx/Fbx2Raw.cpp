@@ -367,13 +367,60 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     }
 }
 
+//ar : aspectY / aspectX
+double HFOV2VFOV(double h, double ar)
+{
+    return 2.0 * std::atan((ar) * std::tan((h * FBXSDK_PI_DIV_180) * 0.5)) * FBXSDK_180_DIV_PI;
+};
+
+//ar : aspectX / aspectY
+double VFOV2HFOV(double v, double ar)
+{
+    return 2.0 * std::atan((ar) * std::tan((v * FBXSDK_PI_DIV_180) * 0.5)) * FBXSDK_180_DIV_PI;
+}
+
+// Largely adopted from fbx example 
 static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
 {
     const FbxCamera *pCamera = pNode->GetCamera();
+
+    double filmHeight = pCamera->GetApertureHeight();
+    double filmWidth = pCamera->GetApertureWidth() * pCamera->GetSqueezeRatio();
+    
+    // note Height : Width
+    double apertureRatio = filmHeight / filmWidth;
+
+    double fovx = 0.0f;
+    double fovy = 0.0f;
+
+    switch(pCamera->GetApertureMode())
+    {
+        case FbxCamera::EApertureMode::eHorizAndVert: {
+            fovx = pCamera->FieldOfViewX;
+            fovy = pCamera->FieldOfViewY;
+            break;
+        }
+        case FbxCamera::EApertureMode::eHorizontal: {
+            fovx = pCamera->FieldOfViewX;
+            fovy = HFOV2VFOV(fovx, apertureRatio);
+            break;
+        }
+        case FbxCamera::EApertureMode::eVertical: {
+            fovy = pCamera->FieldOfViewY;
+            fovx = VFOV2HFOV(fovy, 1.0 / apertureRatio);
+            break;
+        }
+        case FbxCamera::EApertureMode::eFocalLength: {
+            fovx = pCamera->ComputeFieldOfView(pCamera->FocalLength);
+            fovy = HFOV2VFOV(fovx, apertureRatio);
+            break;
+        }
+    }
+
     if (pCamera->ProjectionType.Get() == FbxCamera::EProjectionType::ePerspective) {
         raw.AddCameraPerspective(
             "", pNode->GetUniqueID(), (float) pCamera->FilmAspectRatio,
-            (float) pCamera->FieldOfViewX, (float) pCamera->FieldOfViewX,
+            (float) fovx, (float) fovy,
             (float) pCamera->NearPlane, (float) pCamera->FarPlane);
     } else {
         raw.AddCameraOrthographic(
