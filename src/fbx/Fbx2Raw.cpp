@@ -415,6 +415,10 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
             fovy = HFOV2VFOV(fovx, apertureRatio);
             break;
         }
+        default: {
+            fmt::printf("Warning:: Unsupported ApertureMode. Setting FOV to 0.\n");
+            break;
+        }
     }
 
     if (pCamera->ProjectionType.Get() == FbxCamera::EProjectionType::ePerspective) {
