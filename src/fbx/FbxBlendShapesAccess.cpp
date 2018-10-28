@@ -39,7 +39,7 @@ std::vector<FbxBlendShapesAccess::BlendChannel> FbxBlendShapesAccess::extractCha
 {
     std::vector<BlendChannel> channels;
     for (int                       shapeIx = 0; shapeIx < mesh->GetDeformerCount(FbxDeformer::eBlendShape); shapeIx++) {
-        auto *fbxBlendShape = dynamic_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
+        auto *fbxBlendShape = static_cast<FbxBlendShape *>(mesh->GetDeformer(shapeIx, FbxDeformer::eBlendShape));
 
         for (int channelIx = 0; channelIx < fbxBlendShape->GetBlendShapeChannelCount(); ++channelIx) {
             FbxBlendShapeChannel *fbxChannel = fbxBlendShape->GetBlendShapeChannel(channelIx);
