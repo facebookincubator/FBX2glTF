@@ -221,7 +221,9 @@ int main(int argc, char *argv[])
 
     if (options.count("output") == 0) {
         // if -o is not given, default to the basename of the .fbx
-        outputPath = "./" + StringUtils::GetFileBaseString(inputPath);
+        outputPath = fmt::format(".{}{}", (const char)StringUtils::GetPathSeparator(), StringUtils::GetFileBaseString(inputPath));
+
+        fmt::printf("outputPath = %s\n", outputPath);
     }
     std::string outputFolder; // the output folder in .gltf mode, not used for .glb
     std::string modelPath; // the path of the actual .glb or .gltf file
@@ -231,7 +233,7 @@ int main(int argc, char *argv[])
 
     } else {
         // in gltf mode, we create a folder and write into that
-        outputFolder = outputPath + "_out/";
+        outputFolder = fmt::format("{}_out{}", outputFolder.c_str(), (const char)StringUtils::GetPathSeparator());
         modelPath = outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
     }
     if (!FileUtils::CreatePath(modelPath.c_str())) {
