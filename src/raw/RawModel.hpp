@@ -267,7 +267,7 @@ struct RawMaterial
     RawMaterialType              type;
     std::shared_ptr<RawMatProps> info;
     int                          textures[RAW_TEXTURE_USAGE_MAX];
-	std::vector<std::string>     userProperties;
+    std::vector<std::string>     userProperties;
 };
 
 struct RawBlendChannel
