@@ -113,14 +113,15 @@ int RawModel::AddTexture(const std::string &name, const std::string &fileName, c
 
 int RawModel::AddMaterial(const RawMaterial &material)
 {
-    return AddMaterial(material.name.c_str(), material.type, material.textures, material.info);
+    return AddMaterial(material.name.c_str(), material.type, material.textures, material.info, material.userProperties);
 }
 
 int RawModel::AddMaterial(
     const char *name,
     const RawMaterialType materialType,
     const int textures[RAW_TEXTURE_USAGE_MAX],
-    std::shared_ptr<RawMatProps> materialInfo)
+    std::shared_ptr<RawMatProps> materialInfo,
+	const std::vector<std::string>& userProperties)
 {
     for (size_t i = 0; i < materials.size(); i++) {
         if (materials[i].name != name) {
@@ -136,6 +137,14 @@ int RawModel::AddMaterial(
         for (int j = 0; match && j < RAW_TEXTURE_USAGE_MAX; j++) {
             match = match && (materials[i].textures[j] == textures[j]);
         }
+		if (materials[i].userProperties.size() != userProperties.size()) {
+			match = false;
+		}
+		else {
+			for (int j = 0; match && j < userProperties.size(); j++) {
+				match = match && (materials[i].userProperties[j] == userProperties[j]);
+			}
+		}
         if (match) {
             return (int) i;
         }
@@ -145,6 +154,7 @@ int RawModel::AddMaterial(
     material.name = name;
     material.type = materialType;
     material.info = materialInfo;
+	material.userProperties = userProperties;
 
     for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++) {
         material.textures[i] = textures[i];

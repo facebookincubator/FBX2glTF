@@ -267,6 +267,7 @@ struct RawMaterial
     RawMaterialType              type;
     std::shared_ptr<RawMatProps> info;
     int                          textures[RAW_TEXTURE_USAGE_MAX];
+	std::vector<std::string>     userProperties;
 };
 
 struct RawBlendChannel
@@ -363,7 +364,7 @@ public:
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
         const char *name, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
-        std::shared_ptr<RawMatProps> materialInfo);
+        std::shared_ptr<RawMatProps> materialInfo, const std::vector<std::string>& userProperties);
     int AddSurface(const RawSurface &suface);
     int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);
