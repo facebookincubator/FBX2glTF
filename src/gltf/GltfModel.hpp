@@ -110,7 +110,7 @@ public:
             accessor->count = attribArr.size();
         } else {
             auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
-			accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));
+            accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));
         }
         primitive.AddAttrib(attrDef.gltfName, *accessor);
         return accessor;

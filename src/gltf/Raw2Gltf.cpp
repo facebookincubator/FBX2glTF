@@ -363,9 +363,9 @@ ModelData *Raw2Gltf(
                     emissiveFactor * emissiveIntensity, khrCmnUnlitMat, pbrMetRough));
             materialsByName[materialHash(material)] = mData;
 
-			if (options.enableUserProperties) {
-				mData->userProperties = material.userProperties;
-			}
+            if (options.enableUserProperties) {
+                mData->userProperties = material.userProperties;
+            }
         }
 
         for (const auto &surfaceModel : materialModels) {

@@ -121,7 +121,7 @@ int RawModel::AddMaterial(
     const RawMaterialType materialType,
     const int textures[RAW_TEXTURE_USAGE_MAX],
     std::shared_ptr<RawMatProps> materialInfo,
-	const std::vector<std::string>& userProperties)
+    const std::vector<std::string>& userProperties)
 {
     for (size_t i = 0; i < materials.size(); i++) {
         if (materials[i].name != name) {
@@ -137,14 +137,14 @@ int RawModel::AddMaterial(
         for (int j = 0; match && j < RAW_TEXTURE_USAGE_MAX; j++) {
             match = match && (materials[i].textures[j] == textures[j]);
         }
-		if (materials[i].userProperties.size() != userProperties.size()) {
-			match = false;
-		}
-		else {
-			for (int j = 0; match && j < userProperties.size(); j++) {
-				match = match && (materials[i].userProperties[j] == userProperties[j]);
-			}
-		}
+        if (materials[i].userProperties.size() != userProperties.size()) {
+            match = false;
+        }
+        else {
+            for (int j = 0; match && j < userProperties.size(); j++) {
+                match = match && (materials[i].userProperties[j] == userProperties[j]);
+            }
+        }
         if (match) {
             return (int) i;
         }
@@ -154,7 +154,7 @@ int RawModel::AddMaterial(
     material.name = name;
     material.type = materialType;
     material.info = materialInfo;
-	material.userProperties = userProperties;
+    material.userProperties = userProperties;
 
     for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++) {
         material.textures[i] = textures[i];
@@ -623,11 +623,11 @@ size_t RawModel::CalculateNormals(bool onlyBroken)
         }
     }
 
-	for (auto &triangle : triangles) {
+    for (auto &triangle : triangles) {
         bool relevant = false;
         for (int vertIx : triangle.verts) {
             relevant |= (brokenVerts.count(vertIx) > 0);
-		}
+        }
         if (!relevant) {
             continue;
         }
@@ -636,8 +636,8 @@ size_t RawModel::CalculateNormals(bool onlyBroken)
             if (!onlyBroken || brokenVerts.count(vertIx) > 0) {
                 vertices[vertIx].normal += faceNormal;
             }
-		}
-	}
+        }
+    }
 
     for (int vertIx = 0; vertIx < vertices.size(); vertIx ++) {
         if (onlyBroken && brokenVerts.count(vertIx) == 0) {
@@ -652,6 +652,6 @@ size_t RawModel::CalculateNormals(bool onlyBroken)
             }
         }
         vertex.normal.Normalize();
-	}
+    }
     return onlyBroken ? brokenVerts.size() : vertices.size();
 }
