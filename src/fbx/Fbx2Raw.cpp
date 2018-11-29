@@ -173,6 +173,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     for (int polygonIndex = 0; polygonIndex < pMesh->GetPolygonCount(); polygonIndex++) {
         FBX_ASSERT(pMesh->GetPolygonSize(polygonIndex) == 3);
         const std::shared_ptr<FbxMaterialInfo> fbxMaterial = materials.GetMaterial(polygonIndex);
+		const std::vector<std::string> userProperties = materials.GetUserProperties(polygonIndex);
 
         int textures[RAW_TEXTURE_USAGE_MAX];
         std::fill_n(textures, (int) RAW_TEXTURE_USAGE_MAX, -1);
@@ -361,7 +362,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         }
 
         const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
-        const int rawMaterialIndex = raw.AddMaterial(materialName, materialType, textures, rawMatProps);
+        const int rawMaterialIndex = raw.AddMaterial(materialName, materialType, textures, rawMatProps, userProperties);
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
     }
