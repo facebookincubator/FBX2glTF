@@ -56,7 +56,7 @@ json NodeData::serialize() const
 
     // if any of the T/R/S have NaN components, just leave them out of the glTF
     auto maybeAdd = [&](std::string key, std::vector<float> vec) -> void {
-        if (std::none_of(vec.begin(), vec.end(), [&](float n) { return isnan(n); })) {
+        if (std::none_of(vec.begin(), vec.end(), [&](float n) { return std::isnan(n); })) {
             result[key] = vec;
         }
     };
