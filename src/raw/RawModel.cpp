@@ -270,7 +270,6 @@ void RawModel::Condense()
 
         std::set<int> survivingSurfaceIds;
         for (auto &triangle : triangles) {
-            int oldSurfaceIndex = triangle.surfaceIndex;
             const RawSurface &surface = oldSurfaces[triangle.surfaceIndex];
             const int surfaceIndex = AddSurface(surface.name.c_str(), surface.id);
             surfaces[surfaceIndex] = surface;
