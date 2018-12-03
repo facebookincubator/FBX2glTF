@@ -235,6 +235,8 @@ target_link_libraries(libFBX2glTF
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
