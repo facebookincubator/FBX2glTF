@@ -257,7 +257,7 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${ZLIB_INCLUDE_DIRS}
 )
 
-if (Iconv::Iconv)
+if (Iconv_FOUND)
   target_link_libraries(libFBX2glTF Iconv::Iconv)
   target_include_directories(libFBX2glTF SYSTEM PUBLIC Iconv::Iconv)
 endif()
