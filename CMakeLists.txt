@@ -8,13 +8,17 @@ if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif ()
 
 set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
+find_package(LibXml2 REQUIRED)
+find_package(ZLIB REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
 # FBX
-foreach (FBXSDK_VERSION "2019.0" "2018.1.1")
+foreach (FBXSDK_VERSION "2019.2")
   find_package(FBX)
   if (FBXSDK_FOUND)
     break()
@@ -230,6 +234,8 @@ target_link_libraries(libFBX2glTF
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
   ${CMAKE_DL_LIBS}
+  ${LIBXML2_LIBRARIES}
+  ${ZLIB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
