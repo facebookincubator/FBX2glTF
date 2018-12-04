@@ -13,7 +13,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(iConv)
+find_package(Iconv QUIET)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
@@ -229,7 +229,6 @@ if (NOT MSVC)
 endif()
 
 target_link_libraries(libFBX2glTF
-  Iconv::Iconv
   ${FRAMEWORKS}
   ${DRACO_LIB}
   ${FMT_LIB}
@@ -257,6 +256,11 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${LIBXML2_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIRS}
 )
+
+if (Iconv::Iconv)
+  target_link_libraries(libFBX2glTF Iconv::Iconv)
+  target_include_directories(libFBX2glTF SYSTEM PUBLIC Iconv::Iconv)
+endif()
 
 target_include_directories(appFBX2glTF PUBLIC
   ${CXXOPTS_INCLUDE_DIR}
