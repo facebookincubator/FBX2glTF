@@ -9,12 +9,6 @@ endif ()
 
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package(Threads REQUIRED)
-find_package(LibXml2 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(Iconv QUIET)
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
@@ -33,6 +27,32 @@ if (NOT FBXSDK_FOUND)
     " - Linux: ${FBXSDK_LINUX_ROOT}"
   )
 endif()
+
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads REQUIRED)
+find_package(Iconv QUIET)
+
+if (WIN32)
+  # this will suffice for now; don't really care about 32-bit
+  set(LIBXML2_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
+  set(LIBXML2_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/libxml2-mt.lib)
+  set(LIBXML2_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/libxml2-mt.lib)
+  if (NOT LIBXML2_INCLUDE_DIRS OR NOT LIBXML2_LIBRARIES)
+    message(FATAL_ERROR "Cannot find libxml2.lib in the expected location.")
+  endif()
+
+  set(ZLIB_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
+  set(ZLIB_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/zlib-mt.lib)
+  set(ZLIB_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/zlib-mt.lib)
+  if (NOT ZLIB_LIBRARIES)
+    message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
+  endif()
+
+else()
+  find_package(LibXml2 REQUIRED)
+  find_package(ZLIB REQUIRED)
+endif()
+
 
 # DRACO
 ExternalProject_Add(Draco
@@ -235,10 +255,22 @@ target_link_libraries(libFBX2glTF
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
   ${CMAKE_DL_LIBS}
-  ${LIBXML2_LIBRARIES}
-  ${ZLIB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
+
+if (WIN32)
+  target_link_libraries(libFBX2glTF
+    optimized ${LIBXML2_LIBRARIES}
+    debug ${LIBXML2_LIBRARIES_DEBUG}
+    optimized ${ZLIB_LIBRARIES}
+    debug ${ZLIB_LIBRARIES_DEBUG}
+  )
+else()
+  target_link_libraries(libFBX2glTF
+    ${LIBXML2_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+  )
+endif()
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
