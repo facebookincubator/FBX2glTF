@@ -15,6 +15,7 @@ const MODELS :Array<Model> = [
     { path: 'fromFbxSDK/Camera' },
     { path: 'fromFbxSDK/Normals' },
     { path: 'fromGltfSamples/BoxVertexColors/BoxVertexColors' },
+    { path: 'fromGltfSamples/WaterBottle/NewWaterBottle' },
 ];
 
 const CONVERSION_TIMEOUT_MS = 50000;
