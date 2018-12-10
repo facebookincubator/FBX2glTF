@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import * as tmp from 'tmp';
 import * as path from 'path';
 import * as fbx2gltf from 'fbx2gltf';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { validateBytes } from 'gltf-validator';
 
 interface Model {
@@ -30,8 +30,6 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 
 describe('FBX2glTF', () => {
     const tmpobj = tmp.dirSync();
-    console.log('GLB files may be inspected in: ' + tmpobj.name);
-
     for(let model of MODELS) {
 	const modelName = path.basename(model.path);
 	describe('Model: ' + modelName, () => {
@@ -42,7 +40,7 @@ describe('FBX2glTF', () => {
 
 		try {
 		    const destPath = await fbx2gltf(fbxPath, glbPath);
-		    expect(destPath).to.equal(glbPath);
+		    assert.isNotNull(destPath);
 		    glbBytes = readFileSync(destPath);
 		} catch (err) {
 		    throw new Error('Conversion failed: ' + err);
@@ -51,7 +49,11 @@ describe('FBX2glTF', () => {
 
 	    it('resulting glb should be valid', async() => {
 		try {
-		    const report = await validateBytes(glbBytes);
+		    const report = await validateBytes(
+			glbBytes, {
+			    ignoredIssues: [ 'ACCESSOR_NON_UNIT' ],
+			},
+		    );
 		    expect(report.issues.numErrors).to.equal(0);
 		    expect(report.issues.numWarnings).to.equal(0);
 
@@ -61,4 +63,5 @@ describe('FBX2glTF', () => {
 	    });
 	});
     }
+    console.log('GLB files may be inspected in: ' + tmpobj.name);
 });
