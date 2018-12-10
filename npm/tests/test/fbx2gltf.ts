@@ -7,11 +7,15 @@ import { validateBytes } from 'gltf-validator';
 
 interface Model {
     path: string;
+    ignoredIssues?: Array<string>;
 }
 
 const MODELS :Array<Model> = [
     { path: 'fromFacebook/Jon/jon_morph' },
-    { path: 'fromFacebook/Jon/troll-final' },
+    {
+	path: 'fromFacebook/Jon/troll-final',
+	ignoredIssues: [ 'ACCESSOR_NON_UNIT' ],
+    },
     { path: 'fromFacebook/Natalie/GlitchRobot' },
     { path: 'fromFacebook/Ocean/blackvan/blackvan_with_windows' },
     { path: 'fromFacebook/Ocean/zell_van_vertex_color' },
@@ -49,11 +53,11 @@ describe('FBX2glTF', () => {
 
 	    it('resulting glb should be valid', async() => {
 		try {
-		    const report = await validateBytes(
-			glbBytes, {
-			    ignoredIssues: [ 'ACCESSOR_NON_UNIT' ],
-			},
-		    );
+		    let options = <any>{};
+		    if (model.ignoredIssues) {
+			options.ignoredIssues = model.ignoredIssues;
+		    }
+		    const report = await validateBytes(glbBytes, options);
 		    expect(report.issues.numErrors).to.equal(0);
 		    expect(report.issues.numWarnings).to.equal(0);
 
