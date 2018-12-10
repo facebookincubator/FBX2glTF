@@ -30,8 +30,6 @@ const MODELS :Array<Model> = [
 
 const CONVERSION_TIMEOUT_MS = 50000;
 
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
-
 describe('FBX2glTF', () => {
     const tmpobj = tmp.dirSync();
     for(let model of MODELS) {
