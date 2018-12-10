@@ -10,6 +10,12 @@ interface Model {
 }
 
 const MODELS :Array<Model> = [
+    { path: 'fromFacebook/Jon/jon_morph' },
+    { path: 'fromFacebook/Jon/troll-final' },
+    { path: 'fromFacebook/Natalie/GlitchRobot' },
+    { path: 'fromFacebook/Ocean/blackvan/blackvan_with_windows' },
+    { path: 'fromFacebook/Ocean/zell_van_vertex_color' },
+    { path: 'fromFacebook/RAZ/RAZ_ape' },
     { path: 'fromFbxSDK/Box' },
     { path: 'fromFbxSDK/Humanoid' },
     { path: 'fromFbxSDK/Camera' },

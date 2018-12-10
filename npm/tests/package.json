@@ -25,7 +25,7 @@
     "prepare": "tsc"
   },
   "dependencies": {
-    "fbx2gltf": "file:///home/zell/FBX2glTF/zellski-repo/npm/fbx2gltf",
+    "fbx2gltf": "file:../fbx2gltf",
     "gltf-validator": "^2.0.0-dev.2.6",
     "tmp": "^0.0.33"
   },
