@@ -184,7 +184,7 @@ namespace FileUtils {
         return true;
     }
 
-    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename, bool createPath = false) {
+    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename, bool createPath) {
         std::ifstream srcFile(srcFilename, std::ios::binary);
         if (!srcFile) {
             fmt::printf("Warning: Couldn't open file %s for reading.\n", srcFilename);
