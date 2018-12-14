@@ -8,6 +8,7 @@
  */
 
 #include "FbxMaterialsAccess.hpp"
+#include "Fbx2Raw.hpp"
 
 FbxMaterialsAccess::FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<const FbxTexture *, FbxString> &textureLocations) :
     mappingMode(FbxGeometryElement::eNone),
@@ -58,86 +59,8 @@ FbxMaterialsAccess::FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<cons
             while (objectProperty.IsValid())
             {
                 if (objectProperty.GetFlag(FbxPropertyFlags::eUserDefined)) {
-                    std::string ename;
-                    switch (objectProperty.GetPropertyDataType().GetType()) {
-                        case eFbxBool:      ename = "eFbxBool";      break;
-                        case eFbxChar:      ename = "eFbxChar";      break;
-                        case eFbxUChar:     ename = "eFbxUChar";     break;
-                        case eFbxShort:     ename = "eFbxShort";     break;
-                        case eFbxUShort:    ename = "eFbxUShort";    break;
-                        case eFbxInt:       ename = "eFbxInt";       break;
-                        case eFbxUInt:      ename = "eFbxUint";      break;
-                        case eFbxLongLong:  ename = "eFbxLongLong";  break;
-                        case eFbxULongLong: ename = "eFbxULongLong"; break;
-                        case eFbxFloat:     ename = "eFbxFloat";     break;
-                        case eFbxHalfFloat: ename = "eFbxHalfFloat"; break;
-                        case eFbxDouble:    ename = "eFbxDouble";    break;
-                        case eFbxDouble2:   ename = "eFbxDouble2";   break;
-                        case eFbxDouble3:   ename = "eFbxDouble3";   break;
-                        case eFbxDouble4:   ename = "eFbxDouble4";   break;
-                        case eFbxString:    ename = "eFbxString";    break;
-
-                        // Use this as fallback because it does not give very descriptive names
-                        default: ename = objectProperty.GetPropertyDataType().GetName(); break;
-                    }
-
-                    json p;
-                    p["type"] = ename;
-
-                    // Convert property value
-                    switch (objectProperty.GetPropertyDataType().GetType()) {
-                        case eFbxBool:
-                        case eFbxChar:
-                        case eFbxUChar:
-                        case eFbxShort:
-                        case eFbxUShort:
-                        case eFbxInt:
-                        case eFbxUInt:
-                        case eFbxLongLong: {
-                            p["value"] = objectProperty.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
-                            break;
-                        }
-                        case eFbxULongLong: {
-                            p["value"] = objectProperty.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
-                            break;
-                        }
-                        case eFbxFloat:
-                        case eFbxHalfFloat:
-                        case eFbxDouble: {
-                            p["value"] = objectProperty.EvaluateValue<double>(FBXSDK_TIME_INFINITE);
-                            break;
-                        }
-                        case eFbxDouble2: {
-                            auto v = objectProperty.EvaluateValue<FbxDouble2>(FBXSDK_TIME_INFINITE);
-                            p["value"] = { v[0], v[1] };
-                            break;
-                        }
-                        case eFbxDouble3: {
-                            auto v = objectProperty.EvaluateValue<FbxDouble3>(FBXSDK_TIME_INFINITE);
-                            p["value"] = { v[0], v[1], v[2] };
-                            break;
-                        }
-                        case eFbxDouble4: {
-                            auto v = objectProperty.EvaluateValue<FbxDouble4>(FBXSDK_TIME_INFINITE);
-                            p["value"] = { v[0], v[1], v[2], v[3] };
-                            break;
-                        }
-                        case eFbxString: {
-                            p["value"] = std::string{ objectProperty.Get<FbxString>() };
-                            break;
-                        }
-                        default: {
-                            p["value"] = "UNSUPPORTED_VALUE_TYPE";
-                            break;
-                        }
-                    }
-
-                    json n;
-                    n[objectProperty.GetNameAsCStr()] = p;
-
-                    userProperties[materialNum].push_back(n.dump());
+                    userProperties[materialNum].push_back(TranscribeProperty(objectProperty).dump());
                 }
-
                 objectProperty = surfaceMaterial->GetNextProperty(objectProperty);
             }
         }

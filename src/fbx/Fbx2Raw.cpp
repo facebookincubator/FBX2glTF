@@ -445,91 +445,11 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
 
 static void ReadNodeProperty(RawModel &raw, FbxNode *pNode, FbxProperty &prop)
 {
-    using fbxsdk::EFbxType;
     int nodeId = raw.GetNodeById(pNode->GetUniqueID());
-    if (nodeId < 0)
-        return;
-
-    std::string ename;
-    // Convert property type
-    switch (prop.GetPropertyDataType().GetType()) {
-        case eFbxBool:      ename = "eFbxBool";      break;
-        case eFbxChar:      ename = "eFbxChar";      break;
-        case eFbxUChar:     ename = "eFbxUChar";     break;
-        case eFbxShort:     ename = "eFbxShort";     break;
-        case eFbxUShort:    ename = "eFbxUShort";    break;
-        case eFbxInt:       ename = "eFbxInt";       break;
-        case eFbxUInt:      ename = "eFbxUint";      break;
-        case eFbxLongLong:  ename = "eFbxLongLong";  break;
-        case eFbxULongLong: ename = "eFbxULongLong"; break;
-        case eFbxFloat:     ename = "eFbxFloat";     break;
-        case eFbxHalfFloat: ename = "eFbxHalfFloat"; break;
-        case eFbxDouble:    ename = "eFbxDouble";    break;
-        case eFbxDouble2:   ename = "eFbxDouble2";   break;
-        case eFbxDouble3:   ename = "eFbxDouble3";   break;
-        case eFbxDouble4:   ename = "eFbxDouble4";   break;
-        case eFbxString:    ename = "eFbxString";    break;
-
-        // Use this as fallback because it does not give very descriptive names
-        default: ename = prop.GetPropertyDataType().GetName(); break;
+    if (nodeId >= 0) {
+        RawNode &node = raw.GetNode(nodeId);
+        node.userProperties.push_back(TranscribeProperty(prop).dump());
     }
-
-    json p;
-    p["type"] = ename;
-
-    // Convert property value
-    switch (prop.GetPropertyDataType().GetType()) {
-        case eFbxBool:
-        case eFbxChar:
-        case eFbxUChar:
-        case eFbxShort:
-        case eFbxUShort:
-        case eFbxInt:
-        case eFbxUInt:
-        case eFbxLongLong: {
-            p["value"] = prop.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxULongLong: {
-            p["value"] = prop.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxFloat:
-        case eFbxHalfFloat:
-        case eFbxDouble: {
-            p["value"] = prop.EvaluateValue<double>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxDouble2: {
-            auto v = prop.EvaluateValue<FbxDouble2>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1]};
-            break;
-        }
-        case eFbxDouble3: {
-            auto v = prop.EvaluateValue<FbxDouble3>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1], v[2]};
-            break;
-        }
-        case eFbxDouble4: {
-            auto v = prop.EvaluateValue<FbxDouble4>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1], v[2], v[3]};
-            break;
-        }
-        case eFbxString: {
-            p["value"] = std::string{prop.Get<FbxString>()};
-            break;
-        }
-        default: {
-            p["value"] = "UNSUPPORTED_VALUE_TYPE";
-            break;
-        }
-    }
-
-    json n;
-    n[prop.GetNameAsCStr()] = p;
-
-    RawNode &node = raw.GetNode(nodeId);
-    node.userProperties.push_back(n.dump());
 }
 
 static void ReadNodeAttributes(
@@ -986,3 +906,90 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
 
     return true;
 }
+
+// convenience method for describing a property in JSON
+json TranscribeProperty(FbxProperty &prop)
+{
+    using fbxsdk::EFbxType;
+    std::string ename;
+
+    // Convert property type
+    switch (prop.GetPropertyDataType().GetType()) {
+        case eFbxBool:      ename = "eFbxBool";      break;
+        case eFbxChar:      ename = "eFbxChar";      break;
+        case eFbxUChar:     ename = "eFbxUChar";     break;
+        case eFbxShort:     ename = "eFbxShort";     break;
+        case eFbxUShort:    ename = "eFbxUShort";    break;
+        case eFbxInt:       ename = "eFbxInt";       break;
+        case eFbxUInt:      ename = "eFbxUint";      break;
+        case eFbxLongLong:  ename = "eFbxLongLong";  break;
+        case eFbxULongLong: ename = "eFbxULongLong"; break;
+        case eFbxFloat:     ename = "eFbxFloat";     break;
+        case eFbxHalfFloat: ename = "eFbxHalfFloat"; break;
+        case eFbxDouble:    ename = "eFbxDouble";    break;
+        case eFbxDouble2:   ename = "eFbxDouble2";   break;
+        case eFbxDouble3:   ename = "eFbxDouble3";   break;
+        case eFbxDouble4:   ename = "eFbxDouble4";   break;
+        case eFbxString:    ename = "eFbxString";    break;
+
+            // Use this as fallback because it does not give very descriptive names
+        default: ename = prop.GetPropertyDataType().GetName(); break;
+    }
+
+    json p = {
+        {"type", ename}
+    };
+
+    // Convert property value
+    switch (prop.GetPropertyDataType().GetType()) {
+        case eFbxBool:
+        case eFbxChar:
+        case eFbxUChar:
+        case eFbxShort:
+        case eFbxUShort:
+        case eFbxInt:
+        case eFbxUInt:
+        case eFbxLongLong: {
+            p["value"] = prop.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxULongLong: {
+            p["value"] = prop.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxFloat:
+        case eFbxHalfFloat:
+        case eFbxDouble: {
+            p["value"] = prop.EvaluateValue<double>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxDouble2: {
+            auto v = prop.EvaluateValue<FbxDouble2>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1]};
+            break;
+        }
+        case eFbxDouble3: {
+            auto v = prop.EvaluateValue<FbxDouble3>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1], v[2]};
+            break;
+        }
+        case eFbxDouble4: {
+            auto v = prop.EvaluateValue<FbxDouble4>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1], v[2], v[3]};
+            break;
+        }
+        case eFbxString: {
+            p["value"] = std::string{prop.Get<FbxString>()};
+            break;
+        }
+        default: {
+            p["value"] = "UNSUPPORTED_VALUE_TYPE";
+            break;
+        }
+    }
+
+    return {
+        {prop.GetNameAsCStr(), p}
+    };
+}
+

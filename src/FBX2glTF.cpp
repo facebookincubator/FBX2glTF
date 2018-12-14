@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
                    "khr-materials-unlit", "Use KHR_materials_unlit extension to specify Unlit shader.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatUnlit))
                (
-                   "user-properties", "Transcribe FBX User Properties into glTF node 'extras'.",
+                   "user-properties", "Transcribe FBX User Properties into glTF node and material 'extras'.",
                    cxxopts::value<bool>(gltfOptions.enableUserProperties))
                (
                    "blend-shape-normals", "Include blend shape normals, if reported present by the FBX SDK.",
@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 
     } else {
         // in gltf mode, we create a folder and write into that
-        outputFolder = fmt::format("{}_out{}", outputFolder.c_str(), (const char)StringUtils::GetPathSeparator());
+        outputFolder = fmt::format("{}_out{}", outputPath.c_str(), (const char)StringUtils::GetPathSeparator());
         modelPath = outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
     }
     if (!FileUtils::CreatePath(modelPath.c_str())) {

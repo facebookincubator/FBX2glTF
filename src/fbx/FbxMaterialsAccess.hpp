@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "Fbx2Raw.hpp"
 #include "FbxMaterialInfo.hpp"
 #include "FbxTraditionalMaterialInfo.hpp"
 #include "FbxRoughMetMaterialInfo.hpp"
