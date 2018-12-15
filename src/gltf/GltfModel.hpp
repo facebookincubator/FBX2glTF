@@ -19,6 +19,7 @@
 #include "gltf/properties/BufferViewData.hpp"
 #include "gltf/properties/CameraData.hpp"
 #include "gltf/properties/ImageData.hpp"
+#include "gltf/properties/LightData.hpp"
 #include "gltf/properties/MaterialData.hpp"
 #include "gltf/properties/MeshData.hpp"
 #include "gltf/properties/NodeData.hpp"
@@ -150,6 +151,7 @@ public:
     Holder<CameraData>     cameras;
     Holder<NodeData>       nodes;
     Holder<SceneData>      scenes;
+    Holder<LightData>      lights;
 
     std::shared_ptr<SamplerData> defaultSampler;
     std::shared_ptr<BufferData> defaultBuffer;

@@ -380,6 +380,40 @@ double VFOV2HFOV(double v, double ar)
     return 2.0 * std::atan((ar) * std::tan((v * FBXSDK_PI_DIV_180) * 0.5)) * FBXSDK_180_DIV_PI;
 }
 
+static void ReadLight(RawModel &raw, FbxScene *pScene, FbxNode *pNode) {
+  const FbxLight *pLight = pNode->GetLight();
+
+  int lightIx;
+  float intensity = (float)pLight->Intensity.Get();
+  Vec3f color = toVec3f(pLight->Color.Get());
+  switch (pLight->LightType.Get()) {
+    case FbxLight::eDirectional: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_DIRECTIONAL,
+                             color, intensity, 0, 0);
+      break;
+    }
+    case FbxLight::ePoint: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_POINT, color,
+                             intensity, 0, 0);
+      break;
+    }
+    case FbxLight::eSpot: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_SPOT, color,
+                             intensity, (float)pLight->InnerAngle.Get(),
+                             (float)pLight->OuterAngle.Get());
+      break;
+    }
+    default: {
+      fmt::printf("Warning:: Ignoring unsupported light type.\n");
+      return;
+    }
+  }
+
+  int nodeId = raw.GetNodeById(pNode->GetUniqueID());
+  RawNode &node = raw.GetNode(nodeId);
+  node.lightIx = lightIx;
+}
+
 // Largely adopted from fbx example 
 static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
 {
@@ -486,13 +520,15 @@ static void ReadNodeAttributes(
                 ReadCamera(raw, pScene, pNode);
                 break;
             }
+            case FbxNodeAttribute::eLight:
+                ReadLight(raw, pScene, pNode);
+                break;
             case FbxNodeAttribute::eUnknown:
             case FbxNodeAttribute::eNull:
             case FbxNodeAttribute::eMarker:
             case FbxNodeAttribute::eSkeleton:
             case FbxNodeAttribute::eCameraStereo:
             case FbxNodeAttribute::eCameraSwitcher:
-            case FbxNodeAttribute::eLight:
             case FbxNodeAttribute::eOpticalReference:
             case FbxNodeAttribute::eOpticalMarker:
             case FbxNodeAttribute::eNurbsCurve:

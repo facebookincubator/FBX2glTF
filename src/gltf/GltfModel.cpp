@@ -77,4 +77,9 @@ void GltfModel::serializeHolders(json &glTFJson)
     serializeHolder(glTFJson, "animations", animations);
     serializeHolder(glTFJson, "cameras", cameras);
     serializeHolder(glTFJson, "nodes", nodes);
+    if (!lights.ptrs.empty()) {
+        json lightsJson = json::object();
+        serializeHolder(lightsJson, "lights", lights);
+        glTFJson["extensions"][KHR_LIGHTS_PUNCTUAL] = lightsJson;
+    }
 }

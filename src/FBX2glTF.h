@@ -91,6 +91,10 @@ struct GltfOptions
     bool useKHRMatUnlit { false };
     /** Whether to populate the pbrMetallicRoughness substruct in materials. */
     bool usePBRMetRough { false };
+
+    /** Whether to include lights through the KHR_punctual_lights extension. */
+    bool useKHRPunctualLights { true };
+
     /** Whether to include blend shape normals, if present according to the SDK. */
     bool useBlendShapeNormals { false };
     /** Whether to include blend shape tangents, if present according to the SDK. */

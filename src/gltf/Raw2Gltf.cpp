@@ -119,6 +119,8 @@ ModelData *Raw2Gltf(
         fmt::printf("%7d nodes\n", raw.GetNodeCount());
         fmt::printf("%7d surfaces\n", (int) materialModels.size());
         fmt::printf("%7d animations\n", raw.GetAnimationCount());
+        fmt::printf("%7d cameras\n", raw.GetCameraCount());
+        fmt::printf("%7d lights\n", raw.GetLightCount());
     }
 
     std::unique_ptr<GltfModel> gltf(new GltfModel(options));
@@ -624,6 +626,47 @@ ModelData *Raw2Gltf(
             }
             iter->second->SetCamera(camera.ix);
         }
+
+        //
+        // lights
+        //
+        std::vector<json> khrPunctualLights;
+        if (options.useKHRPunctualLights) {
+            for (int i = 0; i < raw.GetLightCount(); i ++) {
+                const RawLight &light = raw.GetLight(i);
+                LightData::Type type;
+                switch(light.type) {
+                    case RAW_LIGHT_TYPE_DIRECTIONAL:
+                        type = LightData::Type::Directional;
+                        break;
+                    case RAW_LIGHT_TYPE_POINT:
+                        type = LightData::Type::Point;
+                        break;
+                    case RAW_LIGHT_TYPE_SPOT:
+                        type = LightData::Type::Spot;
+                        break;
+                }
+                gltf->lights.hold(new LightData(
+                    light.name,
+                    type,
+                    light.color,
+                    // FBX intensity defaults to 100, so let's call that 1.0;
+                    // but caveat: I find nothing in the documentation to suggest
+                    // what unit the FBX value is meant to be measured in...
+                    light.intensity / 100,
+                    light.innerConeAngle,
+                    light.outerConeAngle));
+            }
+        }
+        for (int i = 0; i < raw.GetNodeCount(); i++) {
+            const RawNode &node = raw.GetNode(i);
+            const auto nodeData = gltf->nodes.ptrs[i];
+
+            if (node.lightIx >= 0) {
+                // we lean on the fact that in this simple case, raw and gltf indexing are aligned
+                nodeData->SetLight(node.lightIx);
+            }
+        }
     }
 
     NodeData        &rootNode  = require(nodesById, raw.GetRootNode());
@@ -651,6 +694,9 @@ ModelData *Raw2Gltf(
         if (options.useKHRMatUnlit) {
             extensionsUsed.push_back(KHR_MATERIALS_CMN_UNLIT);
         }
+        if (!gltf->lights.ptrs.empty()) {
+            extensionsUsed.push_back(KHR_LIGHTS_PUNCTUAL);
+        }
         if (options.draco.enabled) {
             extensionsUsed.push_back(KHR_DRACO_MESH_COMPRESSION);
             extensionsRequired.push_back(KHR_DRACO_MESH_COMPRESSION);
@@ -670,6 +716,7 @@ ModelData *Raw2Gltf(
         }
 
         gltf->serializeHolders(glTFJson);
+
         gltfOutStream << glTFJson.dump(options.outputBinary ? 0 : 4);
     }
     if (options.outputBinary) {
