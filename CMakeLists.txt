@@ -194,6 +194,8 @@ set(LIB_SOURCE_FILES
         src/gltf/properties/CameraData.hpp
         src/gltf/properties/ImageData.cpp
         src/gltf/properties/ImageData.hpp
+        src/gltf/properties/LightData.cpp
+        src/gltf/properties/LightData.hpp
         src/gltf/properties/MaterialData.cpp
         src/gltf/properties/MaterialData.hpp
         src/gltf/properties/MeshData.cpp

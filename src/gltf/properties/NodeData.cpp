@@ -21,6 +21,7 @@ NodeData::NodeData(
       children(),
       mesh(-1),
       camera(-1),
+      light(-1),
       skin(-1)
 {
 }
@@ -48,6 +49,12 @@ void NodeData::SetCamera(uint32_t cameraIndex)
 {
     assert(!isJoint);
     camera = cameraIndex;
+}
+
+void NodeData::SetLight(uint32_t lightIndex)
+{
+    assert(!isJoint);
+    light = lightIndex;
 }
 
 json NodeData::serialize() const
@@ -83,6 +90,9 @@ json NodeData::serialize() const
         }
         if (camera >= 0) {
             result["camera"] = camera;
+        }
+        if (light >= 0) {
+            result["extensions"][KHR_LIGHTS_PUNCTUAL]["light"] = light;
         }
     }
 

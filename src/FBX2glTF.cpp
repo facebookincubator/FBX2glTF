@@ -95,6 +95,9 @@ int main(int argc, char *argv[])
                    "khr-materials-unlit", "Use KHR_materials_unlit extension to specify Unlit shader.",
                    cxxopts::value<bool>(gltfOptions.useKHRMatUnlit))
                (
+                   "no-khr-punctual-lights", "Don't use KHR_punctual_lights extension to export lights.",
+                   cxxopts::value<bool>(gltfOptions.useKHRPunctualLights))
+               (
                    "user-properties", "Transcribe FBX User Properties into glTF node and material 'extras'.",
                    cxxopts::value<bool>(gltfOptions.enableUserProperties))
                (

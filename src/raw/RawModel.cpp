@@ -165,6 +165,40 @@ int RawModel::AddMaterial(
     return (int) materials.size() - 1;
 }
 
+int RawModel::AddLight(
+    const char *name,
+    const RawLightType lightType,
+    const Vec3f color,
+    const float intensity,
+    const float innerConeAngle,
+    const float outerConeAngle)
+{
+    for (size_t i = 0; i < lights.size(); i ++) {
+        if (lights[i].name != name || lights[i].type != lightType) {
+            continue;
+        }
+        // only care about cone angles for spot
+        if (lights[i].type == RAW_LIGHT_TYPE_SPOT) {
+            if (lights[i].innerConeAngle != innerConeAngle ||
+                lights[i].outerConeAngle != outerConeAngle) {
+                continue;
+            }
+        }
+        return (int) i;
+    }
+    RawLight light {
+        name,
+        lightType,
+        color,
+        intensity,
+        innerConeAngle,
+        outerConeAngle,
+    };
+    lights.push_back(light);
+    return (int) lights.size() - 1;
+}
+
+
 int RawModel::AddSurface(const RawSurface &surface)
 {
     for (size_t i = 0; i < surfaces.size(); i++) {
@@ -262,6 +296,7 @@ int RawModel::AddNode(const long id, const char *name, const long parentId)
     joint.name        = name;
     joint.parentId    = parentId;
     joint.surfaceId   = 0;
+    joint.lightIx     = -1;
     joint.translation = Vec3f(0, 0, 0);
     joint.rotation    = Quatf(0, 0, 0, 1);
     joint.scale       = Vec3f(1, 1, 1);
