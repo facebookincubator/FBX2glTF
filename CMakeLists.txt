@@ -32,6 +32,9 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 find_package(Iconv QUIET)
 
+# create a compilation database for e.g. clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if (WIN32)
   # this will suffice for now; don't really care about 32-bit
   set(LIBXML2_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
@@ -194,6 +197,8 @@ set(LIB_SOURCE_FILES
         src/gltf/properties/CameraData.hpp
         src/gltf/properties/ImageData.cpp
         src/gltf/properties/ImageData.hpp
+        src/gltf/properties/LightData.cpp
+        src/gltf/properties/LightData.hpp
         src/gltf/properties/MaterialData.cpp
         src/gltf/properties/MaterialData.hpp
         src/gltf/properties/MeshData.cpp
