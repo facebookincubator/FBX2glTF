@@ -631,7 +631,7 @@ ModelData *Raw2Gltf(
         // lights
         //
         std::vector<json> khrPunctualLights;
-        if (options.useKHRPunctualLights) {
+        if (options.useKHRLightsPunctual) {
             for (int i = 0; i < raw.GetLightCount(); i ++) {
                 const RawLight &light = raw.GetLight(i);
                 LightData::Type type;

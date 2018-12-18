@@ -127,17 +127,6 @@ ExternalProject_Add(CPPCodec
 )
 set(CPPCODEC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cppcodec/src/CPPCodec")
 
-# CXXOPTS
-ExternalProject_Add(CxxOpts
-  GIT_REPOSITORY https://github.com/jarro2783/cxxopts
-  GIT_TAG v1.4.4
-  PREFIX cxxopts
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping cxxopts configure step."
-  BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping cxxopts build step."
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping cxxopts install step."
-)
-set(CXXOPTS_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cxxopts/src/CxxOpts/include")
-
 # FMT
 ExternalProject_Add(Fmt
   PREFIX fmt
@@ -220,6 +209,7 @@ set(LIB_SOURCE_FILES
         src/utils/Image_Utils.hpp
         src/utils/String_Utils.cpp
         src/utils/String_Utils.hpp
+        third_party/CLI11/CLI11.hpp
 )
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
@@ -233,7 +223,6 @@ add_dependencies(libFBX2glTF
   FiFoMap
   Json
   STB
-  CxxOpts
   CPPCodec
   Fmt
 )
@@ -297,7 +286,7 @@ if (Iconv_FOUND)
 endif()
 
 target_include_directories(appFBX2glTF PUBLIC
-  ${CXXOPTS_INCLUDE_DIR}
+  "third_party/CLI11"
 )
 target_link_libraries(appFBX2glTF libFBX2glTF)
 
