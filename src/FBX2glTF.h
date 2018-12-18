@@ -76,12 +76,12 @@ struct GltfOptions
     /** Whether and how to use KHR_draco_mesh_compression to minimize static geometry size. */
     struct {
         bool enabled = false;
-        int compressionLevel = -1;
-        int quantBitsPosition = -1;
-        int quantBitsTexCoord = -1;
-        int quantBitsNormal = -1;
-        int quantBitsColor = -1;
-        int quantBitsGeneric = -1;
+        int compressionLevel = 7;
+        int quantBitsPosition = 14;
+        int quantBitsTexCoord = 10;
+        int quantBitsNormal = 10;
+        int quantBitsColor = 8;
+        int quantBitsGeneric = 8;
     } draco;
 
     /** Whether to include FBX User Properties as 'extras' metadata in glTF nodes. */
@@ -93,7 +93,7 @@ struct GltfOptions
     bool usePBRMetRough { false };
 
     /** Whether to include lights through the KHR_punctual_lights extension. */
-    bool useKHRPunctualLights { true };
+    bool useKHRLightsPunctual { true };
 
     /** Whether to include blend shape normals, if present according to the SDK. */
     bool useBlendShapeNormals { false };
