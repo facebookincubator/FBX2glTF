@@ -76,6 +76,10 @@ template<class T> std::vector<T> toStdVec(const mathfu::Quaternion<T> &quat) {
     return std::vector<T> { quat.vector()[0], quat.vector()[1], quat.vector()[2], quat.scalar() };
 }
 
+inline Vec3f toVec3f(const FbxDouble3 &v) {
+    return Vec3f((float) v[0], (float) v[1], (float) v[2]);
+}
+
 inline Vec3f toVec3f(const FbxVector4 &v) {
     return Vec3f((float) v[0], (float) v[1], (float) v[2]);
 }

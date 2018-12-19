@@ -261,12 +261,31 @@ struct RawMetRoughMatProps : RawMatProps {
     }
 };
 
+
 struct RawMaterial
 {
     std::string                  name;
     RawMaterialType              type;
     std::shared_ptr<RawMatProps> info;
     int                          textures[RAW_TEXTURE_USAGE_MAX];
+    std::vector<std::string>     userProperties;
+};
+
+enum RawLightType
+{
+    RAW_LIGHT_TYPE_DIRECTIONAL,
+    RAW_LIGHT_TYPE_POINT,
+    RAW_LIGHT_TYPE_SPOT,
+};
+
+struct RawLight
+{
+    std::string     name;
+    RawLightType    type;
+    Vec3f color;
+    float intensity;
+    float           innerConeAngle;     // only meaningful for spot
+    float           outerConeAngle;     // only meaningful for spot
 };
 
 struct RawBlendChannel
@@ -347,6 +366,7 @@ struct RawNode
     Quatf                    rotation;
     Vec3f                    scale;
     long                     surfaceId;
+    long                     lightIx;
     std::vector<std::string> userProperties;
 };
 
@@ -363,7 +383,9 @@ public:
     int AddMaterial(const RawMaterial &material);
     int AddMaterial(
         const char *name, const RawMaterialType materialType, const int textures[RAW_TEXTURE_USAGE_MAX],
-        std::shared_ptr<RawMatProps> materialInfo);
+        std::shared_ptr<RawMatProps> materialInfo, const std::vector<std::string>& userProperties);
+    int AddLight(const char *name, RawLightType lightType, Vec3f color, float intensity,
+                 float innerConeAngle, float outerConeAngle);
     int AddSurface(const RawSurface &suface);
     int AddSurface(const char *name, long surfaceId);
     int AddAnimation(const RawAnimation &animation);
@@ -419,6 +441,10 @@ public:
     int GetCameraCount() const { return (int) cameras.size(); }
     const RawCamera &GetCamera(const int index) const { return cameras[index]; }
 
+    // Iterate over the lights.
+    int GetLightCount() const { return (int) lights.size(); }
+    const RawLight &GetLight(const int index) const { return lights[index]; }
+
     // Iterate over the nodes.
     int GetNodeCount() const { return (int) nodes.size(); }
     const RawNode &GetNode(const int index) const { return nodes[index]; }
@@ -446,6 +472,7 @@ private:
     std::vector<RawTriangle>                         triangles;
     std::vector<RawTexture>                          textures;
     std::vector<RawMaterial>                         materials;
+    std::vector<RawLight>                            lights;
     std::vector<RawSurface>                          surfaces;
     std::vector<RawAnimation>                        animations;
     std::vector<RawCamera>                           cameras;

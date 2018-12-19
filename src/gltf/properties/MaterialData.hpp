@@ -61,6 +61,8 @@ struct MaterialData : Holdable
 
     const std::shared_ptr<const KHRCmnUnlitMaterial>    khrCmnConstantMaterial;
     const std::shared_ptr<const PBRMetallicRoughness>   pbrMetallicRoughness;
+
+    std::vector<std::string> userProperties;
 };
 
 void to_json(json &j, const Tex &data);

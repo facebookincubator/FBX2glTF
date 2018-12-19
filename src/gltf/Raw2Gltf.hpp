@@ -21,6 +21,7 @@
 
 const std::string KHR_DRACO_MESH_COMPRESSION            = "KHR_draco_mesh_compression";
 const std::string KHR_MATERIALS_CMN_UNLIT               = "KHR_materials_unlit";
+const std::string KHR_LIGHTS_PUNCTUAL                   = "KHR_lights_punctual";
 
 const std::string extBufferFilename = "buffer.bin";
 

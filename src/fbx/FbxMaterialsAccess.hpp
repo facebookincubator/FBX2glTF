@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "Fbx2Raw.hpp"
 #include "FbxMaterialInfo.hpp"
 #include "FbxTraditionalMaterialInfo.hpp"
 #include "FbxRoughMetMaterialInfo.hpp"
@@ -21,12 +22,15 @@ public:
 
     const std::shared_ptr<FbxMaterialInfo> GetMaterial(const int polygonIndex) const;
 
+	const std::vector<std::string> GetUserProperties(const int polygonIndex) const;
+
     std::unique_ptr<FbxMaterialInfo>
     GetMaterialInfo(FbxSurfaceMaterial *material, const std::map<const FbxTexture *, FbxString> &textureLocations);
 
 private:
     FbxGeometryElement::EMappingMode              mappingMode;
     std::vector<std::shared_ptr<FbxMaterialInfo>> summaries {};
+	std::vector<std::vector<std::string>>         userProperties;
     const FbxMesh                                 *mesh;
     const FbxLayerElementArrayTemplate<int>       *indices;
 };

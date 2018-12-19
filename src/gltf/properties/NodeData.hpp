@@ -19,6 +19,7 @@ struct NodeData : Holdable
     void SetMesh(uint32_t meshIx);
     void SetSkin(uint32_t skinIx);
     void SetCamera(uint32_t camera);
+    void SetLight(uint32_t light);
 
     json serialize() const override;
 
@@ -30,6 +31,7 @@ struct NodeData : Holdable
     std::vector<uint32_t>    children;
     int32_t                  mesh;
     int32_t                  camera;
+    int32_t                  light;
     int32_t                  skin;
     std::vector<std::string> skeletons;
     std::vector<std::string> userProperties;

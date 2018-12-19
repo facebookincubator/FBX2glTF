@@ -57,10 +57,10 @@ GetMaterialType(const RawModel &raw, const int textures[RAW_TEXTURE_USAGE_MAX], 
             : (skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT);
     }
 
-	// else if there is any vertex transparency, treat whole mesh as transparent
-	if (vertexTransparency) {
-		return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
-	}
+    // else if there is any vertex transparency, treat whole mesh as transparent
+    if (vertexTransparency) {
+        return skinned ? RAW_MATERIAL_TYPE_SKINNED_TRANSPARENT : RAW_MATERIAL_TYPE_TRANSPARENT;
+    }
 
 
     // Default to simply opaque.
@@ -173,6 +173,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
     for (int polygonIndex = 0; polygonIndex < pMesh->GetPolygonCount(); polygonIndex++) {
         FBX_ASSERT(pMesh->GetPolygonSize(polygonIndex) == 3);
         const std::shared_ptr<FbxMaterialInfo> fbxMaterial = materials.GetMaterial(polygonIndex);
+        const std::vector<std::string> userProperties = materials.GetUserProperties(polygonIndex);
 
         int textures[RAW_TEXTURE_USAGE_MAX];
         std::fill_n(textures, (int) RAW_TEXTURE_USAGE_MAX, -1);
@@ -361,7 +362,7 @@ static void ReadMesh(RawModel &raw, FbxScene *pScene, FbxNode *pNode, const std:
         }
 
         const RawMaterialType materialType = GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
-        const int rawMaterialIndex = raw.AddMaterial(materialName, materialType, textures, rawMatProps);
+        const int rawMaterialIndex = raw.AddMaterial(materialName, materialType, textures, rawMatProps, userProperties);
 
         raw.AddTriangle(rawVertexIndices[0], rawVertexIndices[1], rawVertexIndices[2], rawMaterialIndex, rawSurfaceIndex);
     }
@@ -377,6 +378,40 @@ double HFOV2VFOV(double h, double ar)
 double VFOV2HFOV(double v, double ar)
 {
     return 2.0 * std::atan((ar) * std::tan((v * FBXSDK_PI_DIV_180) * 0.5)) * FBXSDK_180_DIV_PI;
+}
+
+static void ReadLight(RawModel &raw, FbxScene *pScene, FbxNode *pNode) {
+  const FbxLight *pLight = pNode->GetLight();
+
+  int lightIx;
+  float intensity = (float)pLight->Intensity.Get();
+  Vec3f color = toVec3f(pLight->Color.Get());
+  switch (pLight->LightType.Get()) {
+    case FbxLight::eDirectional: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_DIRECTIONAL,
+                             color, intensity, 0, 0);
+      break;
+    }
+    case FbxLight::ePoint: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_POINT, color,
+                             intensity, 0, 0);
+      break;
+    }
+    case FbxLight::eSpot: {
+      lightIx = raw.AddLight(pLight->GetName(), RAW_LIGHT_TYPE_SPOT, color,
+                             intensity, (float)pLight->InnerAngle.Get(),
+                             (float)pLight->OuterAngle.Get());
+      break;
+    }
+    default: {
+      fmt::printf("Warning:: Ignoring unsupported light type.\n");
+      return;
+    }
+  }
+
+  int nodeId = raw.GetNodeById(pNode->GetUniqueID());
+  RawNode &node = raw.GetNode(nodeId);
+  node.lightIx = lightIx;
 }
 
 // Largely adopted from fbx example 
@@ -444,91 +479,11 @@ static void ReadCamera(RawModel &raw, FbxScene *pScene, FbxNode *pNode)
 
 static void ReadNodeProperty(RawModel &raw, FbxNode *pNode, FbxProperty &prop)
 {
-    using fbxsdk::EFbxType;
     int nodeId = raw.GetNodeById(pNode->GetUniqueID());
-    if (nodeId < 0)
-        return;
-
-    std::string ename;
-    // Convert property type
-    switch (prop.GetPropertyDataType().GetType()) {
-        case eFbxBool:      ename = "eFbxBool";      break;
-        case eFbxChar:      ename = "eFbxChar";      break;
-        case eFbxUChar:     ename = "eFbxUChar";     break;
-        case eFbxShort:     ename = "eFbxShort";     break;
-        case eFbxUShort:    ename = "eFbxUShort";    break;
-        case eFbxInt:       ename = "eFbxInt";       break;
-        case eFbxUInt:      ename = "eFbxUint";      break;
-        case eFbxLongLong:  ename = "eFbxLongLong";  break;
-        case eFbxULongLong: ename = "eFbxULongLong"; break;
-        case eFbxFloat:     ename = "eFbxFloat";     break;
-        case eFbxHalfFloat: ename = "eFbxHalfFloat"; break;
-        case eFbxDouble:    ename = "eFbxDouble";    break;
-        case eFbxDouble2:   ename = "eFbxDouble2";   break;
-        case eFbxDouble3:   ename = "eFbxDouble3";   break;
-        case eFbxDouble4:   ename = "eFbxDouble4";   break;
-        case eFbxString:    ename = "eFbxString";    break;
-
-        // Use this as fallback because it does not give very descriptive names
-        default: ename = prop.GetPropertyDataType().GetName(); break;
+    if (nodeId >= 0) {
+        RawNode &node = raw.GetNode(nodeId);
+        node.userProperties.push_back(TranscribeProperty(prop).dump());
     }
-
-    json p;
-    p["type"] = ename;
-
-    // Convert property value
-    switch (prop.GetPropertyDataType().GetType()) {
-        case eFbxBool:
-        case eFbxChar:
-        case eFbxUChar:
-        case eFbxShort:
-        case eFbxUShort:
-        case eFbxInt:
-        case eFbxUInt:
-        case eFbxLongLong: {
-            p["value"] = prop.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxULongLong: {
-            p["value"] = prop.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxFloat:
-        case eFbxHalfFloat:
-        case eFbxDouble: {
-            p["value"] = prop.EvaluateValue<double>(FBXSDK_TIME_INFINITE);
-            break;
-        }
-        case eFbxDouble2: {
-            auto v = prop.EvaluateValue<FbxDouble2>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1]};
-            break;
-        }
-        case eFbxDouble3: {
-            auto v = prop.EvaluateValue<FbxDouble3>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1], v[2]};
-            break;
-        }
-        case eFbxDouble4: {
-            auto v = prop.EvaluateValue<FbxDouble4>(FBXSDK_TIME_INFINITE);
-            p["value"] = {v[0], v[1], v[2], v[3]};
-            break;
-        }
-        case eFbxString: {
-            p["value"] = std::string{prop.Get<FbxString>()};
-            break;
-        }
-        default: {
-            p["value"] = "UNSUPPORTED_VALUE_TYPE";
-            break;
-        }
-    }
-
-    json n;
-    n[prop.GetNameAsCStr()] = p;
-
-    RawNode &node = raw.GetNode(nodeId);
-    node.userProperties.push_back(n.dump());
 }
 
 static void ReadNodeAttributes(
@@ -565,13 +520,15 @@ static void ReadNodeAttributes(
                 ReadCamera(raw, pScene, pNode);
                 break;
             }
+            case FbxNodeAttribute::eLight:
+                ReadLight(raw, pScene, pNode);
+                break;
             case FbxNodeAttribute::eUnknown:
             case FbxNodeAttribute::eNull:
             case FbxNodeAttribute::eMarker:
             case FbxNodeAttribute::eSkeleton:
             case FbxNodeAttribute::eCameraStereo:
             case FbxNodeAttribute::eCameraSwitcher:
-            case FbxNodeAttribute::eLight:
             case FbxNodeAttribute::eOpticalReference:
             case FbxNodeAttribute::eOpticalMarker:
             case FbxNodeAttribute::eNurbsCurve:
@@ -985,3 +942,90 @@ bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExte
 
     return true;
 }
+
+// convenience method for describing a property in JSON
+json TranscribeProperty(FbxProperty &prop)
+{
+    using fbxsdk::EFbxType;
+    std::string ename;
+
+    // Convert property type
+    switch (prop.GetPropertyDataType().GetType()) {
+        case eFbxBool:      ename = "eFbxBool";      break;
+        case eFbxChar:      ename = "eFbxChar";      break;
+        case eFbxUChar:     ename = "eFbxUChar";     break;
+        case eFbxShort:     ename = "eFbxShort";     break;
+        case eFbxUShort:    ename = "eFbxUShort";    break;
+        case eFbxInt:       ename = "eFbxInt";       break;
+        case eFbxUInt:      ename = "eFbxUint";      break;
+        case eFbxLongLong:  ename = "eFbxLongLong";  break;
+        case eFbxULongLong: ename = "eFbxULongLong"; break;
+        case eFbxFloat:     ename = "eFbxFloat";     break;
+        case eFbxHalfFloat: ename = "eFbxHalfFloat"; break;
+        case eFbxDouble:    ename = "eFbxDouble";    break;
+        case eFbxDouble2:   ename = "eFbxDouble2";   break;
+        case eFbxDouble3:   ename = "eFbxDouble3";   break;
+        case eFbxDouble4:   ename = "eFbxDouble4";   break;
+        case eFbxString:    ename = "eFbxString";    break;
+
+            // Use this as fallback because it does not give very descriptive names
+        default: ename = prop.GetPropertyDataType().GetName(); break;
+    }
+
+    json p = {
+        {"type", ename}
+    };
+
+    // Convert property value
+    switch (prop.GetPropertyDataType().GetType()) {
+        case eFbxBool:
+        case eFbxChar:
+        case eFbxUChar:
+        case eFbxShort:
+        case eFbxUShort:
+        case eFbxInt:
+        case eFbxUInt:
+        case eFbxLongLong: {
+            p["value"] = prop.EvaluateValue<long long>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxULongLong: {
+            p["value"] = prop.EvaluateValue<unsigned long long>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxFloat:
+        case eFbxHalfFloat:
+        case eFbxDouble: {
+            p["value"] = prop.EvaluateValue<double>(FBXSDK_TIME_INFINITE);
+            break;
+        }
+        case eFbxDouble2: {
+            auto v = prop.EvaluateValue<FbxDouble2>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1]};
+            break;
+        }
+        case eFbxDouble3: {
+            auto v = prop.EvaluateValue<FbxDouble3>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1], v[2]};
+            break;
+        }
+        case eFbxDouble4: {
+            auto v = prop.EvaluateValue<FbxDouble4>(FBXSDK_TIME_INFINITE);
+            p["value"] = {v[0], v[1], v[2], v[3]};
+            break;
+        }
+        case eFbxString: {
+            p["value"] = std::string{prop.Get<FbxString>()};
+            break;
+        }
+        default: {
+            p["value"] = "UNSUPPORTED_VALUE_TYPE";
+            break;
+        }
+    }
+
+    return {
+        {prop.GetNameAsCStr(), p}
+    };
+}
+
