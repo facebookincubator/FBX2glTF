@@ -12,11 +12,10 @@
 #include "FBX2glTF.h"
 
 class FbxMaterialInfo {
-public:
-    FbxMaterialInfo(const FbxString &name, const FbxString &shadingModel)
-        : name(name),
-          shadingModel(shadingModel) {}
+ public:
+  FbxMaterialInfo(const FbxString& name, const FbxString& shadingModel)
+      : name(name), shadingModel(shadingModel) {}
 
-    const FbxString name;
-    const FbxString shadingModel;
+  const FbxString name;
+  const FbxString shadingModel;
 };

@@ -11,12 +11,11 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct SceneData : Holdable
-{
-    SceneData(std::string name, const NodeData &rootNode);
+struct SceneData : Holdable {
+  SceneData(std::string name, const NodeData& rootNode);
 
-    json serialize() const override;
+  json serialize() const override;
 
-    const std::string     name;
-    std::vector<uint32_t> nodes;
+  const std::string name;
+  std::vector<uint32_t> nodes;
 };

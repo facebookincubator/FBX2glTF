@@ -10,34 +10,32 @@
 #include "FbxMaterials.hpp"
 
 struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
-    static constexpr const char *FBX_SHADER_LAMBERT = "Lambert";
-    static constexpr const char *FBX_SHADER_BLINN   = "Blinn";
-    static constexpr const char *FBX_SHADER_PHONG   = "Phong";
+  static constexpr const char* FBX_SHADER_LAMBERT = "Lambert";
+  static constexpr const char* FBX_SHADER_BLINN = "Blinn";
+  static constexpr const char* FBX_SHADER_PHONG = "Phong";
 
-    FbxTraditionalMaterialInfo(const FbxString &name, const FbxString &shadingModel)
-        : FbxMaterialInfo(name, shadingModel)
-    {}
+  FbxTraditionalMaterialInfo(const FbxString& name, const FbxString& shadingModel)
+      : FbxMaterialInfo(name, shadingModel) {}
 
-    FbxFileTexture *texAmbient {};
-    FbxVector4     colAmbient {};
-    FbxFileTexture *texSpecular {};
-    FbxVector4     colSpecular {};
-    FbxFileTexture *texDiffuse {};
-    FbxVector4     colDiffuse {};
-    FbxFileTexture *texEmissive {};
-    FbxVector4     colEmissive {};
-    FbxFileTexture *texNormal {};
-    FbxFileTexture *texShininess {};
-    FbxDouble      shininess {};
+  FbxFileTexture* texAmbient{};
+  FbxVector4 colAmbient{};
+  FbxFileTexture* texSpecular{};
+  FbxVector4 colSpecular{};
+  FbxFileTexture* texDiffuse{};
+  FbxVector4 colDiffuse{};
+  FbxFileTexture* texEmissive{};
+  FbxVector4 colEmissive{};
+  FbxFileTexture* texNormal{};
+  FbxFileTexture* texShininess{};
+  FbxDouble shininess{};
 };
 
 class FbxTraditionalMaterialResolver : FbxMaterialResolver<FbxTraditionalMaterialInfo> {
-public:
-    FbxTraditionalMaterialResolver(
-        FbxSurfaceMaterial *fbxMaterial,
-        const std::map<const FbxTexture *, FbxString> &textureLocations)
-        : FbxMaterialResolver(fbxMaterial, textureLocations)
-    {}
+ public:
+  FbxTraditionalMaterialResolver(
+      FbxSurfaceMaterial* fbxMaterial,
+      const std::map<const FbxTexture*, FbxString>& textureLocations)
+      : FbxMaterialResolver(fbxMaterial, textureLocations) {}
 
-    virtual std::unique_ptr<FbxTraditionalMaterialInfo> resolve() const;
+  virtual std::unique_ptr<FbxTraditionalMaterialInfo> resolve() const;
 };

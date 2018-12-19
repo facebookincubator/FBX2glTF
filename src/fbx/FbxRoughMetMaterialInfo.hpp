@@ -7,36 +7,35 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <algorithm>
 #include <fstream>
-#include <string>
-#include <set>
 #include <map>
+#include <set>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 #include "FbxMaterialInfo.hpp"
 
 struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
-    static constexpr const char *FBX_SHADER_METROUGH = "MetallicRoughness";
+  static constexpr const char* FBX_SHADER_METROUGH = "MetallicRoughness";
 
-    static std::unique_ptr<FbxRoughMetMaterialInfo> From(
-        FbxSurfaceMaterial *fbxMaterial,
-        const std::map<const FbxTexture *, FbxString> &textureLocations);
+  static std::unique_ptr<FbxRoughMetMaterialInfo> From(
+      FbxSurfaceMaterial* fbxMaterial,
+      const std::map<const FbxTexture*, FbxString>& textureLocations);
 
-    FbxRoughMetMaterialInfo(const FbxString &name, const FbxString &shadingModel)
-        : FbxMaterialInfo(name, shadingModel)
-    {}
+  FbxRoughMetMaterialInfo(const FbxString& name, const FbxString& shadingModel)
+      : FbxMaterialInfo(name, shadingModel) {}
 
-    const FbxFileTexture *texColor {};
-    FbxVector4           colBase {};
-    const FbxFileTexture *texNormal {};
-    const FbxFileTexture *texMetallic {};
-    FbxDouble            metallic {};
-    const FbxFileTexture *texRoughness {};
-    FbxDouble            roughness {};
-    const FbxFileTexture *texEmissive {};
-    FbxVector4           colEmissive {};
-    FbxDouble            emissiveIntensity {};
-    const FbxFileTexture *texAmbientOcclusion {};
+  const FbxFileTexture* texColor{};
+  FbxVector4 colBase{};
+  const FbxFileTexture* texNormal{};
+  const FbxFileTexture* texMetallic{};
+  FbxDouble metallic{};
+  const FbxFileTexture* texRoughness{};
+  FbxDouble roughness{};
+  const FbxFileTexture* texEmissive{};
+  FbxVector4 colEmissive{};
+  FbxDouble emissiveIntensity{};
+  const FbxFileTexture* texAmbientOcclusion{};
 };

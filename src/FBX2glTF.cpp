@@ -35,8 +35,7 @@ int main(int argc, char* argv[]) {
 
   CLI::App app{
       fmt::sprintf(
-          "FBX2glTF %s: Generate a glTF 2.0 representation of an FBX model.",
-          FBX2GLTF_VERSION),
+          "FBX2glTF %s: Generate a glTF 2.0 representation of an FBX model.", FBX2GLTF_VERSION),
       "FBX2glTF"};
 
   app.add_flag(
@@ -45,32 +44,22 @@ int main(int argc, char* argv[]) {
       "Include blend shape tangents, if reported present by the FBX SDK.");
 
   app.add_flag_function("-V,--version", [&](size_t count) {
-    fmt::printf(
-        "FBX2glTF version %s\nCopyright (c) 2016-2018 Oculus VR, LLC.\n",
-        FBX2GLTF_VERSION);
+    fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2018 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
     exit(0);
   });
 
   std::string inputPath;
-  app.add_option("FBX Model", inputPath, "The FBX model to convert.")
-      ->check(CLI::ExistingFile);
-  app.add_option("-i,--input", inputPath, "The FBX model to convert.")
-      ->check(CLI::ExistingFile);
+  app.add_option("FBX Model", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
+  app.add_option("-i,--input", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
 
   std::string outputPath;
-  app.add_option(
-      "-o,--output",
-      outputPath,
-      "Where to generate the output, without suffix.");
+  app.add_option("-o,--output", outputPath, "Where to generate the output, without suffix.");
 
   app.add_flag(
       "-e,--embed",
       gltfOptions.embedResources,
       "Inline buffers as data:// URIs within generated non-binary glTF.");
-  app.add_flag(
-      "-b,--binary",
-      gltfOptions.outputBinary,
-      "Output a single binary format .glb file.");
+  app.add_flag("-b,--binary", gltfOptions.outputBinary, "Output a single binary format .glb file.");
 
   app.add_option(
          "--long-indices",
@@ -119,8 +108,7 @@ int main(int argc, char* argv[]) {
       "--flip-u",
       [&](size_t count) {
         if (count > 0) {
-          texturesTransforms.emplace_back(
-              [](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
+          texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
           if (verboseOutput) {
             fmt::printf("Flipping texture coordinates in the 'U' dimension.\n");
           }
@@ -128,23 +116,20 @@ int main(int argc, char* argv[]) {
       },
       "Flip all U texture coordinates.");
 
-  app.add_flag("--no-flip-u", "Don't flip U texture coordinates.")
-      ->excludes("--flip-u");
+  app.add_flag("--no-flip-u", "Don't flip U texture coordinates.")->excludes("--flip-u");
 
   app.add_flag_function(
       "--no-flip-v",
       [&](size_t count) {
         if (count > 0) {
-          texturesTransforms.emplace_back(
-              [](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
+          texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
           if (verboseOutput) {
             fmt::printf("NOT flipping texture coordinates in the 'V' dimension.\n");
           }
         }
       },
       "Flip all V texture coordinates.");
-  app.add_flag("--flip-v", "Don't flip U texture coordinates.")
-      ->excludes("--no-flip-v");
+  app.add_flag("--flip-v", "Don't flip U texture coordinates.")->excludes("--no-flip-v");
 
   app.add_flag(
          "--pbr-metallic-rougnness",
@@ -181,8 +166,8 @@ int main(int argc, char* argv[]) {
   app.add_option(
          "-k,--keep-attribute",
          [&](std::vector<std::string> attributes) -> bool {
-           gltfOptions.keepAttribs = RAW_VERTEX_ATTRIBUTE_JOINT_INDICES |
-               RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+           gltfOptions.keepAttribs =
+               RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
            for (std::string attribute : attributes) {
              if (attribute == "position") {
                gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION;
@@ -212,9 +197,7 @@ int main(int argc, char* argv[]) {
       ->type_name("(position|normal|tangent|binormial|color|uv0|uv1|auto)");
 
   app.add_flag(
-         "-d,--draco",
-         gltfOptions.draco.enabled,
-         "Apply Draco mesh compression to geometries.")
+         "-d,--draco", gltfOptions.draco.enabled, "Apply Draco mesh compression to geometries.")
       ->group("Draco");
 
   app.add_option(
@@ -301,16 +284,12 @@ int main(int argc, char* argv[]) {
 
   } else {
     // in gltf mode, we create a folder and write into that
-    outputFolder = fmt::format(
-        "{}_out{}",
-        outputPath.c_str(),
-        (const char)StringUtils::GetPathSeparator());
-    modelPath =
-        outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
+    outputFolder =
+        fmt::format("{}_out{}", outputPath.c_str(), (const char)StringUtils::GetPathSeparator());
+    modelPath = outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
-    fmt::fprintf(
-        stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
+    fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
     return 1;
   }
 
@@ -334,14 +313,9 @@ int main(int argc, char* argv[]) {
   std::ofstream outStream; // note: auto-flushes in destructor
   const auto streamStart = outStream.tellp();
 
-  outStream.open(
-      modelPath,
-      std::ios::trunc | std::ios::ate | std::ios::out | std::ios::binary);
+  outStream.open(modelPath, std::ios::trunc | std::ios::ate | std::ios::out | std::ios::binary);
   if (outStream.fail()) {
-    fmt::fprintf(
-        stderr,
-        "ERROR:: Couldn't open file for writing: %s\n",
-        modelPath.c_str());
+    fmt::fprintf(stderr, "ERROR:: Couldn't open file for writing: %s\n", modelPath.c_str());
     return 1;
   }
   data_render_model = Raw2Gltf(outStream, outputFolder, raw, gltfOptions);
@@ -371,8 +345,7 @@ int main(int argc, char* argv[]) {
   const std::string binaryPath = outputFolder + extBufferFilename;
   FILE* fp = fopen(binaryPath.c_str(), "wb");
   if (fp == nullptr) {
-    fmt::fprintf(
-        stderr, "ERROR:: Couldn't open file '%s' for writing.\n", binaryPath);
+    fmt::fprintf(stderr, "ERROR:: Couldn't open file '%s' for writing.\n", binaryPath);
     return 1;
   }
 
@@ -381,16 +354,12 @@ int main(int argc, char* argv[]) {
     unsigned long binarySize = data_render_model->binary->size();
     if (fwrite(binaryData, binarySize, 1, fp) != 1) {
       fmt::fprintf(
-          stderr,
-          "ERROR: Failed to write %lu bytes to file '%s'.\n",
-          binarySize,
-          binaryPath);
+          stderr, "ERROR: Failed to write %lu bytes to file '%s'.\n", binarySize, binaryPath);
       fclose(fp);
       return 1;
     }
     fclose(fp);
-    fmt::printf(
-        "Wrote %lu bytes of binary data to %s.\n", binarySize, binaryPath);
+    fmt::printf("Wrote %lu bytes of binary data to %s.\n", binarySize, binaryPath);
   }
 
   delete data_render_model;

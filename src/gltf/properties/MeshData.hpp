@@ -17,18 +17,16 @@
 
 #include "PrimitiveData.hpp"
 
-struct MeshData : Holdable
-{
-    MeshData(const std::string &name, const std::vector<float> &weights);
+struct MeshData : Holdable {
+  MeshData(const std::string& name, const std::vector<float>& weights);
 
-    void AddPrimitive(std::shared_ptr<PrimitiveData> primitive)
-    {
-        primitives.push_back(std::move(primitive));
-    }
+  void AddPrimitive(std::shared_ptr<PrimitiveData> primitive) {
+    primitives.push_back(std::move(primitive));
+  }
 
-    json serialize() const override;
+  json serialize() const override;
 
-    const std::string                           name;
-    const std::vector<float>                    weights;
-    std::vector<std::shared_ptr<PrimitiveData>> primitives;
+  const std::string name;
+  const std::vector<float> weights;
+  std::vector<std::shared_ptr<PrimitiveData>> primitives;
 };

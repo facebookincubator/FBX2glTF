@@ -12,17 +12,16 @@
 #include "gltf/Raw2Gltf.hpp"
 
 // TODO: this class needs some work
-struct CameraData : Holdable
-{
-    CameraData();
-    json serialize() const override;
+struct CameraData : Holdable {
+  CameraData();
+  json serialize() const override;
 
-    std::string name;
-    std::string type;
-    float       aspectRatio;
-    float       yfov;
-    float       xmag;
-    float       ymag;
-    float       znear;
-    float       zfar;
+  std::string name;
+  std::string type;
+  float aspectRatio;
+  float yfov;
+  float xmag;
+  float ymag;
+  float znear;
+  float zfar;
 };
