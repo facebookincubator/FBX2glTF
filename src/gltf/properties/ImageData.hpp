@@ -11,15 +11,14 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct ImageData : Holdable
-{
-    ImageData(std::string name, std::string uri);
-    ImageData(std::string name, const BufferViewData &bufferView, std::string mimeType);
+struct ImageData : Holdable {
+  ImageData(std::string name, std::string uri);
+  ImageData(std::string name, const BufferViewData& bufferView, std::string mimeType);
 
-    json serialize() const override;
+  json serialize() const override;
 
-    const std::string name;
-    const std::string uri; // non-empty in gltf mode
-    const int32_t     bufferView; // non-negative in glb mode
-    const std::string mimeType;
+  const std::string name;
+  const std::string uri; // non-empty in gltf mode
+  const int32_t bufferView; // non-negative in glb mode
+  const std::string mimeType;
 };

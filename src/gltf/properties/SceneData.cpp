@@ -11,18 +11,10 @@
 
 #include "NodeData.hpp"
 
-SceneData::SceneData(std::string name, const NodeData &rootNode)
-    : Holdable(),
-      name(std::move(name)),
-      nodes({rootNode.ix})
-{
-}
+SceneData::SceneData(std::string name, const NodeData& rootNode)
+    : Holdable(), name(std::move(name)), nodes({rootNode.ix}) {}
 
-json SceneData::serialize() const
-{
-    assert(nodes.size() <= 1);
-    return {
-        { "name", name },
-        { "nodes", nodes }
-    };
+json SceneData::serialize() const {
+  assert(nodes.size() <= 1);
+  return {{"name", name}, {"nodes", nodes}};
 }

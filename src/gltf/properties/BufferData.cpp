@@ -11,33 +11,24 @@
 
 #include "BufferData.hpp"
 
-BufferData::BufferData(const std::shared_ptr<const std::vector<uint8_t> > &binData)
-    : Holdable(),
-      isGlb(true),
-      binData(binData)
-{
-}
+BufferData::BufferData(const std::shared_ptr<const std::vector<uint8_t>>& binData)
+    : Holdable(), isGlb(true), binData(binData) {}
 
-BufferData::BufferData(std::string uri, const std::shared_ptr<const std::vector<uint8_t> > &binData, bool isEmbedded)
-    : Holdable(),
-      isGlb(false),
-      uri(isEmbedded ? "" : std::move(uri)),
-      binData(binData)
-{
-}
+BufferData::BufferData(
+    std::string uri,
+    const std::shared_ptr<const std::vector<uint8_t>>& binData,
+    bool isEmbedded)
+    : Holdable(), isGlb(false), uri(isEmbedded ? "" : std::move(uri)), binData(binData) {}
 
-json BufferData::serialize() const
-{
-    json result{
-        {"byteLength", binData->size()}
-    };
-    if (!isGlb) {
-        if (!uri.empty()) {
-            result["uri"] = uri;
-        } else {
-            std::string encoded = base64::encode(*binData);
-            result["uri"] = "data:application/octet-stream;base64," + encoded;
-        }
+json BufferData::serialize() const {
+  json result{{"byteLength", binData->size()}};
+  if (!isGlb) {
+    if (!uri.empty()) {
+      result["uri"] = uri;
+    } else {
+      std::string encoded = base64::encode(*binData);
+      result["uri"] = "data:application/octet-stream;base64," + encoded;
     }
-    return result;
+  }
+  return result;
 }

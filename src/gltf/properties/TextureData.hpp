@@ -11,13 +11,12 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct TextureData : Holdable
-{
-    TextureData(std::string name, const SamplerData &sampler, const ImageData &source);
+struct TextureData : Holdable {
+  TextureData(std::string name, const SamplerData& sampler, const ImageData& source);
 
-    json serialize() const override;
+  json serialize() const override;
 
-    const std::string name;
-    const uint32_t    sampler;
-    const uint32_t    source;
+  const std::string name;
+  const uint32_t sampler;
+  const uint32_t source;
 };
