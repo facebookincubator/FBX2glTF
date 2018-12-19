@@ -255,11 +255,11 @@ static void ReadMesh(
         RawShadingModel shadingModel;
         if (fbxMaterial->shadingModel == "Lambert") {
           shadingModel = RAW_SHADING_MODEL_LAMBERT;
-        } else if (fbxMaterial->shadingModel == "Blinn") {
+        } else if (0 == fbxMaterial->shadingModel.CompareNoCase("Blinn")) {
           shadingModel = RAW_SHADING_MODEL_BLINN;
-        } else if (fbxMaterial->shadingModel == "Phong") {
+        } else if (0 == fbxMaterial->shadingModel.CompareNoCase("Phong")) {
           shadingModel = RAW_SHADING_MODEL_PHONG;
-        } else if (fbxMaterial->shadingModel == "Constant") {
+        } else if (0 == fbxMaterial->shadingModel.CompareNoCase("Constant")) {
           shadingModel = RAW_SHADING_MODEL_PHONG;
         } else {
           shadingModel = RAW_SHADING_MODEL_UNKNOWN;
