@@ -11,15 +11,15 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct SkinData : Holdable
-{
-    SkinData(
-        const std::vector<uint32_t> joints, const AccessorData &inverseBindMatricesAccessor,
-        const NodeData &skeletonRootNode);
+struct SkinData : Holdable {
+  SkinData(
+      const std::vector<uint32_t> joints,
+      const AccessorData& inverseBindMatricesAccessor,
+      const NodeData& skeletonRootNode);
 
-    json serialize() const override;
+  json serialize() const override;
 
-    const std::vector<uint32_t> joints;
-    const uint32_t              skeletonRootNode;
-    const uint32_t              inverseBindMatrices;
+  const std::vector<uint32_t> joints;
+  const uint32_t skeletonRootNode;
+  const uint32_t inverseBindMatrices;
 };

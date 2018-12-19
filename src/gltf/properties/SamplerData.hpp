@@ -11,15 +11,11 @@
 
 #include "gltf/Raw2Gltf.hpp"
 
-struct SamplerData : Holdable
-{
-    // this is where magFilter, minFilter, wrapS and wrapT would go, should we want it
-    SamplerData()
-        : Holdable()
-    {
-    }
+struct SamplerData : Holdable {
+  // this is where magFilter, minFilter, wrapS and wrapT would go, should we want it
+  SamplerData() : Holdable() {}
 
-    json serialize() const override {
-        return json::object();
-    }
+  json serialize() const override {
+    return json::object();
+  }
 };

@@ -14,15 +14,18 @@
 
 namespace FileUtils {
 
-    std::string GetCurrentFolder();
+std::string GetCurrentFolder();
 
-    bool FileExists(const std::string &folderPath);
-    bool FolderExists(const std::string &folderPath);
+bool FileExists(const std::string& folderPath);
+bool FolderExists(const std::string& folderPath);
 
-    bool MatchExtension(const char *fileExtension, const char *matchExtensions);
-    std::vector<std::string> ListFolderFiles(const char *folder, const char *matchExtensions);
+bool MatchExtension(const char* fileExtension, const char* matchExtensions);
+std::vector<std::string> ListFolderFiles(const char* folder, const char* matchExtensions);
 
-    bool CreatePath(const char *path);
+bool CreatePath(const char* path);
 
-    bool CopyFile(const std::string &srcFilename, const std::string &dstFilename, bool createPath = false);
-}
+bool CopyFile(
+    const std::string& srcFilename,
+    const std::string& dstFilename,
+    bool createPath = false);
+} // namespace FileUtils

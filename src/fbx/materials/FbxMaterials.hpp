@@ -15,46 +15,43 @@
 #include "FBX2glTF.h"
 
 class FbxMaterialInfo {
-public:
-    FbxMaterialInfo(const FbxString &name, const FbxString &shadingModel)
-        : name(name)
-        , shadingModel(shadingModel)
-    {}
+ public:
+  FbxMaterialInfo(const FbxString& name, const FbxString& shadingModel)
+      : name(name), shadingModel(shadingModel) {}
 
-    const FbxString name;
-    const FbxString shadingModel;
+  const FbxString name;
+  const FbxString shadingModel;
 };
 
 template <class T>
-class FbxMaterialResolver
-{
-public:
-    FbxMaterialResolver(
-        FbxSurfaceMaterial *fbxMaterial,
-        const std::map<const FbxTexture *, FbxString> &textureLocations)
-        : fbxMaterial(fbxMaterial)
-        , textureLocations(textureLocations)
-    {}
-    virtual std::unique_ptr<T> resolve() const = 0;
+class FbxMaterialResolver {
+ public:
+  FbxMaterialResolver(
+      FbxSurfaceMaterial* fbxMaterial,
+      const std::map<const FbxTexture*, FbxString>& textureLocations)
+      : fbxMaterial(fbxMaterial), textureLocations(textureLocations) {}
+  virtual std::unique_ptr<T> resolve() const = 0;
 
-protected:
-    const FbxSurfaceMaterial *fbxMaterial;
-    const std::map<const FbxTexture *, FbxString> textureLocations;
+ protected:
+  const FbxSurfaceMaterial* fbxMaterial;
+  const std::map<const FbxTexture*, FbxString> textureLocations;
 };
 
-class FbxMaterialsAccess
-{
-public:
-    FbxMaterialsAccess(const FbxMesh *pMesh, const std::map<const FbxTexture *, FbxString> &textureLocations);
+class FbxMaterialsAccess {
+ public:
+  FbxMaterialsAccess(
+      const FbxMesh* pMesh,
+      const std::map<const FbxTexture*, FbxString>& textureLocations);
 
-    const std::shared_ptr<FbxMaterialInfo> GetMaterial(const int polygonIndex) const;
+  const std::shared_ptr<FbxMaterialInfo> GetMaterial(const int polygonIndex) const;
 
-    std::unique_ptr<FbxMaterialInfo>
-    GetMaterialInfo(FbxSurfaceMaterial *material, const std::map<const FbxTexture *, FbxString> &textureLocations);
+  std::unique_ptr<FbxMaterialInfo> GetMaterialInfo(
+      FbxSurfaceMaterial* material,
+      const std::map<const FbxTexture*, FbxString>& textureLocations);
 
-private:
-    FbxGeometryElement::EMappingMode              mappingMode;
-    std::vector<std::shared_ptr<FbxMaterialInfo>> summaries {};
-    const FbxMesh                                 *mesh;
-    const FbxLayerElementArrayTemplate<int>       *indices;
+ private:
+  FbxGeometryElement::EMappingMode mappingMode;
+  std::vector<std::shared_ptr<FbxMaterialInfo>> summaries{};
+  const FbxMesh* mesh;
+  const FbxLayerElementArrayTemplate<int>* indices;
 };

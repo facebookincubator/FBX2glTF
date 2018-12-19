@@ -7,38 +7,37 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <algorithm>
 #include <fstream>
-#include <string>
-#include <set>
 #include <map>
+#include <set>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <algorithm>
 
 #include "FbxMaterialInfo.hpp"
 
 struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
-    static constexpr const char *FBX_SHADER_LAMBERT = "Lambert";
-    static constexpr const char *FBX_SHADER_BLINN   = "Blinn";
-    static constexpr const char *FBX_SHADER_PHONG   = "Phong";
+  static constexpr const char* FBX_SHADER_LAMBERT = "Lambert";
+  static constexpr const char* FBX_SHADER_BLINN = "Blinn";
+  static constexpr const char* FBX_SHADER_PHONG = "Phong";
 
-    FbxTraditionalMaterialInfo(const FbxString &name, const FbxString &shadingModel)
-        : FbxMaterialInfo(name, shadingModel)
-    {}
+  FbxTraditionalMaterialInfo(const FbxString& name, const FbxString& shadingModel)
+      : FbxMaterialInfo(name, shadingModel) {}
 
-    FbxFileTexture *texAmbient {};
-    FbxVector4     colAmbient {};
-    FbxFileTexture *texSpecular {};
-    FbxVector4     colSpecular {};
-    FbxFileTexture *texDiffuse {};
-    FbxVector4     colDiffuse {};
-    FbxFileTexture *texEmissive {};
-    FbxVector4     colEmissive {};
-    FbxFileTexture *texNormal {};
-    FbxFileTexture *texShininess {};
-    FbxDouble      shininess {};
+  FbxFileTexture* texAmbient{};
+  FbxVector4 colAmbient{};
+  FbxFileTexture* texSpecular{};
+  FbxVector4 colSpecular{};
+  FbxFileTexture* texDiffuse{};
+  FbxVector4 colDiffuse{};
+  FbxFileTexture* texEmissive{};
+  FbxVector4 colEmissive{};
+  FbxFileTexture* texNormal{};
+  FbxFileTexture* texShininess{};
+  FbxDouble shininess{};
 
-    static std::unique_ptr<FbxTraditionalMaterialInfo> From(
-        FbxSurfaceMaterial *fbxMaterial,
-        const std::map<const FbxTexture *, FbxString> &textureLocations);
+  static std::unique_ptr<FbxTraditionalMaterialInfo> From(
+      FbxSurfaceMaterial* fbxMaterial,
+      const std::map<const FbxTexture*, FbxString>& textureLocations);
 };

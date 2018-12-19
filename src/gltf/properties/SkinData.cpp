@@ -13,20 +13,16 @@
 #include "NodeData.hpp"
 
 SkinData::SkinData(
-    const std::vector<uint32_t> joints, const AccessorData &inverseBindMatricesAccessor,
-    const NodeData &skeletonRootNode)
+    const std::vector<uint32_t> joints,
+    const AccessorData& inverseBindMatricesAccessor,
+    const NodeData& skeletonRootNode)
     : Holdable(),
       joints(joints),
       inverseBindMatrices(inverseBindMatricesAccessor.ix),
-      skeletonRootNode(skeletonRootNode.ix)
-{
-}
+      skeletonRootNode(skeletonRootNode.ix) {}
 
-json SkinData::serialize() const
-{
-    return {
-        { "joints", joints },
-        { "inverseBindMatrices", inverseBindMatrices },
-        { "skeleton", skeletonRootNode }
-    };
+json SkinData::serialize() const {
+  return {{"joints", joints},
+          {"inverseBindMatrices", inverseBindMatrices},
+          {"skeleton", skeletonRootNode}};
 }

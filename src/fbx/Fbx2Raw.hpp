@@ -11,6 +11,6 @@
 
 #include "raw/RawModel.hpp"
 
-bool LoadFBXFile(RawModel &raw, const char *fbxFileName, const char *textureExtensions);
+bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExtensions);
 
-json TranscribeProperty(FbxProperty &prop);
+json TranscribeProperty(FbxProperty& prop);
