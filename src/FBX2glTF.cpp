@@ -103,33 +103,29 @@ int main(int argc, char* argv[]) {
          "When to compute vertex normals from mesh geometry.")
       ->type_name("(never|broken|missing|always)");
 
-  std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
+  bool flip_u = false;
+  bool flip_v = true;
   app.add_flag_function(
       "--flip-u",
-      [&](size_t count) {
-        if (count > 0) {
-          texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
-          if (verboseOutput) {
-            fmt::printf("Flipping texture coordinates in the 'U' dimension.\n");
-          }
-        }
-      },
-      "Flip all U texture coordinates.");
-
-  app.add_flag("--no-flip-u", "Don't flip U texture coordinates.")->excludes("--flip-u");
+      [&](const size_t count) { flip_u = flip_u || (count > 0); },
+      "Flip all V texture coordinates.");
 
   app.add_flag_function(
-      "--no-flip-v",
-      [&](size_t count) {
-        if (count > 0) {
-          texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
-          if (verboseOutput) {
-            fmt::printf("NOT flipping texture coordinates in the 'V' dimension.\n");
-          }
-        }
-      },
+         "--no-flip-u",
+         [&](const size_t count) { flip_u = flip_u && (count == 0); },
+         "Don't flip U texture coordinates.")
+      ->excludes("--flip-u");
+
+  app.add_flag_function(
+      "--flip-v",
+      [&](const size_t count) { flip_v = flip_v || (count > 0); },
       "Flip all V texture coordinates.");
-  app.add_flag("--flip-v", "Don't flip U texture coordinates.")->excludes("--no-flip-v");
+
+  app.add_flag_function(
+         "--no-flip-v",
+         [&](const size_t count) { flip_v = flip_v && (count == 0); },
+         "Don't flip V texture coordinates.")
+      ->excludes("--flip-v");
 
   app.add_flag(
          "--pbr-metallic-rougnness",
@@ -249,6 +245,25 @@ int main(int argc, char* argv[]) {
       ->group("Draco");
 
   CLI11_PARSE(app, argc, argv);
+
+  std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
+  if (flip_u || flip_v) {
+    if (flip_u && flip_v) {
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], 1.0 - uv[1]); });
+    } else if (flip_u) {
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], uv[1]); });
+    } else {
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0 - uv[1]); });
+    }
+  }
+  if (verboseOutput) {
+    if (flip_u) {
+      fmt::printf("Flipping texture coordinates in the 'U' dimension.\n");
+    }
+    if (!flip_v) {
+      fmt::printf("NOT flipping texture coordinates in the 'V' dimension.\n");
+    }
+  }
 
   if (inputPath.empty()) {
     fmt::printf("You must supply a FBX file to convert.\n");
