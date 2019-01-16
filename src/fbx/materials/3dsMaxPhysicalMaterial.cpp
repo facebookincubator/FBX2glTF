@@ -73,34 +73,34 @@ std::unique_ptr<FbxRoughMetMaterialInfo> Fbx3dsMaxPhysicalMaterialResolver::reso
   }
 
   // TODO: attempt to bake transparency > 0.0f into the alpha of baseColour?
-  double transparency = getValue(props, "transparency", 0.0);
-  const auto* transparencyMap = getTex("transparency");
+  // double transparency = getValue(props, "transparency", 0.0);
+  // const auto* transparencyMap = getTex("transparency");
 
   // SSS: not supported
-  double scattering = getValue(props, "scattering", 0.0);
-  const auto* scatteringMap = getTex("scattering");
+  // double scattering = getValue(props, "scattering", 0.0);
+  // const auto* scatteringMap = getTex("scattering");
 
   // reflectivity: not supported
-  double reflectivityWeight = getValue(props, "reflectivity", 1.);
-  const auto* reflectivityWeightMap = getTex("reflectivity");
-  FbxDouble4 reflectivityColor = getValue(props, "refl_color", FbxDouble4(1, 1, 1, 1));
-  const auto* reflectivityColorMap = getTex("refl_color");
+  // double reflectivityWeight = getValue(props, "reflectivity", 1.);
+  // const auto* reflectivityWeightMap = getTex("reflectivity");
+  // FbxDouble4 reflectivityColor = getValue(props, "refl_color", FbxDouble4(1, 1, 1, 1));
+  // const auto* reflectivityColorMap = getTex("refl_color");
 
   // coatings: not supported
-  double coating = getValue(props, "coating", 0.0);
+  // double coating = getValue(props, "coating", 0.0);
 
   // diffuse roughness: not supported
-  double diffuseRoughness = getValue(props, "diff_roughness", 0.);
+  // double diffuseRoughness = getValue(props, "diff_roughness", 0.);
 
   // explicit brdf curve control: not supported
-  bool isBrdfMode = getValue(props, "brdf_mode", false);
+  // bool isBrdfMode = getValue(props, "brdf_mode", false);
 
   // anisotrophy: not supported
-  double anisotropy = getValue(props, "anisotropy", 1.0);
+  // double anisotropy = getValue(props, "anisotropy", 1.0);
 
   // TODO: how the heck do we combine these to generate a normal map?
   const auto* bumpMap = getTex("bump");
-  const auto* displacementMap = getTex("displacement");
+  // const auto* displacementMap = getTex("displacement");
 
   std::unique_ptr<FbxRoughMetMaterialInfo> res(new FbxRoughMetMaterialInfo(
       fbxMaterial->GetName(),

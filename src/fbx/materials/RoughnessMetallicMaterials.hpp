@@ -70,8 +70,8 @@ class Fbx3dsMaxPhysicalMaterialResolver : FbxMaterialResolver<FbxRoughMetMateria
 
  private:
   template <typename T>
-  T getValue(const FbxProperty& props, std::string propName, const T& default) const {
+  T getValue(const FbxProperty& props, std::string propName, const T& def) const {
     const FbxProperty prop = props.FindHierarchical(propName.c_str());
-    return prop.IsValid() ? prop.Get<T>() : default;
+    return prop.IsValid() ? prop.Get<T>() : def;
   }
 };

@@ -29,8 +29,9 @@
 
 #include "FbxBlendShapesAccess.hpp"
 #include "FbxLayerElementAccess.hpp"
-#include "FbxMaterialsAccess.hpp"
 #include "FbxSkinningAccess.hpp"
+#include "materials/RoughnessMetallicMaterials.hpp"
+#include "materials/TraditionalMaterials.hpp"
 
 float scaleFactor;
 
@@ -236,7 +237,7 @@ static void ReadMesh(
         FbxRoughMetMaterialInfo* fbxMatInfo =
             static_cast<FbxRoughMetMaterialInfo*>(fbxMaterial.get());
 
-        maybeAddTexture(fbxMatInfo->texColor, RAW_TEXTURE_USAGE_ALBEDO);
+        maybeAddTexture(fbxMatInfo->texBaseColor, RAW_TEXTURE_USAGE_ALBEDO);
         maybeAddTexture(fbxMatInfo->texNormal, RAW_TEXTURE_USAGE_NORMAL);
         maybeAddTexture(fbxMatInfo->texEmissive, RAW_TEXTURE_USAGE_EMISSIVE);
         maybeAddTexture(fbxMatInfo->texRoughness, RAW_TEXTURE_USAGE_ROUGHNESS);
@@ -244,8 +245,8 @@ static void ReadMesh(
         maybeAddTexture(fbxMatInfo->texAmbientOcclusion, RAW_TEXTURE_USAGE_OCCLUSION);
         rawMatProps.reset(new RawMetRoughMatProps(
             RAW_SHADING_MODEL_PBR_MET_ROUGH,
-            toVec4f(fbxMatInfo->colBase),
-            toVec3f(fbxMatInfo->colEmissive),
+            toVec4f(fbxMatInfo->baseColor),
+            toVec3f(fbxMatInfo->emissive),
             fbxMatInfo->emissiveIntensity,
             fbxMatInfo->metallic,
             fbxMatInfo->roughness));

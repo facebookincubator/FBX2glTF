@@ -154,20 +154,20 @@ endif()
 
 set(LIB_SOURCE_FILES
         src/FBX2glTF.h
+        src/fbx/materials/3dsMaxPhysicalMaterial.cpp
+        src/fbx/materials/FbxMaterials.cpp
+        src/fbx/materials/FbxMaterials.hpp
+        src/fbx/materials/RoughnessMetallicMaterials.hpp
+        src/fbx/materials/StingrayPBSMaterial.cpp
+        src/fbx/materials/TraditionalMaterials.cpp
+        src/fbx/materials/TraditionalMaterials.hpp
         src/fbx/Fbx2Raw.cpp
         src/fbx/Fbx2Raw.hpp
         src/fbx/FbxBlendShapesAccess.cpp
         src/fbx/FbxBlendShapesAccess.hpp
         src/fbx/FbxLayerElementAccess.hpp
-        src/fbx/FbxMaterialInfo.hpp
-        src/fbx/FbxMaterialsAccess.cpp
-        src/fbx/FbxMaterialsAccess.hpp
-        src/fbx/FbxRoughMetMaterialInfo.cpp
-        src/fbx/FbxRoughMetMaterialInfo.hpp
         src/fbx/FbxSkinningAccess.cpp
         src/fbx/FbxSkinningAccess.hpp
-        src/fbx/FbxTraditionalMaterialInfo.cpp
-        src/fbx/FbxTraditionalMaterialInfo.hpp
         src/gltf/Raw2Gltf.cpp
         src/gltf/Raw2Gltf.hpp
         src/gltf/GltfModel.cpp

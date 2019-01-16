@@ -7,6 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include "fbx/Fbx2Raw.hpp"
+
 #include "FbxMaterials.hpp"
 #include "RoughnessMetallicMaterials.hpp"
 #include "TraditionalMaterials.hpp"
@@ -41,13 +43,29 @@ FbxMaterialsAccess::FbxMaterialsAccess(
     if (materialNum < 0) {
       continue;
     }
+
+    FbxSurfaceMaterial* surfaceMaterial =
+        mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum);
+
     if (materialNum >= summaries.size()) {
       summaries.resize(materialNum + 1);
     }
     auto summary = summaries[materialNum];
     if (summary == nullptr) {
-      summary = summaries[materialNum] = GetMaterialInfo(
-          mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum), textureLocations);
+      summary = summaries[materialNum] = GetMaterialInfo(surfaceMaterial, textureLocations);
+    }
+
+    if (materialNum >= userProperties.size()) {
+      userProperties.resize(materialNum + 1);
+    }
+    if (userProperties[materialNum].empty()) {
+      FbxProperty objectProperty = surfaceMaterial->GetFirstProperty();
+      while (objectProperty.IsValid()) {
+        if (objectProperty.GetFlag(FbxPropertyFlags::eUserDefined)) {
+          userProperties[materialNum].push_back(TranscribeProperty(objectProperty).dump());
+        }
+        objectProperty = surfaceMaterial->GetNextProperty(objectProperty);
+      }
     }
   }
 }
@@ -63,6 +81,18 @@ const std::shared_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterial(
     return summaries.at((unsigned long)materialNum);
   }
   return nullptr;
+}
+
+const std::vector<std::string> FbxMaterialsAccess::GetUserProperties(const int polygonIndex) const {
+  if (mappingMode != FbxGeometryElement::eNone) {
+    const int materialNum =
+        indices->GetAt((mappingMode == FbxGeometryElement::eByPolygon) ? polygonIndex : 0);
+    if (materialNum < 0) {
+      return std::vector<std::string>();
+    }
+    return userProperties.at((unsigned long)materialNum);
+  }
+  return std::vector<std::string>();
 }
 
 std::unique_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterialInfo(
