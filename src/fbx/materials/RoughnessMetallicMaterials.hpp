@@ -35,6 +35,7 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
   const FbxDouble metallic;
   const FbxDouble roughness;
 
+  FbxBool invertRoughnessMap = false;
   FbxDouble baseWeight = 1;
   FbxVector4 emissive = FbxVector4(0, 0, 0, 1);
   FbxDouble emissiveIntensity = 1;

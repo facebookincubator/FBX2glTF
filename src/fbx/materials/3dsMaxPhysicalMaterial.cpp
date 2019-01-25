@@ -65,9 +65,6 @@ std::unique_ptr<FbxRoughMetMaterialInfo> Fbx3dsMaxPhysicalMaterialResolver::reso
     roughness = 1.0f - roughness;
   }
 
-  // TODO: turn this into a normal map through simple numerial differentiation
-  const auto* bumpMap = getTex("bump");
-
   std::string unsupported;
   const auto addUnsupported = [&](const std::string bit) {
     if (!unsupported.empty()) {
@@ -75,6 +72,12 @@ std::unique_ptr<FbxRoughMetMaterialInfo> Fbx3dsMaxPhysicalMaterialResolver::reso
     }
     unsupported += bit;
   };
+
+  // TODO: turn this into a normal map through simple numerial differentiation
+  const auto* bumpMap = getTex("bump");
+  if (bumpMap != nullptr) {
+    addUnsupported("bump map");
+  }
 
   // TODO: bake transparency > 0.0f into the alpha of baseColor?
   double transparency = getValue(props, "transparency", 0.0);
@@ -157,6 +160,7 @@ std::unique_ptr<FbxRoughMetMaterialInfo> Fbx3dsMaxPhysicalMaterialResolver::reso
 
   res->texMetallic = metalnessMap;
   res->texRoughness = roughnessMap;
+  res->invertRoughnessMap = invertRoughness;
 
   res->emissive = emissiveColor;
   res->emissiveIntensity = emissiveWeight;

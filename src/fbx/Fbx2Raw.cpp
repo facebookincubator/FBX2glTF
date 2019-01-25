@@ -249,7 +249,8 @@ static void ReadMesh(
             toVec3f(fbxMatInfo->emissive),
             fbxMatInfo->emissiveIntensity,
             fbxMatInfo->metallic,
-            fbxMatInfo->roughness));
+            fbxMatInfo->roughness,
+            fbxMatInfo->invertRoughnessMap));
       } else {
         FbxTraditionalMaterialInfo* fbxMatInfo =
             static_cast<FbxTraditionalMaterialInfo*>(fbxMaterial.get());
