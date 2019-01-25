@@ -24,11 +24,11 @@ const MODELS :Array<Model> = [
     { path: 'fromFbxSDK/Box' },
     {
         path: 'fromFbxSDK/Humanoid',
-        args: [ '--no-khr-lights-punctual' ],
+	ignoredIssues: [ 'UNSUPPORTED_EXTENSION' ],
     },
     {
         path: 'fromFbxSDK/Camera',
-        args: [ '--no-khr-lights-punctual' ],
+	ignoredIssues: [ 'UNSUPPORTED_EXTENSION' ],
     },
     { path: 'fromFbxSDK/Normals' },
     { path: 'fromGltfSamples/BoxVertexColors/BoxVertexColors' },
