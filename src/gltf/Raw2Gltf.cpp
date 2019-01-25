@@ -729,14 +729,14 @@ ModelData* Raw2Gltf(
             light.innerConeAngle,
             light.outerConeAngle));
       }
-    }
-    for (int i = 0; i < raw.GetNodeCount(); i++) {
-      const RawNode& node = raw.GetNode(i);
-      const auto nodeData = gltf->nodes.ptrs[i];
+      for (int i = 0; i < raw.GetNodeCount(); i++) {
+        const RawNode& node = raw.GetNode(i);
+        const auto nodeData = gltf->nodes.ptrs[i];
 
-      if (node.lightIx >= 0) {
-        // we lean on the fact that in this simple case, raw and gltf indexing are aligned
-        nodeData->SetLight(node.lightIx);
+        if (node.lightIx >= 0) {
+          // we lean on the fact that in this simple case, raw and gltf indexing are aligned
+          nodeData->SetLight(node.lightIx);
+        }
       }
     }
   }
