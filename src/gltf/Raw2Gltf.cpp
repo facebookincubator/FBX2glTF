@@ -276,7 +276,13 @@ ModelData* Raw2Gltf(
               },
               "ao_met_rough",
               [&](const std::vector<const TextureBuilder::pixel*> pixels) -> TextureBuilder::pixel {
-                return {{(*pixels[0])[0], (*pixels[2])[0], (*pixels[1])[0], 1}};
+                const float occlusion = (*pixels[0])[0];
+                const float metallic = (*pixels[1])[0];
+                const float roughness = (*pixels[2])[0];
+                return {{occlusion,
+                         props->invertRoughnessMap ? 1.0f - roughness : roughness,
+                         metallic,
+                         1}};
               },
               false);
 

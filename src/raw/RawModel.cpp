@@ -100,7 +100,10 @@ int RawModel::AddTexture(
     return -1;
   }
   for (size_t i = 0; i < textures.size(); i++) {
-    if (StringUtils::CompareNoCase(textures[i].name, name) == 0 && textures[i].usage == usage) {
+    // we allocate the struct even if the implementing image file is missing
+    if (textures[i].usage == usage &&
+        StringUtils::CompareNoCase(textures[i].fileLocation, fileLocation) == 0 &&
+        StringUtils::CompareNoCase(textures[i].name, name) == 0) {
       return (int)i;
     }
   }

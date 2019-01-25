@@ -234,18 +234,21 @@ struct RawMetRoughMatProps : RawMatProps {
       const Vec3f&& emissiveFactor,
       float emissiveIntensity,
       float metallic,
-      float roughness)
+      float roughness,
+      bool invertRoughnessMap)
       : RawMatProps(shadingModel),
         diffuseFactor(diffuseFactor),
         emissiveFactor(emissiveFactor),
         emissiveIntensity(emissiveIntensity),
         metallic(metallic),
-        roughness(roughness) {}
+        roughness(roughness),
+        invertRoughnessMap(invertRoughnessMap) {}
   const Vec4f diffuseFactor;
   const Vec3f emissiveFactor;
   const float emissiveIntensity;
   const float metallic;
   const float roughness;
+  const bool invertRoughnessMap;
 
   bool operator==(const RawMatProps& other) const override {
     if (RawMatProps::operator==(other)) {

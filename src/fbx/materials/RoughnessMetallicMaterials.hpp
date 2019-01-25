@@ -35,6 +35,7 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
   const FbxDouble metallic;
   const FbxDouble roughness;
 
+  FbxBool invertRoughnessMap = false;
   FbxDouble baseWeight = 1;
   FbxVector4 emissive = FbxVector4(0, 0, 0, 1);
   FbxDouble emissiveIntensity = 1;
@@ -70,8 +71,8 @@ class Fbx3dsMaxPhysicalMaterialResolver : FbxMaterialResolver<FbxRoughMetMateria
 
  private:
   template <typename T>
-  T getValue(const FbxProperty& props, std::string propName, const T& default) const {
+  T getValue(const FbxProperty& props, std::string propName, const T& def) const {
     const FbxProperty prop = props.FindHierarchical(propName.c_str());
-    return prop.IsValid() ? prop.Get<T>() : default;
+    return prop.IsValid() ? prop.Get<T>() : def;
   }
 };
