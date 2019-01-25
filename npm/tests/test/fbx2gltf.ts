@@ -8,6 +8,7 @@ import { validateBytes } from 'gltf-validator';
 interface Model {
     path: string;
     ignoredIssues?: Array<string>;
+    args?: Array<string>;
 }
 
 const MODELS :Array<Model> = [
@@ -21,8 +22,14 @@ const MODELS :Array<Model> = [
     { path: 'fromFacebook/Ocean/zell_van_vertex_color' },
     { path: 'fromFacebook/RAZ/RAZ_ape' },
     { path: 'fromFbxSDK/Box' },
-    { path: 'fromFbxSDK/Humanoid' },
-    { path: 'fromFbxSDK/Camera' },
+    {
+        path: 'fromFbxSDK/Humanoid',
+        args: [ '--no-khr-lights-punctual' ],
+    },
+    {
+        path: 'fromFbxSDK/Camera',
+        args: [ '--no-khr-lights-punctual' ],
+    },
     { path: 'fromFbxSDK/Normals' },
     { path: 'fromGltfSamples/BoxVertexColors/BoxVertexColors' },
     { path: 'fromGltfSamples/WaterBottle/NewWaterBottle' },
@@ -41,7 +48,7 @@ describe('FBX2glTF', () => {
 		const glbPath = path.join(tmpobj.name, modelName + '.glb');
 
 		try {
-		    const destPath = await fbx2gltf(fbxPath, glbPath);
+		    const destPath = await fbx2gltf(fbxPath, glbPath, model.args || []);
 		    assert.isNotNull(destPath);
 		    glbBytes = readFileSync(destPath);
 		} catch (err) {
