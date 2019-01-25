@@ -120,10 +120,10 @@ int main(int argc, char* argv[]) {
          "Use KHR_materials_unlit extension to request an unlit shader.")
       ->group("Materials");
 
-  app.add_flag(
-      "--khr-lights-punctual",
-      gltfOptions.useKHRLightsPunctual,
-      "Use KHR_lights_punctual extension to request an unlit shader.");
+  app.add_flag_function(
+      "--no-khr-lights-punctual",
+      [&](size_t count) { gltfOptions.useKHRLightsPunctual = (count == 0); },
+      "Don't use KHR_lights_punctual extension to export FBX lights.");
 
   app.add_flag(
       "--user-properties",
