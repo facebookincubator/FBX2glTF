@@ -1,5 +1,7 @@
-npm/bin/Darwin/FBX2glTF
-npm/bin/Linux/FBX2glTF
-npm/bin/Windows_NT/FBX2glTF.exe
-npm/node_modules/
-sdk/
+npm/fbx2gltf/bin/Darwin/FBX2glTF
+npm/fbx2gltf/bin/Linux/FBX2glTF
+npm/fbx2gltf/bin/Windows_NT/FBX2glTF.exe
+npm/fbx2gltf/node_modules/
+npm/tests/node_modules/
+npm/tests/test/*.js
+npm/tests/test/*.js.map

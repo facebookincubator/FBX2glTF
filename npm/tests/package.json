@@ -1,0 +1,42 @@
+{
+  "name": "fbx2gltf-tests",
+  "version": "0.9.6",
+  "description": "Test suite for FBX2glTF",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/facebookincubator/FBX2glTF.git"
+  },
+  "contributors": [
+    "Pär Winzell <zell@fb.com>",
+    "Michael Bayne",
+    "J.M.P. van Waveren",
+    "Amanda Watson"
+  ],
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/facebookincubator/FBX2glTF/issues"
+  },
+  "homepage": "https://github.com/facebookincubator/FBX2glTF",
+  "scripts": {
+    "pretest": "tsc",
+    "test": "mocha",
+    "watch": "mocha-typescript-watch",
+    "prepare": "tsc"
+  },
+  "dependencies": {
+    "fbx2gltf": "file:../fbx2gltf",
+    "gltf-validator": "^2.0.0-dev.2.6",
+    "tmp": "^0.0.33"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.12",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "mocha-typescript": "^1.1.17",
+    "source-map-support": "^0.5.9",
+    "typescript": "^3.2.2"
+  }
+}

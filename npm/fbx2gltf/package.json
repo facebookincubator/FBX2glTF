@@ -1,6 +1,6 @@
 {
   "name": "fbx2gltf",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "description": "Node wrapper around FBX2glTF tools.",
   "main": "index.js",
   "repository": {
