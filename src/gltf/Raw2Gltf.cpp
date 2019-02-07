@@ -439,10 +439,15 @@ ModelData* Raw2Gltf(
 
         for (uint32_t ii = 0; ii < triangleCount; ii++) {
           draco::Mesh::Face face;
-          face[0] = surfaceModel.GetTriangle(ii).verts[0];
-          face[1] = surfaceModel.GetTriangle(ii).verts[1];
-          face[2] = surfaceModel.GetTriangle(ii).verts[2];
-          dracoMesh->SetFace(draco::FaceIndex(ii), face);
+          //face[0] = surfaceModel.GetTriangle(ii).verts[0];
+          //face[1] = surfaceModel.GetTriangle(ii).verts[1];
+         // face[2] = surfaceModel.GetTriangle(ii).verts[2];
+          //dracoMesh->SetFace(draco::FaceIndex(ii), face);
+          draco::Mesh::Face face;
+            face[0] = ii * 3;
+            face[1] = ii * 3 + 1;
+            face[2] = ii * 3 + 2;
+            dracoMesh->SetFace(draco::FaceIndex(ii), face);
         }
 
         AccessorData& indexes =
@@ -611,7 +616,24 @@ ModelData* Raw2Gltf(
           encoder.SetAttributeQuantization(
               draco::GeometryAttribute::GENERIC, options.draco.quantBitsGeneric);
         }
-
+      // MapPointToVertexIndices
+          std::map<std::string, int>::iterator itB = primitive->dracoAttributes.begin();
+          auto dracoMesh = primitive->dracoMesh;
+          int triangleCount = surfaceModel.GetTriangleCount();
+          for (; itB != primitive->dracoAttributes.end(); itB++) {
+            draco::PointAttribute* attPtr = dracoMesh->attribute(itB->second);
+            for (uint32_t ii = 0; ii < triangleCount; ii++) {
+              int index1 = surfaceModel.GetTriangle(ii).verts[0];
+              int index2 = surfaceModel.GetTriangle(ii).verts[1];
+              int index3 = surfaceModel.GetTriangle(ii).verts[2];
+              attPtr->SetPointMapEntry(
+                  draco::PointIndex(ii * 3), draco::AttributeValueIndex(index1));
+              attPtr->SetPointMapEntry(
+                  draco::PointIndex(ii * 3 + 1), draco::AttributeValueIndex(index2));
+              attPtr->SetPointMapEntry(
+                  draco::PointIndex(ii * 3 + 2), draco::AttributeValueIndex(index3));
+            }
+          }
         draco::EncoderBuffer dracoBuffer;
         draco::Status status = encoder.EncodeMeshToBuffer(*primitive->dracoMesh, &dracoBuffer);
         assert(status.code() == draco::Status::OK);
