@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "fbx2gltf": "file:../fbx2gltf",
-    "gltf-validator": "^2.0.0-dev.2.6",
+    "gltf-validator": "^2.0.0-dev.2.7",
     "tmp": "^0.0.33"
   },
   "devDependencies": {
