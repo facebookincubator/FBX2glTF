@@ -34,6 +34,14 @@ json LightData::serialize() const {
       break;
     case Spot:
       result["type"] = "spot";
+      json spotJson;
+      if (innerConeAngle != 0) {
+        spotJson["innerConeAngle"] = innerConeAngle;
+      }
+      if (outerConeAngle != M_PI_4) {
+        spotJson["outerConeAngle"] = outerConeAngle;
+      }
+      result["spot"] = spotJson;
       break;
   }
   return result;

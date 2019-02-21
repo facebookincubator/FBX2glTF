@@ -479,8 +479,8 @@ static void ReadLight(RawModel& raw, FbxScene* pScene, FbxNode* pNode) {
           RAW_LIGHT_TYPE_SPOT,
           color,
           intensity,
-          (float)pLight->InnerAngle.Get(),
-          (float)pLight->OuterAngle.Get());
+          (float)pLight->InnerAngle.Get() * M_PI / 180,
+          (float)pLight->OuterAngle.Get() * M_PI / 180);
       break;
     }
     default: {
