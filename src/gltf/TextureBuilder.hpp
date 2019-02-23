@@ -62,9 +62,9 @@ class TextureBuilder {
   };
 
   static void WriteToVectorContext(void* context, void* data, int size) {
-    auto* vec = static_cast<std::vector<char>*>(context);
+    auto* vec = static_cast<std::vector<uint8_t>*>(context);
     for (int ii = 0; ii < size; ii++) {
-      vec->push_back(((char*)data)[ii]);
+      vec->push_back(((uint8_t*)data)[ii]);
     }
   }
 
