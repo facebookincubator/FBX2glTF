@@ -76,6 +76,13 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
       }
       for (int i = 0; i < controlPointCount; i++) {
         vertexJointWeights[i] = vertexJointWeights[i].Normalized();
+        float flen = fabs(vertexJointWeights[i].x) + fabs(vertexJointWeights[i].y) +
+            fabs(vertexJointWeights[i].z) + fabs(vertexJointWeights[i].w);
+        float scale = 1.0 / flen;
+        vertexJointWeights[i].x = vertexJointWeights[i].x * scale;
+        vertexJointWeights[i].y = vertexJointWeights[i].y * scale;
+        vertexJointWeights[i].z = vertexJointWeights[i].z * scale;
+        vertexJointWeights[i].w = vertexJointWeights[i].w * scale;
       }
     }
   }
