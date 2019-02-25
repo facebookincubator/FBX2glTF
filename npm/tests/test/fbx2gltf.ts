@@ -19,8 +19,12 @@ const MODELS: Array<Model> = [
   },
   {path : 'fromFacebook/Natalie/GlitchRobot'},
   {path : 'fromFacebook/Ocean/blackvan/blackvan_with_windows'},
-  {path : 'fromFacebook/Ocean/zell_van_vertex_color'},
-  {path : 'fromFacebook/RAZ/RAZ_ape'},
+  {
+    path : 'fromFacebook/Ocean/zell_van_vertex_color',
+    args : [ '--draco' ],
+    ignoredIssues : [ 'UNSUPPORTED_EXTENSION' ],
+  },
+  {path : 'fromFacebook/RAZ/RAZ_ape', args : [ '--long-indices=always' ]},
   {path : 'fromFbxSDK/Box'},
   {
     path : 'fromFbxSDK/Humanoid',
@@ -31,7 +35,7 @@ const MODELS: Array<Model> = [
     ignoredIssues : [ 'UNSUPPORTED_EXTENSION' ],
   },
   {path : 'fromFbxSDK/Normals'},
-  {path : 'fromGltfSamples/BoxVertexColors/BoxVertexColors'},
+  {path : 'fromGltfSamples/BoxVertexColors/BoxVertexColors', args : [ '--khr-materials-unlit' ]},
   {path : 'fromGltfSamples/WaterBottle/NewWaterBottle'},
 ];
 
