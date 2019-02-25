@@ -54,6 +54,7 @@ std::unique_ptr<FbxRoughMetMaterialInfo> FbxStingrayPBSMaterialResolver::resolve
 
   FbxDouble3 baseColor = getVec("base_color");
   std::unique_ptr<FbxRoughMetMaterialInfo> res(new FbxRoughMetMaterialInfo(
+      fbxMaterial->GetUniqueID(),
       fbxMaterial->GetName(),
       FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH,
       FbxDouble4(baseColor[0], baseColor[1], baseColor[2], 1),

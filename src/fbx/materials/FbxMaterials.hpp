@@ -16,9 +16,10 @@
 
 class FbxMaterialInfo {
  public:
-  FbxMaterialInfo(const FbxString& name, const FbxString& shadingModel)
-      : name(name), shadingModel(shadingModel) {}
+  FbxMaterialInfo(const FbxUInt64 id, const FbxString& name, const FbxString& shadingModel)
+      : id(id), name(name), shadingModel(shadingModel) {}
 
+  const FbxUInt64 id;
   const FbxString name;
   const FbxString shadingModel;
 };

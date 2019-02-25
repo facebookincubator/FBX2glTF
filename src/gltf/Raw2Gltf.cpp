@@ -77,11 +77,6 @@ static const std::vector<TriangleIndex> getIndexArray(const RawModel& raw) {
   return result;
 }
 
-// TODO: replace with a proper MaterialHasher class
-static const std::string materialHash(const RawMaterial& m) {
-  return m.name + "_" + std::to_string(m.type);
-}
-
 ModelData* Raw2Gltf(
     std::ofstream& gltfOutStream,
     const std::string& outputFolder,
@@ -123,7 +118,7 @@ ModelData* Raw2Gltf(
   std::unique_ptr<GltfModel> gltf(new GltfModel(options));
 
   std::map<long, std::shared_ptr<NodeData>> nodesById;
-  std::map<std::string, std::shared_ptr<MaterialData>> materialsByName;
+  std::map<long, std::shared_ptr<MaterialData>> materialsById;
   std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;
   std::map<long, std::shared_ptr<MeshData>> meshBySurfaceId;
 
@@ -394,7 +389,8 @@ ModelData* Raw2Gltf(
           emissiveFactor * emissiveIntensity,
           khrCmnUnlitMat,
           pbrMetRough));
-      materialsByName[materialHash(material)] = mData;
+      fmt::printf("Stashing material of id %ls, name %s...\n", material.id, material.name.c_str());
+      materialsById[material.id] = mData;
 
       if (options.enableUserProperties) {
         mData->userProperties = material.userProperties;
@@ -408,7 +404,9 @@ ModelData* Raw2Gltf(
 
       const RawMaterial& rawMaterial =
           surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
-      const MaterialData& mData = require(materialsByName, materialHash(rawMaterial));
+      fmt::printf(
+          "Seeking material of id %ls, name %s...\n", rawMaterial.id, rawMaterial.name.c_str());
+      const MaterialData& mData = require(materialsById, rawMaterial.id);
 
       MeshData* mesh = nullptr;
       auto meshIter = meshBySurfaceId.find(surfaceId);

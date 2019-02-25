@@ -209,9 +209,11 @@ static void ReadMesh(
 
     std::shared_ptr<RawMatProps> rawMatProps;
     FbxString materialName;
+    long materialId;
 
     if (fbxMaterial == nullptr) {
       materialName = "DefaultMaterial";
+      materialId = -1;
       rawMatProps.reset(new RawTraditionalMatProps(
           RAW_SHADING_MODEL_LAMBERT,
           Vec3f(0, 0, 0),
@@ -222,6 +224,7 @@ static void ReadMesh(
 
     } else {
       materialName = fbxMaterial->name;
+      materialId = fbxMaterial->id;
 
       const auto maybeAddTexture = [&](const FbxFileTexture* tex, RawTextureUsage usage) {
         if (tex != nullptr) {
@@ -436,8 +439,8 @@ static void ReadMesh(
 
     const RawMaterialType materialType =
         GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
-    const int rawMaterialIndex =
-        raw.AddMaterial(materialName, materialType, textures, rawMatProps, userProperties);
+    const int rawMaterialIndex = raw.AddMaterial(
+        materialId, materialName, materialType, textures, rawMatProps, userProperties);
 
     raw.AddTriangle(
         rawVertexIndices[0],

@@ -21,12 +21,13 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
       const std::map<const FbxTexture*, FbxString>& textureLocations);
 
   FbxRoughMetMaterialInfo(
+      const FbxUInt64 id,
       const FbxString& name,
       const FbxString& shadingModel,
       FbxDouble4 baseColor,
       FbxDouble metallic,
       FbxDouble roughness)
-      : FbxMaterialInfo(name, shadingModel),
+      : FbxMaterialInfo(id, name, shadingModel),
         baseColor(baseColor),
         metallic(metallic),
         roughness(roughness) {}
