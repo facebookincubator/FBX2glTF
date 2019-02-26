@@ -14,8 +14,11 @@ struct FbxTraditionalMaterialInfo : FbxMaterialInfo {
   static constexpr const char* FBX_SHADER_BLINN = "Blinn";
   static constexpr const char* FBX_SHADER_PHONG = "Phong";
 
-  FbxTraditionalMaterialInfo(const FbxString& name, const FbxString& shadingModel)
-      : FbxMaterialInfo(name, shadingModel) {}
+  FbxTraditionalMaterialInfo(
+      const FbxUInt64 id,
+      const FbxString& name,
+      const FbxString& shadingModel)
+      : FbxMaterialInfo(id, name, shadingModel) {}
 
   FbxFileTexture* texAmbient{};
   FbxVector4 colAmbient{};

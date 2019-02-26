@@ -149,6 +149,7 @@ std::unique_ptr<FbxRoughMetMaterialInfo> Fbx3dsMaxPhysicalMaterialResolver::reso
   }
 
   std::unique_ptr<FbxRoughMetMaterialInfo> res(new FbxRoughMetMaterialInfo(
+      fbxMaterial->GetUniqueID(),
       fbxMaterial->GetName(),
       FbxRoughMetMaterialInfo::FBX_SHADER_METROUGH,
       baseCol,

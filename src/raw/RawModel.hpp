@@ -262,6 +262,7 @@ struct RawMetRoughMatProps : RawMatProps {
 };
 
 struct RawMaterial {
+  long id;
   std::string name;
   RawMaterialType type;
   std::shared_ptr<RawMatProps> info;
@@ -374,6 +375,7 @@ class RawModel {
       RawTextureUsage usage);
   int AddMaterial(const RawMaterial& material);
   int AddMaterial(
+      const long id,
       const char* name,
       const RawMaterialType materialType,
       const int textures[RAW_TEXTURE_USAGE_MAX],

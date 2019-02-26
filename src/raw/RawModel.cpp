@@ -129,6 +129,7 @@ int RawModel::AddTexture(
 
 int RawModel::AddMaterial(const RawMaterial& material) {
   return AddMaterial(
+      material.id,
       material.name.c_str(),
       material.type,
       material.textures,
@@ -137,6 +138,7 @@ int RawModel::AddMaterial(const RawMaterial& material) {
 }
 
 int RawModel::AddMaterial(
+    const long id,
     const char* name,
     const RawMaterialType materialType,
     const int textures[RAW_TEXTURE_USAGE_MAX],
@@ -169,6 +171,7 @@ int RawModel::AddMaterial(
   }
 
   RawMaterial material;
+  material.id = id;
   material.name = name;
   material.type = materialType;
   material.info = materialInfo;

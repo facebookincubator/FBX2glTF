@@ -68,8 +68,8 @@ std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::reso
   };
 
   std::string name = fbxMaterial->GetName();
-  std::unique_ptr<FbxTraditionalMaterialInfo> res(
-      new FbxTraditionalMaterialInfo(name.c_str(), fbxMaterial->ShadingModel.Get()));
+  std::unique_ptr<FbxTraditionalMaterialInfo> res(new FbxTraditionalMaterialInfo(
+      fbxMaterial->GetUniqueID(), name.c_str(), fbxMaterial->ShadingModel.Get()));
 
   // four properties are on the same structure and follow the same rules
   auto handleBasicProperty = [&](const char* colName,

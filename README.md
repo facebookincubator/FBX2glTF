@@ -8,6 +8,8 @@ a modern runtime asset delivery format.
 Precompiled binaries releases for Windows, Mac OS X and Linux may be
 found [here](https://github.com/facebookincubator/FBX2glTF/releases).
 
+Bleeding-edge binaries are periodically built and publicly available [here](https://dev.azure.com/parwinzell/FBX2glTF/): click a build (usually the most recent), then the 'Artefacts' dropdown in the upper right. 
+
 ## Running
 
 The tool can be invoked like so:
