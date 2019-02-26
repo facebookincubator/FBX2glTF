@@ -144,28 +144,8 @@ int RawModel::AddMaterial(
     const int textures[RAW_TEXTURE_USAGE_MAX],
     std::shared_ptr<RawMatProps> materialInfo,
     const std::vector<std::string>& userProperties) {
-  for (size_t i = 0; i < materials.size(); i++) {
-    if (materials[i].name != name) {
-      continue;
-    }
-    if (materials[i].type != materialType) {
-      continue;
-    }
-    if (*(materials[i].info) != *materialInfo) {
-      continue;
-    }
-    bool match = true;
-    for (int j = 0; match && j < RAW_TEXTURE_USAGE_MAX; j++) {
-      match = match && (materials[i].textures[j] == textures[j]);
-    }
-    if (materials[i].userProperties.size() != userProperties.size()) {
-      match = false;
-    } else {
-      for (int j = 0; match && j < userProperties.size(); j++) {
-        match = match && (materials[i].userProperties[j] == userProperties[j]);
-      }
-    }
-    if (match) {
+   for (size_t i = 0; i < materials.size(); i++) {
+    if (materials[i].id == id) {
       return (int)i;
     }
   }
