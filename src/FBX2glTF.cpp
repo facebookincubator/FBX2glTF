@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
   const auto opt_no_flip_v = app.add_flag("--no-flip-v", "Don't flip V texture coordinates.");
 
   app.add_flag(
-         "--pbr-metallic-rougnness",
+         "--pbr-metallic-roughness",
          gltfOptions.usePBRMetRough,
          "Try to glean glTF 2.0 native PBR attributes from the FBX.")
       ->group("Materials");
