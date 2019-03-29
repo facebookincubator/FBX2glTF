@@ -261,13 +261,19 @@ ModelData* Raw2Gltf(
            * Other values translate directly.
            */
           RawMetRoughMatProps* props = (RawMetRoughMatProps*)material.info.get();
-          
-          // If either a metallic or roughness map has been provided, generate the aoMetRoughTex.
+
+          // determine if we need to generate a combined map
           bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
           bool hasRoughnessMap = material.textures[RAW_TEXTURE_USAGE_ROUGHNESS] >= 0;
-          if (hasMetallicMap || hasRoughnessMap) {
-            // merge metallic into the blue channel and roughness into the green, of a new combinatory
-            // texture
+          bool hasOcclusionMap = material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0;
+          aoMetRoughTex = hasMetallicMap
+              ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
+              : (hasRoughnessMap
+                     ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
+                     : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
+          if (aoMetRoughTex == nullptr) {
+            // merge occlusion into the red channel, metallic into blue channel, and
+            // roughness into the green, of a new combinatory texture
             aoMetRoughTex = textureBuilder.combine(
                 {
                     material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
@@ -275,14 +281,16 @@ ModelData* Raw2Gltf(
                     material.textures[RAW_TEXTURE_USAGE_ROUGHNESS],
                 },
                 "ao_met_rough",
-                [&](const std::vector<const TextureBuilder::pixel*> pixels) -> TextureBuilder::pixel {
+                [&](const std::vector<const TextureBuilder::pixel*> pixels)
+                    -> TextureBuilder::pixel {
                   const float occlusion = (*pixels[0])[0];
                   const float metallic = (*pixels[1])[0] * (hasMetallicMap ? 1 : props->metallic);
-                  const float roughness = (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
+                  const float roughness =
+                      (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
                   return {{occlusion,
-                          props->invertRoughnessMap ? 1.0f - roughness : roughness,
-                          metallic,
-                          1}};
+                           props->invertRoughnessMap ? 1.0f - roughness : roughness,
+                           metallic,
+                           1}};
                 },
                 false);
           }
@@ -292,11 +300,8 @@ ModelData* Raw2Gltf(
           roughness = props->roughness;
           emissiveFactor = props->emissiveFactor;
           emissiveIntensity = props->emissiveIntensity;
-          // add the occlusion texture only if actual occlusion pixels exist in the aoNetRough
-          // texture.
-          if (material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0) {
-            occlusionTexture = aoMetRoughTex.get();
-          }
+          // this will set occlusionTexture to null, if no actual occlusion map exists
+          occlusionTexture = aoMetRoughTex.get();
         } else {
           /**
            * Traditional FBX Material -> PBR Met/Rough glTF.
