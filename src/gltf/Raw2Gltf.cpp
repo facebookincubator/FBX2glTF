@@ -261,26 +261,31 @@ ModelData* Raw2Gltf(
            * Other values translate directly.
            */
           RawMetRoughMatProps* props = (RawMetRoughMatProps*)material.info.get();
-          // merge metallic into the blue channel and roughness into the green, of a new combinatory
-          // texture
-          aoMetRoughTex = textureBuilder.combine(
-              {
-                  material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
-                  material.textures[RAW_TEXTURE_USAGE_METALLIC],
-                  material.textures[RAW_TEXTURE_USAGE_ROUGHNESS],
-              },
-              "ao_met_rough",
-              [&](const std::vector<const TextureBuilder::pixel*> pixels) -> TextureBuilder::pixel {
-                const float occlusion = (*pixels[0])[0];
-                const float metallic = (*pixels[1])[0];
-                const float roughness = (*pixels[2])[0];
-                return {{occlusion,
-                         props->invertRoughnessMap ? 1.0f - roughness : roughness,
-                         metallic,
-                         1}};
-              },
-              false);
-
+          
+          // If either a metallic or roughness map has been provided, generate the aoMetRoughTex.
+          bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
+          bool hasRoughnessMap = material.textures[RAW_TEXTURE_USAGE_ROUGHNESS] >= 0;
+          if (hasMetallicMap || hasRoughnessMap) {
+            // merge metallic into the blue channel and roughness into the green, of a new combinatory
+            // texture
+            aoMetRoughTex = textureBuilder.combine(
+                {
+                    material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
+                    material.textures[RAW_TEXTURE_USAGE_METALLIC],
+                    material.textures[RAW_TEXTURE_USAGE_ROUGHNESS],
+                },
+                "ao_met_rough",
+                [&](const std::vector<const TextureBuilder::pixel*> pixels) -> TextureBuilder::pixel {
+                  const float occlusion = (*pixels[0])[0];
+                  const float metallic = (*pixels[1])[0] * (hasMetallicMap ? 1 : props->metallic);
+                  const float roughness = (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
+                  return {{occlusion,
+                          props->invertRoughnessMap ? 1.0f - roughness : roughness,
+                          metallic,
+                          1}};
+                },
+                false);
+          }
           baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
           diffuseFactor = props->diffuseFactor;
           metallic = props->metallic;
