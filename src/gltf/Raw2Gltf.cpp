@@ -266,13 +266,17 @@ ModelData* Raw2Gltf(
           bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
           bool hasRoughnessMap = material.textures[RAW_TEXTURE_USAGE_ROUGHNESS] >= 0;
           bool hasOcclusionMap = material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0;
-          aoMetRoughTex = hasMetallicMap
-              ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
-              : (hasRoughnessMap
-                     ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
-                     : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
-          if (aoMetRoughTex == nullptr) {
-            // merge occlusion into the red channel, metallic into blue channel, and
+          bool atLeastTwoMaps = hasMetallicMap ? (hasRoughnessMap || hasOcclusionMap)
+                                               : (hasRoughnessMap && hasMetallicMap);
+          if (!atLeastTwoMaps) {
+            // this handles the case of 0 or 1 maps supplied
+            aoMetRoughTex = hasMetallicMap
+                ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
+                : (hasRoughnessMap
+                       ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
+                       : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
+          } else {
+            // otherwise merge occlusion into the red channel, metallic into blue channel, and
             // roughness into the green, of a new combinatory texture
             aoMetRoughTex = textureBuilder.combine(
                 {
