@@ -256,11 +256,18 @@ ModelData* Raw2Gltf(
         if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
           /**
            * PBR FBX Material -> PBR Met/Rough glTF.
-           *
-           * METALLIC and ROUGHNESS textures are packed in G and B channels of a rough/met texture.
-           * Other values translate directly.
            */
           RawMetRoughMatProps* props = (RawMetRoughMatProps*)material.info.get();
+
+          // diffuse and emissive are noncontroversial
+          baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+          diffuseFactor = props->diffuseFactor;
+          emissiveFactor = props->emissiveFactor;
+          emissiveIntensity = props->emissiveIntensity;
+
+          // we always send the metallic/roughness factors onto the glTF generator
+          metallic = props->metallic;
+          roughness = props->roughness;
 
           // determine if we need to generate a combined map
           bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
@@ -268,16 +275,10 @@ ModelData* Raw2Gltf(
           bool hasOcclusionMap = material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0;
           bool atLeastTwoMaps = hasMetallicMap ? (hasRoughnessMap || hasOcclusionMap)
                                                : (hasRoughnessMap && hasMetallicMap);
-          if (!atLeastTwoMaps) {
-            // this handles the case of 0 or 1 maps supplied
-            aoMetRoughTex = hasMetallicMap
-                ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
-                : (hasRoughnessMap
-                       ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
-                       : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
-          } else {
-            // otherwise merge occlusion into the red channel, metallic into blue channel, and
-            // roughness into the green, of a new combinatory texture
+          if (atLeastTwoMaps) {
+            // if there's at least two of metallic/roughness/occlusion, it makes sense to
+            // merge them: occlusion into the red channel, metallic into blue channel, and
+            // roughness into the green.
             aoMetRoughTex = textureBuilder.combine(
                 {
                     material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
@@ -288,24 +289,27 @@ ModelData* Raw2Gltf(
                 [&](const std::vector<const TextureBuilder::pixel*> pixels)
                     -> TextureBuilder::pixel {
                   const float occlusion = (*pixels[0])[0];
-                  const float metallic = (*pixels[1])[0] * (hasMetallicMap ? 1 : props->metallic);
-                  const float roughness =
-                      (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
+                  const float metallic = (*pixels[1])[0];
+                  const float roughness = (*pixels[2])[0];
                   return {{occlusion,
                            props->invertRoughnessMap ? 1.0f - roughness : roughness,
                            metallic,
                            1}};
                 },
                 false);
+            if (hasOcclusionMap) {
+              // will only be true if there were actual non-trivial pixels
+              occlusionTexture = aoMetRoughTex.get();
+            }
+          } else {
+            // this handles the case of 0 or 1 maps supplied
+            if (hasMetallicMap) {
+              aoMetRoughTex = simpleTex(RAW_TEXTURE_USAGE_METALLIC);
+            } else if (hasRoughnessMap) {
+              aoMetRoughTex = simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS);
+            }
+            // else only occlusion map is possible: that check is handled further below
           }
-          baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
-          diffuseFactor = props->diffuseFactor;
-          metallic = props->metallic;
-          roughness = props->roughness;
-          emissiveFactor = props->emissiveFactor;
-          emissiveIntensity = props->emissiveIntensity;
-          // this will set occlusionTexture to null, if no actual occlusion map exists
-          occlusionTexture = aoMetRoughTex.get();
         } else {
           /**
            * Traditional FBX Material -> PBR Met/Rough glTF.
@@ -389,6 +393,7 @@ ModelData* Raw2Gltf(
 
         khrCmnUnlitMat.reset(new KHRCmnUnlitMaterial());
       }
+      // after all the special cases have had a go, check if we need to look up occlusion map
       if (!occlusionTexture) {
         occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
       }
