@@ -99,16 +99,6 @@ ExternalProject_Add(FiFoMap
 )
 set(FIFO_MAP_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fifo_map/src/FiFoMap/src")
 
-# JSON
-ExternalProject_Add(Json
-  PREFIX json
-  GIT_REPOSITORY https://github.com/nlohmann/json
-  GIT_TAG v2.1.1
-  CONFIGURE_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON configure step."
-  BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON build step."
-  INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping JSON install step."
-)
-set(JSON_INCLUDE_DIR "${CMAKE_BINARY_DIR}/json/src/Json/src")
 
 # cppcodec
 ExternalProject_Add(CPPCodec
@@ -214,7 +204,6 @@ add_dependencies(libFBX2glTF
   Draco
   MathFu
   FiFoMap
-  Json
   CPPCodec
   Fmt
 )
@@ -255,17 +244,18 @@ else()
   )
 endif()
 
-target_include_directories(libFBX2glTF PUBLIC
+target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   "third_party/stb"
+  "third_party/json"
 )
+
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
   Iconv::Iconv
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
   ${FIFO_MAP_INCLUDE_DIR}
-  ${JSON_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
   ${FMT_INCLUDE_DIR}
   ${LIBXML2_INCLUDE_DIR}
