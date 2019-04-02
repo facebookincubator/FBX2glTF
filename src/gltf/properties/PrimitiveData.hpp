@@ -49,7 +49,7 @@ struct PrimitiveData {
         componentCount * draco::DataTypeLength(attribute.dracoComponentType),
         0);
 
-    const int dracoAttId = dracoMesh->AddAttribute(att, true, attribArr.size());
+    const int dracoAttId = dracoMesh->AddAttribute(att, true, to_uint32(attribArr.size()));
     draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);
 
     std::vector<uint8_t> buf(sizeof(T));

@@ -13,13 +13,6 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(__unix__) || defined(__APPLE__)
-
-#include <sys/stat.h>
-
-#define _stricmp strcasecmp
-#endif
-
 #include <CLI11.hpp>
 
 #include "FBX2glTF.h"
@@ -271,10 +264,7 @@ int main(int argc, char* argv[]) {
 
   if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
-    outputPath = fmt::format(
-        ".{}{}",
-        (const char)StringUtils::GetPathSeparator(),
-        StringUtils::GetFileBaseString(inputPath));
+    outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }
   // the output folder in .gltf mode, not used for .glb
   std::string outputFolder;
@@ -282,14 +272,17 @@ int main(int argc, char* argv[]) {
   // the path of the actual .glb or .gltf file
   std::string modelPath;
   if (gltfOptions.outputBinary) {
-    // in binary mode, we write precisely where we're asked
-    modelPath = outputPath + ".glb";
-
+    const auto& suffix = FileUtils::GetFileSuffix(outputPath);
+    // add .glb to output path, unless it already ends in exactly that
+    if (suffix.has_value() && suffix.value() == "glb") {
+      modelPath = outputPath;
+    } else {
+      modelPath = outputPath + ".glb";
+    }
   } else {
     // in gltf mode, we create a folder and write into that
-    outputFolder =
-        fmt::format("{}_out{}", outputPath.c_str(), (const char)StringUtils::GetPathSeparator());
-    modelPath = outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
+    outputFolder = fmt::format("{}_out/", outputPath.c_str());
+    modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
     fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
@@ -302,7 +295,7 @@ int main(int argc, char* argv[]) {
   if (verboseOutput) {
     fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg")) {
+  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"})) {
     fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }
