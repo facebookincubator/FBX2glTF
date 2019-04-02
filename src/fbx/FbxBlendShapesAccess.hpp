@@ -95,7 +95,7 @@ class FbxBlendShapesAccess {
   }
 
   FbxAnimCurve* GetAnimation(size_t channelIx, size_t animIx) const {
-    return channels.at(channelIx).ExtractAnimation(animIx);
+    return channels.at(channelIx).ExtractAnimation(to_uint32(animIx));
   }
 
  private:

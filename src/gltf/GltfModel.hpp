@@ -44,7 +44,7 @@ template <typename T>
 class Holder {
  public:
   std::shared_ptr<T> hold(T* ptr) {
-    ptr->ix = ptrs.size();
+    ptr->ix = to_uint32(ptrs.size());
     ptrs.emplace_back(ptr);
     return ptrs.back();
   }
@@ -114,7 +114,7 @@ class GltfModel {
       primitive.AddDracoAttrib(attrDef, attribArr);
 
       accessor = accessors.hold(new AccessorData(attrDef.glType));
-      accessor->count = attribArr.size();
+      accessor->count = to_uint32(attribArr.size());
     } else {
       auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
       accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));

@@ -7,7 +7,7 @@ if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     "Hint: mkdir -p build; cmake -H. -Bbuild; make -Cbuild\n")
 endif ()
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
@@ -34,6 +34,13 @@ find_package(Iconv QUIET)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if (WIN32)
+  add_compile_definitions(
+    _CRT_SECURE_NO_WARNINGS
+    _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
+  )
+endif()
 
 if (WIN32)
   # this will suffice for now; don't really care about 32-bit
@@ -190,7 +197,6 @@ set(LIB_SOURCE_FILES
         src/utils/File_Utils.hpp
         src/utils/Image_Utils.cpp
         src/utils/Image_Utils.hpp
-        src/utils/String_Utils.cpp
         src/utils/String_Utils.hpp
         third_party/CLI11/CLI11.hpp
 )
@@ -237,6 +243,12 @@ if (WIN32)
     optimized ${ZLIB_LIBRARIES}
     debug ${ZLIB_LIBRARIES_DEBUG}
   )
+  # quiet warnings related to fopen, sscanf
+  target_compile_definitions(libFBX2glTF PRIVATE
+  _CRT_SECURE_NO_WARNINGS
+  _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
+  )
+
 else()
   target_link_libraries(libFBX2glTF
     ${LIBXML2_LIBRARIES}

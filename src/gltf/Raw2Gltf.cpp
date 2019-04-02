@@ -256,18 +256,11 @@ ModelData* Raw2Gltf(
         if (material.info->shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH) {
           /**
            * PBR FBX Material -> PBR Met/Rough glTF.
+           *
+           * METALLIC and ROUGHNESS textures are packed in G and B channels of a rough/met texture.
+           * Other values translate directly.
            */
           RawMetRoughMatProps* props = (RawMetRoughMatProps*)material.info.get();
-
-          // diffuse and emissive are noncontroversial
-          baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
-          diffuseFactor = props->diffuseFactor;
-          emissiveFactor = props->emissiveFactor;
-          emissiveIntensity = props->emissiveIntensity;
-
-          // we always send the metallic/roughness factors onto the glTF generator
-          metallic = props->metallic;
-          roughness = props->roughness;
 
           // determine if we need to generate a combined map
           bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
@@ -275,10 +268,16 @@ ModelData* Raw2Gltf(
           bool hasOcclusionMap = material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0;
           bool atLeastTwoMaps = hasMetallicMap ? (hasRoughnessMap || hasOcclusionMap)
                                                : (hasRoughnessMap && hasMetallicMap);
-          if (atLeastTwoMaps) {
-            // if there's at least two of metallic/roughness/occlusion, it makes sense to
-            // merge them: occlusion into the red channel, metallic into blue channel, and
-            // roughness into the green.
+          if (!atLeastTwoMaps) {
+            // this handles the case of 0 or 1 maps supplied
+            aoMetRoughTex = hasMetallicMap
+                ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
+                : (hasRoughnessMap
+                       ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
+                       : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
+          } else {
+            // otherwise merge occlusion into the red channel, metallic into blue channel, and
+            // roughness into the green, of a new combinatory texture
             aoMetRoughTex = textureBuilder.combine(
                 {
                     material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
@@ -289,27 +288,24 @@ ModelData* Raw2Gltf(
                 [&](const std::vector<const TextureBuilder::pixel*> pixels)
                     -> TextureBuilder::pixel {
                   const float occlusion = (*pixels[0])[0];
-                  const float metallic = (*pixels[1])[0];
-                  const float roughness = (*pixels[2])[0];
+                  const float metallic = (*pixels[1])[0] * (hasMetallicMap ? 1 : props->metallic);
+                  const float roughness =
+                      (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
                   return {{occlusion,
                            props->invertRoughnessMap ? 1.0f - roughness : roughness,
                            metallic,
                            1}};
                 },
                 false);
-            if (hasOcclusionMap) {
-              // will only be true if there were actual non-trivial pixels
-              occlusionTexture = aoMetRoughTex.get();
-            }
-          } else {
-            // this handles the case of 0 or 1 maps supplied
-            if (hasMetallicMap) {
-              aoMetRoughTex = simpleTex(RAW_TEXTURE_USAGE_METALLIC);
-            } else if (hasRoughnessMap) {
-              aoMetRoughTex = simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS);
-            }
-            // else only occlusion map is possible: that check is handled further below
           }
+          baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
+          diffuseFactor = props->diffuseFactor;
+          metallic = props->metallic;
+          roughness = props->roughness;
+          emissiveFactor = props->emissiveFactor;
+          emissiveIntensity = props->emissiveIntensity;
+          // this will set occlusionTexture to null, if no actual occlusion map exists
+          occlusionTexture = aoMetRoughTex.get();
         } else {
           /**
            * Traditional FBX Material -> PBR Met/Rough glTF.
@@ -393,7 +389,6 @@ ModelData* Raw2Gltf(
 
         khrCmnUnlitMat.reset(new KHRCmnUnlitMaterial());
       }
-      // after all the special cases have had a go, check if we need to look up occlusion map
       if (!occlusionTexture) {
         occlusionTexture = simpleTex(RAW_TEXTURE_USAGE_OCCLUSION).get();
       }
@@ -447,11 +442,11 @@ ModelData* Raw2Gltf(
 
       std::shared_ptr<PrimitiveData> primitive;
       if (options.draco.enabled) {
-        int triangleCount = surfaceModel.GetTriangleCount();
+        size_t triangleCount = surfaceModel.GetTriangleCount();
 
         // initialize Draco mesh with vertex index information
         auto dracoMesh(std::make_shared<draco::Mesh>());
-        dracoMesh->SetNumFaces(static_cast<size_t>(triangleCount));
+        dracoMesh->SetNumFaces(triangleCount);
         dracoMesh->set_num_points(surfaceModel.GetVertexCount());
 
         for (uint32_t ii = 0; ii < triangleCount; ii++) {
@@ -464,7 +459,7 @@ ModelData* Raw2Gltf(
 
         AccessorData& indexes =
             *gltf->accessors.hold(new AccessorData(useLongIndices ? GLT_UINT : GLT_USHORT));
-        indexes.count = 3 * triangleCount;
+        indexes.count = to_uint32(3 * triangleCount);
         primitive.reset(new PrimitiveData(indexes, mData, dracoMesh));
       } else {
         const AccessorData& indexes = *gltf->AddAccessorWithView(
@@ -499,11 +494,13 @@ ModelData* Raw2Gltf(
               GLT_VEC3F,
               draco::GeometryAttribute::NORMAL,
               draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
+          const auto _ =
+              gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_TANGENT) != 0) {
           const AttributeDefinition<Vec4f> ATTR_TANGENT("TANGENT", &RawVertex::tangent, GLT_VEC4F);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_TANGENT);
+          const auto _ = gltf->AddAttributeToPrimitive<Vec4f>(
+              buffer, surfaceModel, *primitive, ATTR_TANGENT);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0) {
           const AttributeDefinition<Vec4f> ATTR_COLOR(
@@ -512,7 +509,8 @@ ModelData* Raw2Gltf(
               GLT_VEC4F,
               draco::GeometryAttribute::COLOR,
               draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_COLOR);
+          const auto _ =
+              gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_COLOR);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV0) != 0) {
           const AttributeDefinition<Vec2f> ATTR_TEXCOORD_0(
@@ -521,7 +519,8 @@ ModelData* Raw2Gltf(
               GLT_VEC2F,
               draco::GeometryAttribute::TEX_COORD,
               draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_0);
+          const auto _ = gltf->AddAttributeToPrimitive<Vec2f>(
+              buffer, surfaceModel, *primitive, ATTR_TEXCOORD_0);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV1) != 0) {
           const AttributeDefinition<Vec2f> ATTR_TEXCOORD_1(
@@ -530,7 +529,8 @@ ModelData* Raw2Gltf(
               GLT_VEC2F,
               draco::GeometryAttribute::TEX_COORD,
               draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
+          const auto _ = gltf->AddAttributeToPrimitive<Vec2f>(
+              buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
           const AttributeDefinition<Vec4i> ATTR_JOINTS(
@@ -539,7 +539,8 @@ ModelData* Raw2Gltf(
               GLT_VEC4I,
               draco::GeometryAttribute::GENERIC,
               draco::DT_UINT16);
-          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+          const auto _ =
+              gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
           const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
@@ -548,7 +549,8 @@ ModelData* Raw2Gltf(
               GLT_VEC4F,
               draco::GeometryAttribute::GENERIC,
               draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+          const auto _ =
+              gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
         }
 
         // each channel present in the mesh always ends up a target in the primitive
@@ -633,7 +635,7 @@ ModelData* Raw2Gltf(
         draco::Status status = encoder.EncodeMeshToBuffer(*primitive->dracoMesh, &dracoBuffer);
         assert(status.code() == draco::Status::OK);
 
-        auto view = gltf->AddRawBufferView(buffer, dracoBuffer.data(), dracoBuffer.size());
+        auto view = gltf->AddRawBufferView(buffer, dracoBuffer.data(), to_uint32(dracoBuffer.size()));
         primitive->NoteDracoBuffer(*view);
       }
       mesh->AddPrimitive(primitive);
@@ -735,7 +737,7 @@ ModelData* Raw2Gltf(
             type = LightData::Type::Spot;
             break;
         }
-        gltf->lights.hold(new LightData(
+        const auto _ = gltf->lights.hold(new LightData(
             light.name,
             type,
             light.color,
@@ -842,13 +844,13 @@ ModelData* Raw2Gltf(
     gltfOutStream.write(glb2BinaryHeader, 8);
 
     // append binary buffer directly to .glb file
-    uint32_t binaryLength = gltf->binary->size();
+    size_t binaryLength = gltf->binary->size();
     gltfOutStream.write((const char*)&(*gltf->binary)[0], binaryLength);
     while ((binaryLength % 4) != 0) {
       gltfOutStream.put('\0');
       binaryLength++;
     }
-    uint32_t totalLength = (uint32_t)gltfOutStream.tellp();
+    uint32_t totalLength = to_uint32(gltfOutStream.tellp());
 
     // seek back to sub-header for json chunk
     gltfOutStream.seekp(8);

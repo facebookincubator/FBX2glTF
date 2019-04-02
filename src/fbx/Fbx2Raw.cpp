@@ -925,7 +925,7 @@ static std::string GetInferredFileName(
   }
   // Get the file name with file extension.
   const std::string fileName =
-      StringUtils::GetFileNameString(StringUtils::GetCleanPathString(fbxFileName));
+      FileUtils::GetFileNameString(FileUtils::GetCanonicalPath(fbxFileName));
 
   // Try to find a match with extension.
   for (const auto& file : directoryFileList) {
@@ -935,12 +935,12 @@ static std::string GetInferredFileName(
   }
 
   // Get the file name without file extension.
-  const std::string fileBase = StringUtils::GetFileBaseString(fileName);
+  const std::string fileBase = FileUtils::GetFileBaseString(fileName);
 
   // Try to find a match without file extension.
   for (const auto& file : directoryFileList) {
     // If the two extension-less base names match.
-    if (StringUtils::CompareNoCase(fileBase, StringUtils::GetFileBaseString(file)) == 0) {
+    if (StringUtils::CompareNoCase(fileBase, FileUtils::GetFileBaseString(file)) == 0) {
       // Return the name with extension of the file in the directory.
       return std::string(directory) + file;
     }
@@ -960,14 +960,14 @@ static std::string GetInferredFileName(
 */
 static void FindFbxTextures(
     FbxScene* pScene,
-    const char* fbxFileName,
-    const char* extensions,
+    const std::string fbxFileName,
+    const std::set<std::string>& extensions,
     std::map<const FbxTexture*, FbxString>& textureLocations) {
   // Get the folder the FBX file is in.
-  const std::string folder = StringUtils::GetFolderString(fbxFileName);
+  const std::string folder = FileUtils::GetFolderString(fbxFileName);
 
   // Check if there is a filename.fbm folder to which embedded textures were extracted.
-  const std::string fbmFolderName = folder + StringUtils::GetFileBaseString(fbxFileName) + ".fbm/";
+  const std::string fbmFolderName = folder + FileUtils::GetFileBaseString(fbxFileName) + ".fbm/";
 
   // Search either in the folder with embedded textures or in the same folder as the FBX file.
   const std::string searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;
@@ -996,14 +996,17 @@ static void FindFbxTextures(
   }
 }
 
-bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExtensions) {
+bool LoadFBXFile(
+    RawModel& raw,
+    const std::string fbxFileName,
+    const std::set<std::string>& textureExtensions) {
   FbxManager* pManager = FbxManager::Create();
   FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
   pManager->SetIOSettings(pIoSettings);
 
   FbxImporter* pImporter = FbxImporter::Create(pManager, "");
 
-  if (!pImporter->Initialize(fbxFileName, -1, pManager->GetIOSettings())) {
+  if (!pImporter->Initialize(fbxFileName.c_str(), -1, pManager->GetIOSettings())) {
     if (verboseOutput) {
       fmt::printf("%s\n", pImporter->GetStatus().GetErrorString());
     }

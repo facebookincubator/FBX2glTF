@@ -24,7 +24,7 @@ void AnimationData::AddNodeChannel(
     const AccessorData& accessor,
     std::string path) {
   assert(channels.size() == samplers.size());
-  uint32_t ix = channels.size();
+  uint32_t ix = to_uint32(channels.size());
   channels.emplace_back(channel_t(ix, node, std::move(path)));
   samplers.emplace_back(sampler_t(timeAccessor, accessor.ix));
 }

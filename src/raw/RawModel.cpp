@@ -632,7 +632,7 @@ void RawModel::CreateMaterialModels(
   }
 }
 
-int RawModel::GetNodeById(const long nodeId) const {
+int RawModel::GetNodeById(const uint32_t nodeId) const {
   for (size_t i = 0; i < nodes.size(); i++) {
     if (nodes[i].id == nodeId) {
       return (int)i;
@@ -641,7 +641,7 @@ int RawModel::GetNodeById(const long nodeId) const {
   return -1;
 }
 
-int RawModel::GetSurfaceById(const long surfaceId) const {
+int RawModel::GetSurfaceById(const uint32_t surfaceId) const {
   for (size_t i = 0; i < surfaces.size(); i++) {
     if (surfaces[i].id == surfaceId) {
       return (int)i;

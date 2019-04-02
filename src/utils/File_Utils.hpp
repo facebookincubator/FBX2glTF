@@ -9,6 +9,10 @@
 
 #pragma once
 
+#include <filesystem>
+
+#include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -19,13 +23,51 @@ std::string GetCurrentFolder();
 bool FileExists(const std::string& folderPath);
 bool FolderExists(const std::string& folderPath);
 
-bool MatchExtension(const char* fileExtension, const char* matchExtensions);
-std::vector<std::string> ListFolderFiles(const char* folder, const char* matchExtensions);
+std::vector<std::string> ListFolderFiles(
+    const std::string folder,
+    const std::set<std::string>& matchExtensions);
 
-bool CreatePath(const char* path);
+bool CreatePath(std::string path);
 
 bool CopyFile(
     const std::string& srcFilename,
     const std::string& dstFilename,
     bool createPath = false);
+
+inline std::string GetCurrentFolder() {
+  return std::filesystem::current_path().string() + "/";
+}
+
+inline bool FileExists(const std::string& filePath) {
+  return std::filesystem::exists(filePath) && std::filesystem::is_regular_file(filePath);
+}
+
+inline bool FolderExists(const std::string& folderPath) {
+  return std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath);
+}
+
+inline std::string GetFolderString(const std::string& path) {
+  return std::filesystem::path(path).parent_path().string();
+}
+
+inline std::string GetCanonicalPath(const std::string& path) {
+  return std::filesystem::canonical(path).string();
+}
+
+inline std::string GetFileNameString(const std::string& path) {
+  return std::filesystem::canonical(path).filename().string();
+}
+
+inline std::string GetFileBaseString(const std::string& path) {
+  return std::filesystem::canonical(path).stem().string();
+}
+
+inline std::optional<std::string> GetFileSuffix(const std::string& path) {
+  const auto& extension = std::filesystem::canonical(path).extension();
+  if (extension.empty()) {
+    return std::nullopt;
+  }
+  return extension.string().substr(1);
+}
+
 } // namespace FileUtils

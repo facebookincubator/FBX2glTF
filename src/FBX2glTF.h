@@ -41,6 +41,15 @@ using json = nlohmann::basic_json<workaround_fifo_map>;
 extern bool verboseOutput;
 
 /**
+ * Centralises all the laborious downcasting from your OS' 64-bit
+ * index variables down to the uint32s that glTF is built out of.
+ */
+inline uint32_t to_uint32(size_t n) {
+  assert(n < UINT_MAX);
+  return static_cast<uint32_t>(n);
+}
+
+/**
 * The variuos situations in which the user may wish for us to (re-)compute normals for our vertices.
 */
 enum class ComputeNormalsOption {
