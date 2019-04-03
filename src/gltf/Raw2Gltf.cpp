@@ -408,7 +408,6 @@ ModelData* Raw2Gltf(
           emissiveFactor * emissiveIntensity,
           khrCmnUnlitMat,
           pbrMetRough));
-      fmt::printf("Stashing material of id %ls, name %s...\n", material.id, material.name.c_str());
       materialsById[material.id] = mData;
 
       if (options.enableUserProperties) {
