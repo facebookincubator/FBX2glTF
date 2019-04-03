@@ -33,11 +33,6 @@ std::unique_ptr<FbxRoughMetMaterialInfo> FbxStingrayPBSMaterialResolver::resolve
           ptr = nullptr;
         }
       }
-    } else if (verboseOutput && useProp.IsValid()) {
-      fmt::printf(
-          "Note: Property '%s' of Stingray PBS material '%s' exists, but is flagged as 'do not use'.\n",
-          propName,
-          fbxMaterial->GetName());
     }
     return ptr;
   };
