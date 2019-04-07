@@ -89,11 +89,10 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
   int channels = includeAlphaChannel ? 4 : 3;
 
   std::vector<uint8_t> mergedPixels(static_cast<size_t>(channels * width * height));
-  std::vector<pixel> pixels(texes.size());
-  std::vector<const pixel*> pixelPointers(texes.size());
   for (int xx = 0; xx < width; xx++) {
     for (int yy = 0; yy < height; yy++) {
-      pixels.clear();
+      std::vector<pixel> pixels(texes.size());
+      std::vector<const pixel*> pixelPointers(texes.size(), nullptr);
       for (int jj = 0; jj < texes.size(); jj++) {
         const TexInfo& tex = texes[jj];
         // each texture's structure will depend on its channel count
