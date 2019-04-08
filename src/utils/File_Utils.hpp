@@ -34,8 +34,12 @@ bool CopyFile(
     const std::string& dstFilename,
     bool createPath = false);
 
+inline std::string GetAbsolutePath(const std::string& filePath) {
+  return std::filesystem::absolute(filePath).string();
+}
+
 inline std::string GetCurrentFolder() {
-  return std::filesystem::current_path().string() + "/";
+  return std::filesystem::current_path().string();
 }
 
 inline bool FileExists(const std::string& filePath) {

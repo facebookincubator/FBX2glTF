@@ -23,13 +23,19 @@
 namespace FileUtils {
 
 std::vector<std::string> ListFolderFiles(
-    const std::string folder,
+    std::string folder,
     const std::set<std::string>& matchExtensions) {
   std::vector<std::string> fileList;
-  for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(folder)) {
-    const std::filesystem::path& path = entry.path();
-    if (matchExtensions.find(path.extension().string()) != matchExtensions.end()) {
-      fileList.push_back(path.string());
+  if (folder.empty()) {
+    folder = ".";
+  }
+  for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+    const auto& suffix = FileUtils::GetFileSuffix(entry.path());
+    if (suffix.has_value()) {
+      const auto& suffix_str = StringUtils::ToLower(suffix.value());
+      if (matchExtensions.find(suffix_str) != matchExtensions.end()) {
+        fileList.push_back(entry.path().filename().string());
+      }
     }
   }
   return fileList;
