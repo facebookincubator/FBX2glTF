@@ -60,6 +60,9 @@ describe('FBX2glTF', () => {
         }
       }).timeout(CONVERSION_TIMEOUT_MS);
 
+      if (!glbBytes) {
+        return;
+      }
       it('resulting glb should be valid', async () => {
         try {
           let options = <any>{};
