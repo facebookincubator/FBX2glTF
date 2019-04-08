@@ -58,9 +58,16 @@ if (WIN32)
     message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
   endif()
 
-else()
+elseif(CMAKE_COMPILER_IS_GNUCC)
+  if(CMAKE_C_COMPILER_VERSION VERSION_LESS 8.0
+     OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+    message(FATAL_ERROR "GCC 8.0 or greater is required to build this tool.")
+  endif()
   find_package(LibXml2 REQUIRED)
   find_package(ZLIB REQUIRED)
+else()
+  # CLANG can probably be made to work, issue is Mac OS X & default libstdc++
+  message(FATAL_ERROR "Only GCC is currently supported for Unix builds.")
 endif()
 
 
@@ -253,6 +260,7 @@ else()
   target_link_libraries(libFBX2glTF
     ${LIBXML2_LIBRARIES}
     ${ZLIB_LIBRARIES}
+    "stdc++fs"
   )
 endif()
 

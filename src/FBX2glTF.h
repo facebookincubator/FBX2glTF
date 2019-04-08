@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <climits>
 #include <string>
 
 #if defined ( _WIN32 )
