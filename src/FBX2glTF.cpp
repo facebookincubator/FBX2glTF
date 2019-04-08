@@ -264,7 +264,7 @@ int main(int argc, char* argv[]) {
 
   if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
-    outputPath = "./" + FileUtils::GetFileBaseString(inputPath);
+    outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }
   // the output folder in .gltf mode, not used for .glb
   std::string outputFolder;
@@ -273,7 +273,7 @@ int main(int argc, char* argv[]) {
   std::string modelPath;
   if (gltfOptions.outputBinary) {
     const auto& suffix = FileUtils::GetFileSuffix(outputPath);
-	// add .glb to output path, unless it already ends in exactly that
+    // add .glb to output path, unless it already ends in exactly that
     if (suffix.has_value() && suffix.value() == "glb") {
       modelPath = outputPath;
     } else {
@@ -282,7 +282,7 @@ int main(int argc, char* argv[]) {
   } else {
     // in gltf mode, we create a folder and write into that
     outputFolder = fmt::format("{}_out/", outputPath.c_str());
-    modelPath = outputFolder + FileUtils::GetFileNameString(outputPath) + ".gltf";
+    modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
     fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());

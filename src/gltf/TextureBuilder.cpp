@@ -49,7 +49,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
     if (rawTexIx >= 0) {
       const RawTexture& rawTex = raw.GetTexture(rawTexIx);
       const std::string& fileLoc = rawTex.fileLocation;
-      const std::string& name = FileUtils::GetFileBaseString(FileUtils::GetFileNameString(fileLoc));
+      const std::string& name = FileUtils::GetFileBase(FileUtils::GetFileName(fileLoc));
       if (!fileLoc.empty()) {
         info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 0);
         if (!info.pixels) {
@@ -179,8 +179,8 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   }
 
   const RawTexture& rawTexture = raw.GetTexture(rawTexIndex);
-  const std::string textureName = FileUtils::GetFileBaseString(rawTexture.name);
-  const std::string relativeFilename = FileUtils::GetFileNameString(rawTexture.fileLocation);
+  const std::string textureName = FileUtils::GetFileBase(rawTexture.name);
+  const std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
 
   ImageData* image = nullptr;
   if (options.outputBinary) {
@@ -202,7 +202,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
 
   } else if (!relativeFilename.empty()) {
     image = new ImageData(relativeFilename, relativeFilename);
-    std::string outputPath = FileUtils::GetCanonicalPath(outputFolder + "/" + relativeFilename);
+    std::string outputPath = outputFolder + "/" + relativeFilename;
     if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
       if (verboseOutput) {
         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);

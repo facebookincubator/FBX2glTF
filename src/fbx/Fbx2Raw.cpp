@@ -924,8 +924,7 @@ static std::string GetInferredFileName(
     return fbxFileName;
   }
   // Get the file name with file extension.
-  const std::string fileName =
-      FileUtils::GetFileNameString(FileUtils::GetCanonicalPath(fbxFileName));
+  const std::string fileName = FileUtils::GetFileName(fbxFileName);
 
   // Try to find a match with extension.
   for (const auto& file : directoryFileList) {
@@ -935,12 +934,12 @@ static std::string GetInferredFileName(
   }
 
   // Get the file name without file extension.
-  const std::string fileBase = FileUtils::GetFileBaseString(fileName);
+  const std::string fileBase = FileUtils::GetFileBase(fileName);
 
   // Try to find a match without file extension.
   for (const auto& file : directoryFileList) {
     // If the two extension-less base names match.
-    if (StringUtils::CompareNoCase(fileBase, FileUtils::GetFileBaseString(file)) == 0) {
+    if (StringUtils::CompareNoCase(fileBase, FileUtils::GetFileBase(file)) == 0) {
       // Return the name with extension of the file in the directory.
       return std::string(directory) + file;
     }
@@ -964,10 +963,10 @@ static void FindFbxTextures(
     const std::set<std::string>& extensions,
     std::map<const FbxTexture*, FbxString>& textureLocations) {
   // Get the folder the FBX file is in.
-  const std::string folder = FileUtils::GetFolderString(fbxFileName);
+  const std::string folder = FileUtils::getFolder(fbxFileName);
 
   // Check if there is a filename.fbm folder to which embedded textures were extracted.
-  const std::string fbmFolderName = folder + FileUtils::GetFileBaseString(fbxFileName) + ".fbm/";
+  const std::string fbmFolderName = folder + FileUtils::GetFileBase(fbxFileName) + ".fbm/";
 
   // Search either in the folder with embedded textures or in the same folder as the FBX file.
   const std::string searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;

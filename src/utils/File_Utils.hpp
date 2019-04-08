@@ -46,24 +46,20 @@ inline bool FolderExists(const std::string& folderPath) {
   return std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath);
 }
 
-inline std::string GetFolderString(const std::string& path) {
+inline std::string getFolder(const std::string& path) {
   return std::filesystem::path(path).parent_path().string();
 }
 
-inline std::string GetCanonicalPath(const std::string& path) {
-  return std::filesystem::canonical(path).string();
+inline std::string GetFileName(const std::string& path) {
+  return std::filesystem::path(path).filename().string();
 }
 
-inline std::string GetFileNameString(const std::string& path) {
-  return std::filesystem::canonical(path).filename().string();
-}
-
-inline std::string GetFileBaseString(const std::string& path) {
-  return std::filesystem::canonical(path).stem().string();
+inline std::string GetFileBase(const std::string& path) {
+  return std::filesystem::path(path).stem().string();
 }
 
 inline std::optional<std::string> GetFileSuffix(const std::string& path) {
-  const auto& extension = std::filesystem::canonical(path).extension();
+  const auto& extension = std::filesystem::path(path).extension();
   if (extension.empty()) {
     return std::nullopt;
   }
