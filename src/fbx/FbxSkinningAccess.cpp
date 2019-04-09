@@ -75,7 +75,8 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         }
       }
       for (int i = 0; i < controlPointCount; i++) {
-        vertexJointWeights[i] = vertexJointWeights[i].Normalized();
+        const float weightSumRcp = 1.0 / (vertexJointWeights[i][0] + vertexJointWeights[i][1] + vertexJointWeights[i][2] + vertexJointWeights[i][3]);
+        vertexJointWeights[i] *= weightSumRcp;
       }
     }
   }
