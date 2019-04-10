@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
          "-k,--keep-attribute",
          [&](std::vector<std::string> attributes) -> bool {
            gltfOptions.keepAttribs =
-               RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
            for (std::string attribute : attributes) {
              if (attribute == "position") {
                gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION;

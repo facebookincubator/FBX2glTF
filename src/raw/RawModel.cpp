@@ -26,8 +26,9 @@
 bool RawVertex::operator==(const RawVertex& other) const {
   return (position == other.position) && (normal == other.normal) && (tangent == other.tangent) &&
       (binormal == other.binormal) && (color == other.color) && (uv0 == other.uv0) &&
-      (uv1 == other.uv1) && (jointIndices == other.jointIndices) &&
-      (jointWeights == other.jointWeights) && (polarityUv0 == other.polarityUv0) &&
+      (uv1 == other.uv1) && (jointIndices0 == other.jointIndices0) &&
+      (jointWeights0 == other.jointWeights0) && (jointIndices1 == other.jointIndices1) &&
+      (jointWeights1 == other.jointWeights1) && (polarityUv0 == other.polarityUv0) &&
       (blendSurfaceIx == other.blendSurfaceIx) && (blends == other.blends);
 }
 
@@ -55,11 +56,17 @@ size_t RawVertex::Difference(const RawVertex& other) const {
     attributes |= RAW_VERTEX_ATTRIBUTE_UV1;
   }
   // Always need both or neither.
-  if (jointIndices != other.jointIndices) {
-    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+  if (jointIndices0 != other.jointIndices0) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0;
   }
-  if (jointWeights != other.jointWeights) {
-    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+  if (jointWeights0 != other.jointWeights0) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0;
+  }
+  if (jointIndices1 != other.jointIndices1) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
+  }
+  if (jointWeights1 != other.jointWeights1) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
   }
   return attributes;
 }
@@ -573,7 +580,7 @@ void RawModel::CreateMaterialModels(
       if (keepAttribs != -1) {
         int keep = keepAttribs;
         if ((keepAttribs & RAW_VERTEX_ATTRIBUTE_POSITION) != 0) {
-          keep |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+          keep |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
         }
         if ((keepAttribs & RAW_VERTEX_ATTRIBUTE_AUTO) != 0) {
           keep |= RAW_VERTEX_ATTRIBUTE_POSITION;
@@ -614,11 +621,17 @@ void RawModel::CreateMaterialModels(
         if ((keep & RAW_VERTEX_ATTRIBUTE_UV1) == 0) {
           vertex.uv1 = defaultVertex.uv1;
         }
-        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) == 0) {
-          vertex.jointIndices = defaultVertex.jointIndices;
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0) == 0) {
+          vertex.jointIndices0 = defaultVertex.jointIndices0;
         }
-        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) == 0) {
-          vertex.jointWeights = defaultVertex.jointWeights;
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0) == 0) {
+          vertex.jointWeights0 = defaultVertex.jointWeights0;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1) == 0) {
+          vertex.jointIndices1 = defaultVertex.jointIndices1;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1) == 0) {
+          vertex.jointWeights1 = defaultVertex.jointWeights1;
         }
       }
 

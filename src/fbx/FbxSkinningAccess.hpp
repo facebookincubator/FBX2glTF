@@ -21,12 +21,16 @@
 
 class FbxSkinningAccess {
  public:
-  static const int MAX_WEIGHTS = 4;
+  static const int MAX_WEIGHTS = 8;
 
   FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, FbxNode* pNode);
 
   bool IsSkinned() const {
     return (vertexJointWeights.size() > 0);
+  }
+
+  int MaxWeights() const {
+    return MAX_WEIGHTS;
   }
 
   int GetNodeCount() const {
@@ -58,14 +62,22 @@ class FbxSkinningAccess {
     return inverseBindMatrices[jointIndex];
   }
 
-  const Vec4i GetVertexIndices(const int controlPointIndex) const {
-    return (!vertexJointIndices.empty()) ? vertexJointIndices[controlPointIndex]
-                                         : Vec4i(0, 0, 0, 0);
+  const Vec4i GetVertexIndices(const int controlPointIndex, const int subset) const {
+    if (vertexJointIndices.empty())
+      return Vec4i(0, 0, 0, 0);
+    Vec4i indices(0, 0, 0, 0);
+    for (int k = subset * 4; k < subset * 4 + 4 && k < vertexJointIndices[controlPointIndex].size(); k++)
+      indices[k - subset * 4] = vertexJointIndices[controlPointIndex][k];
+    return indices;
   }
 
-  const Vec4f GetVertexWeights(const int controlPointIndex) const {
-    return (!vertexJointWeights.empty()) ? vertexJointWeights[controlPointIndex]
-                                         : Vec4f(0, 0, 0, 0);
+  const Vec4f GetVertexWeights(const int controlPointIndex, const int subset) const {
+    if (vertexJointWeights.empty())
+      return Vec4f(0.0f);
+    Vec4f weights(0.0f);
+    for (int k = subset * 4; k < subset * 4 + 4 && k < vertexJointWeights[controlPointIndex].size(); k++)
+      weights[k - subset * 4] = vertexJointWeights[controlPointIndex][k];
+    return weights;
   }
 
  private:
@@ -75,6 +87,6 @@ class FbxSkinningAccess {
   std::vector<FbxMatrix> jointSkinningTransforms;
   std::vector<FbxMatrix> jointInverseGlobalTransforms;
   std::vector<FbxAMatrix> inverseBindMatrices;
-  std::vector<Vec4i> vertexJointIndices;
-  std::vector<Vec4f> vertexJointWeights;
+  std::vector<std::vector<uint16_t>> vertexJointIndices;
+  std::vector<std::vector<float>> vertexJointWeights;
 };

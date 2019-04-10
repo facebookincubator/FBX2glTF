@@ -20,8 +20,8 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         continue;
       }
       int controlPointCount = pMesh->GetControlPointsCount();
-      vertexJointIndices.resize(controlPointCount, Vec4i(0, 0, 0, 0));
-      vertexJointWeights.resize(controlPointCount, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
+      vertexJointIndices.resize(controlPointCount);
+      vertexJointWeights.resize(controlPointCount);
 
       for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++) {
         FbxCluster* cluster = skin->GetCluster(clusterIndex);
@@ -55,12 +55,12 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
           if (clusterIndices[i] < 0 || clusterIndices[i] >= controlPointCount) {
             continue;
           }
-          if (clusterWeights[i] <= vertexJointWeights[clusterIndices[i]][MAX_WEIGHTS - 1]) {
+          if (clusterWeights[i] <= 0.0 || vertexJointWeights[clusterIndices[i]].size() >= MAX_WEIGHTS) {
             continue;
           }
-          vertexJointIndices[clusterIndices[i]][MAX_WEIGHTS - 1] = clusterIndex;
-          vertexJointWeights[clusterIndices[i]][MAX_WEIGHTS - 1] = (float)clusterWeights[i];
-          for (int j = MAX_WEIGHTS - 1; j > 0; j--) {
+          vertexJointIndices[clusterIndices[i]].push_back(clusterIndex);
+          vertexJointWeights[clusterIndices[i]].push_back((float)clusterWeights[i]);
+          for (int j = vertexJointWeights[clusterIndices[i]].size() - 1; j > 0; j--) {
             if (vertexJointWeights[clusterIndices[i]][j - 1] >=
                 vertexJointWeights[clusterIndices[i]][j]) {
               break;
@@ -75,8 +75,12 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         }
       }
       for (int i = 0; i < controlPointCount; i++) {
-        const float weightSumRcp = 1.0 / (vertexJointWeights[i][0] + vertexJointWeights[i][1] + vertexJointWeights[i][2] + vertexJointWeights[i][3]);
-        vertexJointWeights[i] *= weightSumRcp;
+        float weightSum = 0.0;
+        for (int w = 0; w < vertexJointWeights[i].size(); ++w)
+          weightSum += vertexJointWeights[i][w];
+        float weightSumRcp = 1.0 / weightSum;
+        for (int w = 0; w < vertexJointWeights[i].size(); ++w)
+          vertexJointWeights[i][w] *= weightSumRcp;
       }
     }
   }

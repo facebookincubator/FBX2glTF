@@ -23,8 +23,10 @@ enum RawVertexAttribute {
   RAW_VERTEX_ATTRIBUTE_COLOR = 1 << 4,
   RAW_VERTEX_ATTRIBUTE_UV0 = 1 << 5,
   RAW_VERTEX_ATTRIBUTE_UV1 = 1 << 6,
-  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES = 1 << 7,
-  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS = 1 << 8,
+  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 = 1 << 7,
+  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 = 1 << 8,
+  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 = 1 << 9,
+  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 = 1 << 10,
 
   RAW_VERTEX_ATTRIBUTE_AUTO = 1 << 31
 };
@@ -49,8 +51,10 @@ struct RawVertex {
   Vec4f color{0.0f};
   Vec2f uv0{0.0f};
   Vec2f uv1{0.0f};
-  Vec4i jointIndices{0, 0, 0, 0};
-  Vec4f jointWeights{0.0f};
+  Vec4i jointIndices0{0,0,0,0};
+  Vec4i jointIndices1{0,0,0,0};
+  Vec4f jointWeights0{0.0f};
+  Vec4f jointWeights1{0.0f};
   // end of members that directly correspond to vertex attributes
 
   // if this vertex participates in a blend shape setup, the surfaceIx of its dedicated mesh;

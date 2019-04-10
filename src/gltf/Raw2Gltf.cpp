@@ -532,22 +532,40 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
         }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0) != 0) {
           const AttributeDefinition<Vec4i> ATTR_JOINTS(
               "JOINTS_0",
-              &RawVertex::jointIndices,
+              &RawVertex::jointIndices0,
               GLT_VEC4I,
               draco::GeometryAttribute::GENERIC,
               draco::DT_UINT16);
           gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
         }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0) != 0) {
           const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
               "WEIGHTS_0",
-              &RawVertex::jointWeights,
+              &RawVertex::jointWeights0,
               GLT_VEC4F,
               draco::GeometryAttribute::GENERIC,
               draco::DT_FLOAT32);
+          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+        }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1) != 0) {
+          const AttributeDefinition<Vec4i> ATTR_JOINTS(
+            "JOINTS_1",
+            &RawVertex::jointIndices1,
+            GLT_VEC4I,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_UINT16);
+          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+        }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1) != 0) {
+          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
+            "WEIGHTS_1",
+            &RawVertex::jointWeights1,
+            GLT_VEC4F,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_FLOAT32);
           gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
         }
 
