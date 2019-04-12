@@ -55,6 +55,8 @@ Usage:
                                 (never|auto|always).
       --compute-normals arg     When to compute normals for vertices
                                 (never|broken|missing|always).
+      --anim-framerate arg      Select baked animation framerate
+                                (bake24|bake30|bake60).
   -k, --keep-attribute arg      Used repeatedly to build a limiting set of
                                 vertex attributes to keep.
   -v, --verbose                 Enable verbose output.

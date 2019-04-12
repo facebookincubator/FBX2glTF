@@ -56,6 +56,12 @@ enum class UseLongIndicesOptions {
     ALWAYS,     // only ever use 32-bit indices
 };
 
+enum class AnimationFramerateOptions {
+    BAKE24,     // bake animations at 24 fps
+    BAKE30,     // bake animations at 30 fps
+    BAKE60,     // bake animations at 60 fps
+};
+
 /**
 * User-supplied options that dictate the nature of the glTF being generated.
 */
@@ -103,4 +109,6 @@ struct GltfOptions
     ComputeNormalsOption computeNormals = ComputeNormalsOption::BROKEN;
     /** When to use 32-bit indices. */
     UseLongIndicesOptions useLongIndices = UseLongIndicesOptions::AUTO;
+    /** Select baked animation framerate. */
+    AnimationFramerateOptions animationFramerate = AnimationFramerateOptions::BAKE24;
 };
