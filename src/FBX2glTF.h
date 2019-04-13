@@ -95,7 +95,7 @@ struct GltfOptions
     /** Whether to include lights through the KHR_punctual_lights extension. */
     bool useKHRLightsPunctual { true };
 
-	/** Whether to read multiple fbx animation files. */
+    /** Whether to read multiple fbx animation files. */
     bool readAnimationFiles { false };
 
     /** Whether to include blend shape normals, if present according to the SDK. */

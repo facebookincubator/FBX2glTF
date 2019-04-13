@@ -127,8 +127,8 @@ int main(int argc, char* argv[]) {
 
   app.add_flag(
       "--animation-files",
-	  gltfOptions.readAnimationFiles,
-	  "Read multiple fbx animation files.");
+      gltfOptions.readAnimationFiles,
+      "Read multiple fbx animation files.");
 
   app.add_flag(
       "--user-properties",

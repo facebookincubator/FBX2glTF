@@ -776,7 +776,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, bool nodeNameLookup)
         channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
       } else {
         channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
-	  }
+      }
       if (channel.nodeIndex == -1) {
         continue;
       }
@@ -1079,7 +1079,7 @@ bool LoadFBXFile(
       animationFileNumber++;
     } else {
       readAnimationFiles = false;
-	}
+    }
   }
 
   pManager->Destroy();
