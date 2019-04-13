@@ -47,6 +47,7 @@ Usage:
                                 from the FBX.
       --khr-materials-unlit     Use KHR_materials_unlit extension to specify
                                 Unlit shader.
+      --animation-files         Read multiple fbx animation files.
       --blend-shape-normals     Include blend shape normals, if reported
                                 present by the FBX SDK.
       --blend-shape-tangents    Include blend shape tangents, if reported
@@ -75,6 +76,10 @@ Some of these switches are not obvious:
   Your FBX is likely constructed with the assumption that `(0, 0)` is bottom
   left, whereas glTF has `(0, 0)` as top left. To produce spec-compliant glTF,
   we must flip the texcoords. To request unflipped coordinates:
+- '--animation-files' will try to read in additional animations from multiple
+  fbx files with numbers added to the base name (eg. test1.fbx, test2.fbx, ...).
+  It will apply animations to geometry in the base file by matching the node
+  names, so make sure all nodes have a unique name.
 - `--long-indices` lets you force the use of either 16-bit or 32-bit indices.
   The default option is auto, which make the choice on a per-mesh-size basis.
 - `--compute-normals` controls when automatic vertex normals should be computed

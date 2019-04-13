@@ -721,7 +721,7 @@ static void ReadNodeHierarchy(
   }
 }
 
-static void ReadAnimations(RawModel& raw, FbxScene* pScene) {
+static void ReadAnimations(RawModel& raw, FbxScene* pScene, bool nodeNameLookup) {
   FbxTime::EMode eMode = FbxTime::eFrames24;
   const double epsilon = 1e-5f;
 
@@ -772,7 +772,14 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene) {
       bool hasMorphs = false;
 
       RawChannel channel;
-      channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
+      if (nodeNameLookup) {
+        channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
+      } else {
+        channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
+	  }
+      if (channel.nodeIndex == -1) {
+        continue;
+      }
 
       for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
         FbxTime pTime;
@@ -996,11 +1003,7 @@ static void FindFbxTextures(
   }
 }
 
-bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExtensions) {
-  FbxManager* pManager = FbxManager::Create();
-  FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
-  pManager->SetIOSettings(pIoSettings);
-
+static FbxScene* LoadScene(FbxManager* pManager, const char* fbxFileName) {
   FbxImporter* pImporter = FbxImporter::Create(pManager, "");
 
   if (!pImporter->Initialize(fbxFileName, -1, pManager->GetIOSettings())) {
@@ -1008,8 +1011,7 @@ bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExte
       fmt::printf("%s\n", pImporter->GetStatus().GetErrorString());
     }
     pImporter->Destroy();
-    pManager->Destroy();
-    return false;
+    return nullptr;
   }
 
   FbxScene* pScene = FbxScene::Create(pManager, "fbxScene");
@@ -1017,13 +1019,8 @@ bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExte
   pImporter->Destroy();
 
   if (pScene == nullptr) {
-    pImporter->Destroy();
-    pManager->Destroy();
-    return false;
+    return nullptr;
   }
-
-  std::map<const FbxTexture*, FbxString> textureLocations;
-  FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
 
   // Use Y up for glTF
   FbxAxisSystem::MayaYUp.ConvertScene(pScene);
@@ -1037,14 +1034,54 @@ bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExte
   if (sceneSystemUnit != FbxSystemUnit::cm) {
     FbxSystemUnit::cm.ConvertScene(pScene);
   }
+
+  return pScene;
+}
+
+bool LoadFBXFile(
+    RawModel& raw,
+    const char* fbxFileName,
+    const char* textureExtensions,
+    const GltfOptions& options) {
+  FbxManager* pManager = FbxManager::Create();
+  FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
+  pManager->SetIOSettings(pIoSettings);
+
+  FbxScene* pScene = LoadScene(pManager, fbxFileName);
+  if (pScene == nullptr) {
+    pManager->Destroy();
+    return false;
+  }
+
   // this is always 0.01, but let's opt for clarity.
   scaleFactor = FbxSystemUnit::m.GetConversionFactorFrom(FbxSystemUnit::cm);
 
+  std::map<const FbxTexture*, FbxString> textureLocations;
+  FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
+
   ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
   ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
-  ReadAnimations(raw, pScene);
+  ReadAnimations(raw, pScene, false);
 
   pScene->Destroy();
+
+  // read additional animation files
+  bool readAnimationFiles = options.readAnimationFiles;
+  int animationFileNumber = 1;
+  while (readAnimationFiles) {
+    std::string animationFileName = StringUtils::GetFolderString(fbxFileName) +
+        StringUtils::GetFileBaseString(fbxFileName) +
+        std::to_string(animationFileNumber) + ".fbx";
+    FbxScene* pAnimationScene = LoadScene(pManager, animationFileName.c_str());
+    if (pAnimationScene != nullptr) {
+      ReadAnimations(raw, pAnimationScene, true);
+      pAnimationScene->Destroy();
+      animationFileNumber++;
+    } else {
+      readAnimationFiles = false;
+	}
+  }
+
   pManager->Destroy();
 
   return true;

@@ -509,6 +509,7 @@ class RawModel {
     return nodes[index];
   }
   int GetNodeById(const long nodeId) const;
+  int GetNodeByName(const char* name) const;
 
   // Create individual attribute arrays.
   // Returns true if the vertices store the particular attribute.

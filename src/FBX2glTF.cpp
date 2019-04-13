@@ -126,6 +126,11 @@ int main(int argc, char* argv[]) {
       "Don't use KHR_lights_punctual extension to export FBX lights.");
 
   app.add_flag(
+      "--animation-files",
+	  gltfOptions.readAnimationFiles,
+	  "Read multiple fbx animation files.");
+
+  app.add_flag(
       "--user-properties",
       gltfOptions.enableUserProperties,
       "Transcribe FBX User Properties into glTF node and material 'extras'.");
@@ -302,7 +307,7 @@ int main(int argc, char* argv[]) {
   if (verboseOutput) {
     fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg")) {
+  if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg", gltfOptions)) {
     fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }
