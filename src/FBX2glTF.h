@@ -20,12 +20,14 @@
 
 #define FBX2GLTF_VERSION std::string("0.9.6")
 
-#include <fbxsdk.h>
 #include <fmt/printf.h>
+
+#include <fbxsdk.h>
 
 #if defined(_WIN32)
 // this is defined in fbxmath.h
 #undef isnan
+#undef snprintf
 #endif
 
 #include "mathfu.hpp"

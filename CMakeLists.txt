@@ -7,10 +7,13 @@ if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     "Hint: mkdir -p build; cmake -H. -Bbuild; make -Cbuild\n")
 endif ()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
+conan_basic_setup(TARGETS)
 
 # FBX
 foreach (FBXSDK_VERSION "2019.2")
@@ -124,22 +127,6 @@ ExternalProject_Add(CPPCodec
 )
 set(CPPCODEC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cppcodec/src/CPPCodec")
 
-# FMT
-ExternalProject_Add(Fmt
-  PREFIX fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG 4.0.0
-  CMAKE_CACHE_ARGS  "-DFMT_DOC:BOOL=OFF" "-DFMT_INSTALL:BOOL=ON" "-DFMT_TEST:BOOL=OFF"
-  CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-)
-set(FMT_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fmt/include")
-if (WIN32)
-   set(FMT_LIB "${CMAKE_BINARY_DIR}/fmt/lib/fmt.lib")
-else()
-   set(FMT_LIB "${CMAKE_BINARY_DIR}/fmt/lib/libfmt.a")
-endif()
-
 if (APPLE)
     find_library(CF_FRAMEWORK CoreFoundation)
     message("CoreFoundation Framework: ${CF_FRAMEWORK}")
@@ -218,7 +205,6 @@ add_dependencies(libFBX2glTF
   MathFu
   FiFoMap
   CPPCodec
-  Fmt
 )
 
 if (NOT MSVC)
@@ -235,8 +221,10 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
+  CONAN_PKG::boost_filesystem
+  CONAN_PKG::boost_optional
+  CONAN_PKG::fmt
   ${DRACO_LIB}
-  ${FMT_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
   ${CMAKE_DL_LIBS}
@@ -260,7 +248,6 @@ else()
   target_link_libraries(libFBX2glTF
     ${LIBXML2_LIBRARIES}
     ${ZLIB_LIBRARIES}
-    "stdc++fs"
   )
 endif()
 
@@ -268,16 +255,14 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   "third_party/stb"
   "third_party/json"
-)
-
-target_include_directories(libFBX2glTF SYSTEM PUBLIC
-  Iconv::Iconv
+  CONAN_PKG::boost_filesystem
+  CONAN_PKG::boost_optional
+  CONAN_PKG::fmt
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
   ${FIFO_MAP_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
-  ${FMT_INCLUDE_DIR}
   ${LIBXML2_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIRS}
 )

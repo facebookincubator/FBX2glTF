@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <fbxsdk.h>
 
 #include <mathfu/matrix.h>
