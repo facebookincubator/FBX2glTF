@@ -67,16 +67,9 @@ if (WIN32)
   if (NOT ZLIB_LIBRARIES)
     message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
   endif()
-elseif(CMAKE_COMPILER_IS_GNUCC)
-  if(CMAKE_C_COMPILER_VERSION VERSION_LESS 8.0
-     OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-    message(FATAL_ERROR "GCC 8.0 or greater is required to build this tool.")
-  endif()
+else()
   find_package(LibXml2 REQUIRED)
   find_package(ZLIB REQUIRED)
-else()
-  # CLANG can probably be made to work, issue is Mac OS X & default libstdc++
-  message(FATAL_ERROR "Only GCC is currently supported for Unix builds.")
 endif()
 
 # DRACO
@@ -226,9 +219,6 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
-#  CONAN_PKG::boost_filesystem
-#  CONAN_PKG::boost_optional
-#  CONAN_PKG::fmt
   boost_filesystem::boost_filesystem
   boost_optional::boost_optional
   fmt::fmt
@@ -264,9 +254,6 @@ target_include_directories(libFBX2glTF PUBLIC
   boost_filesystem::boost_filesystem
   boost_optional::boost_optional
   fmt::fmt
-#  CONAN_PKG::boost_filesystem
-#  CONAN_PKG::boost_optional
-#  CONAN_PKG::fmt
 )
 
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
