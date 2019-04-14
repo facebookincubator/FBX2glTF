@@ -6,7 +6,6 @@ class FBX2glTFConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = (("boost_filesystem/1.69.0@bincrafters/stable"),
                ("fmt/5.3.0@bincrafters/stable"))
-#    generators = "cmake"
     generators = "cmake_find_package", "cmake_paths"
 
     def build(self):
