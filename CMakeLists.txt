@@ -12,8 +12,11 @@ set(CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo_multi.cmake)
-conan_basic_setup(TARGETS)
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/Findboost_filesystem.cmake")
+  message(FATAL_ERROR
+    "The Conan package manager must run first.\n"
+    "Hint: conan install . -i build")
+endif()
 
 # FBX
 foreach (FBXSDK_VERSION "2019.2")
@@ -31,21 +34,25 @@ if (NOT FBXSDK_FOUND)
   )
 endif()
 
+# create a compilation database for e.g. clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# cmake's weird low-level packages
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 find_package(Iconv QUIET)
 
-# create a compilation database for e.g. clang-tidy
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# stuff we get from Conan
+find_package(boost_filesystem REQUIRED)
+find_package(boost_optional REQUIRED)
+find_package(fmt REQUIRED)
 
 if (WIN32)
   add_compile_definitions(
     _CRT_SECURE_NO_WARNINGS
     _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING
   )
-endif()
 
-if (WIN32)
   # this will suffice for now; don't really care about 32-bit
   set(LIBXML2_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
   set(LIBXML2_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/libxml2-mt.lib)
@@ -60,7 +67,6 @@ if (WIN32)
   if (NOT ZLIB_LIBRARIES)
     message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
   endif()
-
 elseif(CMAKE_COMPILER_IS_GNUCC)
   if(CMAKE_C_COMPILER_VERSION VERSION_LESS 8.0
      OR CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
@@ -72,7 +78,6 @@ else()
   # CLANG can probably be made to work, issue is Mac OS X & default libstdc++
   message(FATAL_ERROR "Only GCC is currently supported for Unix builds.")
 endif()
-
 
 # DRACO
 ExternalProject_Add(Draco
@@ -221,9 +226,12 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
-  CONAN_PKG::boost_filesystem
-  CONAN_PKG::boost_optional
-  CONAN_PKG::fmt
+#  CONAN_PKG::boost_filesystem
+#  CONAN_PKG::boost_optional
+#  CONAN_PKG::fmt
+  boost_filesystem::boost_filesystem
+  boost_optional::boost_optional
+  fmt::fmt
   ${DRACO_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
@@ -251,13 +259,19 @@ else()
   )
 endif()
 
-target_include_directories(libFBX2glTF SYSTEM PUBLIC
+target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
+  boost_filesystem::boost_filesystem
+  boost_optional::boost_optional
+  fmt::fmt
+#  CONAN_PKG::boost_filesystem
+#  CONAN_PKG::boost_optional
+#  CONAN_PKG::fmt
+)
+
+target_include_directories(libFBX2glTF SYSTEM PUBLIC
   "third_party/stb"
   "third_party/json"
-  CONAN_PKG::boost_filesystem
-  CONAN_PKG::boost_optional
-  CONAN_PKG::fmt
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
