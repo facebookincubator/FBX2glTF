@@ -721,8 +721,19 @@ static void ReadNodeHierarchy(
   }
 }
 
-static void ReadAnimations(RawModel& raw, FbxScene* pScene) {
+static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& options) {
   FbxTime::EMode eMode = FbxTime::eFrames24;
+  switch (options.animationFramerate) {
+    case AnimationFramerateOptions::BAKE24:
+      eMode = FbxTime::eFrames24;
+      break;
+    case AnimationFramerateOptions::BAKE30:
+      eMode = FbxTime::eFrames30;
+      break;
+    case AnimationFramerateOptions::BAKE60:
+      eMode = FbxTime::eFrames60;
+      break;
+  }
   const double epsilon = 1e-5f;
 
   const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
@@ -1027,7 +1038,8 @@ static void FindFbxTextures(
 bool LoadFBXFile(
     RawModel& raw,
     const std::string fbxFileName,
-    const std::set<std::string>& textureExtensions) {
+    const std::set<std::string>& textureExtensions,
+    const GltfOptions& options) {
   FbxManager* pManager = FbxManager::Create();
   FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
   pManager->SetIOSettings(pIoSettings);
@@ -1073,7 +1085,7 @@ bool LoadFBXFile(
 
   ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
   ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
-  ReadAnimations(raw, pScene);
+  ReadAnimations(raw, pScene, options);
 
   pScene->Destroy();
   pManager->Destroy();

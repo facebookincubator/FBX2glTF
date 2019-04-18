@@ -96,6 +96,26 @@ int main(int argc, char* argv[]) {
          "When to compute vertex normals from mesh geometry.")
       ->type_name("(never|broken|missing|always)");
 
+  app.add_option(
+         "--anim-framerate",
+         [&](std::vector<std::string> choices) -> bool {
+           for (const std::string choice : choices) {
+             if (choice == "bake24") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE24;
+             } else if (choice == "bake30") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE30;
+             } else if (choice == "bake60") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE60;
+             } else {
+               fmt::printf("Unknown --anim-framerate: %s\n", choice);
+               throw CLI::RuntimeError(1);
+             }
+           }
+           return true;
+         },
+         "Select baked animation framerate.")
+      ->type_name("(bake24|bake30|bake60)");
+
   const auto opt_flip_u = app.add_flag("--flip-u", "Flip all U texture coordinates.");
   const auto opt_no_flip_u = app.add_flag("--no-flip-u", "Don't flip U texture coordinates.");
   const auto opt_flip_v = app.add_flag("--flip-v", "Flip all V texture coordinates.");
@@ -295,7 +315,7 @@ int main(int argc, char* argv[]) {
   if (verboseOutput) {
     fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"})) {
+  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
     fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }

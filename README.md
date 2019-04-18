@@ -46,6 +46,8 @@ Options:
                               Whether to use 32-bit indices.
   --compute-normals (never|broken|missing|always)
                               When to compute vertex normals from mesh geometry.
+  --anim-framerate (bake24|bake30|bake60)
+                              Select baked animation framerate.
   --flip-u                    Flip all U texture coordinates.
   --no-flip-u                 Don't flip U texture coordinates.
   --flip-v                    Flip all V texture coordinates.
