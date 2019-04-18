@@ -26,9 +26,12 @@
 bool RawVertex::operator==(const RawVertex& other) const {
   return (position == other.position) && (normal == other.normal) && (tangent == other.tangent) &&
       (binormal == other.binormal) && (color == other.color) && (uv0 == other.uv0) &&
-      (uv1 == other.uv1) && (jointIndices0 == other.jointIndices0) &&
-      (jointWeights0 == other.jointWeights0) && (jointIndices1 == other.jointIndices1) &&
-      (jointWeights1 == other.jointWeights1) && (polarityUv0 == other.polarityUv0) &&
+      (uv1 == other.uv1) &&
+      (jointWeights0 == other.jointWeights0) && (jointWeights1 == other.jointWeights1) &&
+      (jointWeights2 == other.jointWeights2) && (jointWeights3 == other.jointWeights3) &&
+      (jointIndices0 == other.jointIndices0) && (jointIndices1 == other.jointIndices1) &&
+      (jointIndices2 == other.jointIndices2) && (jointIndices3 == other.jointIndices3) &&
+      (polarityUv0 == other.polarityUv0) &&
       (blendSurfaceIx == other.blendSurfaceIx) && (blends == other.blends);
 }
 
