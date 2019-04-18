@@ -154,6 +154,44 @@ struct AttributeDefinition {
         glType(_glType),
         dracoAttribute(draco::GeometryAttribute::INVALID),
         dracoComponentType(draco::DataType::DT_INVALID) {}
+
+  AttributeDefinition(
+    const std::string gltfName,
+    const T RawVertex::*rawAttributeIx,
+    const GLType& _glType,
+    const draco::GeometryAttribute::Type dracoAttribute,
+    const draco::DataType dracoComponentType,
+    const int arrayOffset)
+    : gltfName(gltfName),
+    rawAttributeIx(rawAttributeIx),
+    glType(_glType),
+    dracoAttribute(dracoAttribute),
+    dracoComponentType(dracoComponentType),
+    arrayOffset(arrayOffset){}
+};
+
+template <class T>
+struct AttributeArrayDefinition {
+  const std::string gltfName;
+  const T (RawVertex::*rawAttributeIx)[(RawModel::MAX_SUPPORTED_WEIGHTS -1 ) / 4 + 1];
+  const GLType glType;
+  const int arrayOffset;
+  const draco::GeometryAttribute::Type dracoAttribute;
+  const draco::DataType dracoComponentType;
+
+  AttributeArrayDefinition(
+    const std::string gltfName,
+    const T (RawVertex::*rawAttributeIx)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+    const GLType& _glType,
+    const draco::GeometryAttribute::Type dracoAttribute,
+    const draco::DataType dracoComponentType,
+    const int arrayOffset)
+    : gltfName(gltfName),
+    rawAttributeIx(rawAttributeIx),
+    glType(_glType),
+    dracoAttribute(dracoAttribute),
+    dracoComponentType(dracoComponentType),
+    arrayOffset(arrayOffset) {}
 };
 
 struct AccessorData;

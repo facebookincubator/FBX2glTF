@@ -15,6 +15,8 @@
 
 #include "FBX2glTF.h"
 
+#define MAX_SKINNING_WEIGHTS 32
+
 enum RawVertexAttribute {
   RAW_VERTEX_ATTRIBUTE_POSITION = 1 << 0,
   RAW_VERTEX_ATTRIBUTE_NORMAL = 1 << 1,
@@ -23,14 +25,8 @@ enum RawVertexAttribute {
   RAW_VERTEX_ATTRIBUTE_COLOR = 1 << 4,
   RAW_VERTEX_ATTRIBUTE_UV0 = 1 << 5,
   RAW_VERTEX_ATTRIBUTE_UV1 = 1 << 6,
-  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 = 1 << 7,
-  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 = 1 << 8,
-  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 = 1 << 9,
-  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 = 1 << 10,
-  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 = 1 << 11,
-  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2 = 1 << 12,
-  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 = 1 << 13,
-  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3 = 1 << 14,
+  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES = 1 << 7,
+  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS = 1 << 8,
 
   RAW_VERTEX_ATTRIBUTE_AUTO = 1 << 31
 };
@@ -65,14 +61,9 @@ struct RawVertex {
   Vec4f color{0.0f};
   Vec2f uv0{0.0f};
   Vec2f uv1{0.0f};
-  Vec4i jointIndices0{0,0,0,0};
-  Vec4i jointIndices1{0,0,0,0};
-  Vec4i jointIndices2{0,0,0,0};
-  Vec4i jointIndices3{0,0,0,0};
-  Vec4f jointWeights0{0.0f};
-  Vec4f jointWeights1{0.0f};
-  Vec4f jointWeights2{0.0f};
-  Vec4f jointWeights3{0.0f};
+  Vec4i jointIndices[(MAX_SKINNING_WEIGHTS - 1) / 4 + 1];
+  Vec4f jointWeights[(MAX_SKINNING_WEIGHTS - 1) / 4 + 1];
+
 
   std::vector<RawVertexSkinningInfo> skinningInfo;
   // end of members that directly correspond to vertex attributes
@@ -381,7 +372,7 @@ struct RawNode {
 
 class RawModel {
  public:
-  static const int MAX_SUPPORTED_WEIGHTS = 16;
+  static const int MAX_SUPPORTED_WEIGHTS = MAX_SKINNING_WEIGHTS;
 
   RawModel();
 
@@ -460,6 +451,11 @@ class RawModel {
   int GetVertexCount() const {
     return (int)vertices.size();
   }
+  
+  int GetGlobalWeightCount() const{
+    return globalMaxWeights;
+  }
+
   const RawVertex& GetVertex(const int index) const {
     return vertices[index];
   }
@@ -542,6 +538,14 @@ class RawModel {
   void GetAttributeArray(std::vector<_attrib_type_>& out, const _attrib_type_ RawVertex::*ptr)
       const;
 
+  // Create individual attribute arrays, with the source as an array.
+  // Returns true if the vertices store the particular attribute.
+  template <typename _attrib_type_>
+  void GetArrayAttributeArray(std::vector<_attrib_type_>& out, 
+    const _attrib_type_ (RawVertex::*ptr)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+    const int arrayOffset)
+    const;
+
   // Create an array with a raw model for each material.
   // Multiple surfaces with the same material will turn into a single model.
   // However, surfaces that are marked as 'discrete' will turn into separate models.
@@ -556,6 +560,7 @@ class RawModel {
 
   long rootNodeId;
   int vertexAttributes;
+  int globalMaxWeights;
   std::unordered_map<RawVertex, int, VertexHasher> vertexHash;
   std::vector<RawVertex> vertices;
   std::vector<RawTriangle> triangles;
@@ -575,5 +580,16 @@ void RawModel::GetAttributeArray(
   out.resize(vertices.size());
   for (size_t i = 0; i < vertices.size(); i++) {
     out[i] = vertices[i].*ptr;
+  }
+}
+
+template <typename _attrib_type_>
+void RawModel::GetArrayAttributeArray(
+  std::vector<_attrib_type_>& out,
+  const _attrib_type_ (RawVertex::*ptr)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+  const int arrayOffset) const {
+  out.resize(vertices.size());
+  for (size_t i = 0; i < vertices.size(); i++) {
+    out[i] = (vertices[i].*ptr)[arrayOffset];
   }
 }

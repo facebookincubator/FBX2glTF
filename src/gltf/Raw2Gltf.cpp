@@ -532,77 +532,31 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           gltf->AddAttributeToPrimitive<Vec2f>(buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
         }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0) != 0) {
-          const AttributeDefinition<Vec4i> ATTR_JOINTS(
-              "JOINTS_0",
-              &RawVertex::jointIndices0,
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
+          for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
+            const AttributeArrayDefinition<Vec4i> ATTR_JOINTS(
+              std::string("JOINTS_") + std::to_string(i/4),
+              //"JOINTS_0",
+              &RawVertex::jointIndices,
               GLT_VEC4I,
               draco::GeometryAttribute::GENERIC,
-              draco::DT_UINT16);
-          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+              draco::DT_UINT16,
+              i/4);
+            gltf->AddAttributeArrayToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+          }
         }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0) != 0) {
-          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
-              "WEIGHTS_0",
-              &RawVertex::jointWeights0,
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
+          for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
+            const AttributeArrayDefinition<Vec4f> ATTR_WEIGHTS(
+              std::string("WEIGHTS_") + std::to_string(i/4),
+              //"WEIGHTS_0",
+              &RawVertex::jointWeights,
               GLT_VEC4F,
               draco::GeometryAttribute::GENERIC,
-              draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1) != 0) {
-          const AttributeDefinition<Vec4i> ATTR_JOINTS(
-            "JOINTS_1",
-            &RawVertex::jointIndices1,
-            GLT_VEC4I,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_UINT16);
-          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1) != 0) {
-          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
-            "WEIGHTS_1",
-            &RawVertex::jointWeights1,
-            GLT_VEC4F,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2) != 0) {
-          const AttributeDefinition<Vec4i> ATTR_JOINTS(
-            "JOINTS_0",
-            &RawVertex::jointIndices2,
-            GLT_VEC4I,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_UINT16);
-          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2) != 0) {
-          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
-            "WEIGHTS_0",
-            &RawVertex::jointWeights2,
-            GLT_VEC4F,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3) != 0) {
-          const AttributeDefinition<Vec4i> ATTR_JOINTS(
-            "JOINTS_0",
-            &RawVertex::jointIndices3,
-            GLT_VEC4I,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_UINT16);
-          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
-        }
-        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3) != 0) {
-          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
-            "WEIGHTS_0",
-            &RawVertex::jointWeights3,
-            GLT_VEC4F,
-            draco::GeometryAttribute::GENERIC,
-            draco::DT_FLOAT32);
-          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+              draco::DT_FLOAT32,
+              i/4);
+            gltf->AddAttributeArrayToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+          }
         }
 
         // each channel present in the mesh always ends up a target in the primitive

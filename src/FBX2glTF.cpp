@@ -140,10 +140,11 @@ int main(int argc, char* argv[]) {
       gltfOptions.useBlendShapeTangents,
       "Include blend shape tangents, if reported present by the FBX SDK.");
 
-  app.add_flag(
+  app.add_option(
       "--normalize-weights",
       gltfOptions.normalizeSkinningWeights,
-      "Normalize skinning weights.");
+      "Normalize skinning weights.",
+      true);
 
   app.add_option(
       "--skinning-weights",
@@ -156,8 +157,7 @@ int main(int argc, char* argv[]) {
          "-k,--keep-attribute",
          [&](std::vector<std::string> attributes) -> bool {
            gltfOptions.keepAttribs =
-             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 |
-             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3;
+             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
            for (std::string attribute : attributes) {
              if (attribute == "position") {
                gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION;
