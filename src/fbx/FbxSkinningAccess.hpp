@@ -19,19 +19,21 @@
 
 #include "FBX2glTF.h"
 
+struct FbxVertexSkinningInfo {
+  int jointId;
+  float weight;
+};
+
+
 class FbxSkinningAccess {
  public:
-  static const int MAX_WEIGHTS = 8;
 
   FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, FbxNode* pNode);
 
   bool IsSkinned() const {
-    return (vertexJointWeights.size() > 0);
+    return (vertexSkinning.size() > 0);
   }
 
-  int MaxWeights() const {
-    return MAX_WEIGHTS;
-  }
 
   int GetNodeCount() const {
     return (int)jointNodes.size();
@@ -62,31 +64,17 @@ class FbxSkinningAccess {
     return inverseBindMatrices[jointIndex];
   }
 
-  const Vec4i GetVertexIndices(const int controlPointIndex, const int subset) const {
-    if (vertexJointIndices.empty())
-      return Vec4i(0, 0, 0, 0);
-    Vec4i indices(0, 0, 0, 0);
-    for (int k = subset * 4; k < subset * 4 + 4 && k < vertexJointIndices[controlPointIndex].size(); k++)
-      indices[k - subset * 4] = vertexJointIndices[controlPointIndex][k];
-    return indices;
-  }
-
-  const Vec4f GetVertexWeights(const int controlPointIndex, const int subset) const {
-    if (vertexJointWeights.empty())
-      return Vec4f(0.0f);
-    Vec4f weights(0.0f);
-    for (int k = subset * 4; k < subset * 4 + 4 && k < vertexJointWeights[controlPointIndex].size(); k++)
-      weights[k - subset * 4] = vertexJointWeights[controlPointIndex][k];
-    return weights;
+  const std::vector<FbxVertexSkinningInfo> GetVertexSkinningInfo(const int controlPointIndex) const {
+    return vertexSkinning[controlPointIndex];
   }
 
  private:
   int rootIndex;
+  int maxBoneInfluences;
   std::vector<long> jointIds;
   std::vector<FbxNode*> jointNodes;
   std::vector<FbxMatrix> jointSkinningTransforms;
   std::vector<FbxMatrix> jointInverseGlobalTransforms;
   std::vector<FbxAMatrix> inverseBindMatrices;
-  std::vector<std::vector<uint16_t>> vertexJointIndices;
-  std::vector<std::vector<float>> vertexJointWeights;
+  std::vector<std::vector<FbxVertexSkinningInfo>> vertexSkinning;
 };

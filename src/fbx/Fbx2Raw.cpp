@@ -69,18 +69,18 @@ static RawMaterialType GetMaterialType(
   return skinned ? RAW_MATERIAL_TYPE_SKINNED_OPAQUE : RAW_MATERIAL_TYPE_OPAQUE;
 }
 
-static void calcMinMax(RawSurface& rawSurface, const FbxSkinningAccess& skinning, const FbxVector4& globalPosition, const Vec4i& indices, const Vec4f& weights) {
-  for (int i = 0; i < 4; i++) {
-    if (weights[i] > 0.0f) {
+static void calcMinMax(RawSurface& rawSurface, const FbxSkinningAccess& skinning, const FbxVector4& globalPosition, const std::vector<RawVertexSkinningInfo>& indicesAndWeights) {
+  for (int i = 0; i < indicesAndWeights.size(); i++) {
+    if (indicesAndWeights[i].jointWeight > 0.0f) {
       const FbxVector4 localPosition =
-        skinning.GetJointInverseGlobalTransforms(indices[i]).MultNormalize(globalPosition);
+        skinning.GetJointInverseGlobalTransforms(indicesAndWeights[i].jointIndex).MultNormalize(globalPosition);
 
-      Vec3f& mins = rawSurface.jointGeometryMins[indices[i]];
+      Vec3f& mins = rawSurface.jointGeometryMins[indicesAndWeights[i].jointIndex];
       mins[0] = std::min(mins[0], (float)localPosition[0]);
       mins[1] = std::min(mins[1], (float)localPosition[1]);
       mins[2] = std::min(mins[2], (float)localPosition[2]);
 
-      Vec3f& maxs = rawSurface.jointGeometryMaxs[indices[i]];
+      Vec3f& maxs = rawSurface.jointGeometryMaxs[indicesAndWeights[i].jointIndex];
       maxs[0] = std::max(maxs[0], (float)localPosition[0]);
       maxs[1] = std::max(maxs[1], (float)localPosition[1]);
       maxs[2] = std::max(maxs[2], (float)localPosition[2]);
@@ -178,17 +178,6 @@ static void ReadMesh(
   }
   if (uvLayer1.LayerPresent()) {
     raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_UV1);
-  }
-  if (skinning.IsSkinned()) {
-    FBX_ASSERT(skinning.MaxWeights() <= 8); // output only supports up to 8
-
-    raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0);
-    raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0);
-    if (skinning.MaxWeights() > 4) {
-      raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1);
-      raw.AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1);
-    }
-
   }
 
   RawSurface& rawSurface = raw.GetSurface(rawSurfaceIndex);
@@ -370,10 +359,11 @@ static void ReadMesh(
       vertex.uv0[1] = (float)fbxUV0[1];
       vertex.uv1[0] = (float)fbxUV1[0];
       vertex.uv1[1] = (float)fbxUV1[1];
-      vertex.jointIndices0 = skinning.GetVertexIndices(controlPointIndex, 0);
-      vertex.jointWeights0 = skinning.GetVertexWeights(controlPointIndex, 0);
-      vertex.jointIndices1 = skinning.GetVertexIndices(controlPointIndex, 1);
-      vertex.jointWeights1 = skinning.GetVertexWeights(controlPointIndex, 1);
+      const std::vector<FbxVertexSkinningInfo> skinningInfo = skinning.GetVertexSkinningInfo(controlPointIndex);
+      for (int skinningIndex = 0; skinningIndex < skinningInfo.size(); skinningIndex++) {
+        const FbxVertexSkinningInfo& sourceSkinningInfo = skinningInfo[skinningIndex];
+        vertex.skinningInfo.push_back(RawVertexSkinningInfo{ sourceSkinningInfo.jointId, sourceSkinningInfo.weight });
+      }
       vertex.polarityUv0 = false;
 
       // flag this triangle as transparent if any of its corner vertices substantially deviates from
@@ -418,14 +408,11 @@ static void ReadMesh(
 
       if (skinning.IsSkinned()) {
         FbxMatrix skinningMatrix = FbxMatrix() * 0.0;
-        for (int j = 0; j < 4; j++)
-          skinningMatrix += skinning.GetJointSkinningTransform(vertex.jointIndices0[j]) * vertex.jointWeights0[j];
-        for (int j = 0; j < 4; j++)
-          skinningMatrix += skinning.GetJointSkinningTransform(vertex.jointIndices1[j]) * vertex.jointWeights1[j];
+        for (int j = 0; j < vertex.skinningInfo.size(); j++)
+          skinningMatrix += skinning.GetJointSkinningTransform(vertex.skinningInfo[j].jointIndex) * vertex.skinningInfo[j].jointWeight;
 
         const FbxVector4 globalPosition = skinningMatrix.MultNormalize(fbxPosition);
-        calcMinMax(rawSurface, skinning, globalPosition, vertex.jointIndices0, vertex.jointWeights0);
-        calcMinMax(rawSurface, skinning, globalPosition, vertex.jointIndices1, vertex.jointWeights1);
+        calcMinMax(rawSurface, skinning, globalPosition, vertex.skinningInfo);
       }
     }
 

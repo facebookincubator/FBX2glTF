@@ -27,6 +27,10 @@ enum RawVertexAttribute {
   RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 = 1 << 8,
   RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 = 1 << 9,
   RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 = 1 << 10,
+  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 = 1 << 11,
+  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2 = 1 << 12,
+  RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 = 1 << 13,
+  RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3 = 1 << 14,
 
   RAW_VERTEX_ATTRIBUTE_AUTO = 1 << 31
 };
@@ -38,6 +42,16 @@ struct RawBlendVertex {
 
   bool operator==(const RawBlendVertex& other) const {
     return position == other.position && normal == other.normal && tangent == other.tangent;
+  }
+};
+
+struct RawVertexSkinningInfo
+{
+  int jointIndex;
+  float jointWeight;
+
+  bool operator>(const RawVertexSkinningInfo& rjw) const {
+    return jointWeight > rjw.jointWeight;
   }
 };
 
@@ -53,8 +67,14 @@ struct RawVertex {
   Vec2f uv1{0.0f};
   Vec4i jointIndices0{0,0,0,0};
   Vec4i jointIndices1{0,0,0,0};
+  Vec4i jointIndices2{0,0,0,0};
+  Vec4i jointIndices3{0,0,0,0};
   Vec4f jointWeights0{0.0f};
   Vec4f jointWeights1{0.0f};
+  Vec4f jointWeights2{0.0f};
+  Vec4f jointWeights3{0.0f};
+
+  std::vector<RawVertexSkinningInfo> skinningInfo;
   // end of members that directly correspond to vertex attributes
 
   // if this vertex participates in a blend shape setup, the surfaceIx of its dedicated mesh;
@@ -361,6 +381,8 @@ struct RawNode {
 
 class RawModel {
  public:
+  static const int MAX_SUPPORTED_WEIGHTS = 16;
+
   RawModel();
 
   // Add geometry.
@@ -421,7 +443,7 @@ class RawModel {
 
   // Remove unused vertices, textures or materials after removing vertex attributes, textures,
   // materials or surfaces.
-  void Condense();
+  void Condense(const int maxSkinningWeights, const bool normalizeWeights);
 
   void TransformGeometry(ComputeNormalsOption);
 

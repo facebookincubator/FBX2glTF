@@ -568,6 +568,42 @@ ModelData* Raw2Gltf(
             draco::DT_FLOAT32);
           gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
         }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2) != 0) {
+          const AttributeDefinition<Vec4i> ATTR_JOINTS(
+            "JOINTS_0",
+            &RawVertex::jointIndices2,
+            GLT_VEC4I,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_UINT16);
+          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+        }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2) != 0) {
+          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
+            "WEIGHTS_0",
+            &RawVertex::jointWeights2,
+            GLT_VEC4F,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_FLOAT32);
+          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+        }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3) != 0) {
+          const AttributeDefinition<Vec4i> ATTR_JOINTS(
+            "JOINTS_0",
+            &RawVertex::jointIndices3,
+            GLT_VEC4I,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_UINT16);
+          gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+        }
+        if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3) != 0) {
+          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
+            "WEIGHTS_0",
+            &RawVertex::jointWeights3,
+            GLT_VEC4F,
+            draco::GeometryAttribute::GENERIC,
+            draco::DT_FLOAT32);
+          gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+        }
 
         // each channel present in the mesh always ends up a target in the primitive
         for (int channelIx = 0; channelIx < rawSurface.blendChannels.size(); channelIx++) {

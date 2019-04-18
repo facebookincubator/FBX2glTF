@@ -56,22 +56,22 @@ size_t RawVertex::Difference(const RawVertex& other) const {
     attributes |= RAW_VERTEX_ATTRIBUTE_UV1;
   }
   // Always need both or neither.
-  if (jointIndices0 != other.jointIndices0) {
+  if (jointIndices0 != other.jointIndices0 || jointWeights0 != other.jointWeights0) {
     attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0;
   }
-  if (jointWeights0 != other.jointWeights0) {
-    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0;
-  }
-  if (jointIndices1 != other.jointIndices1) {
+  if (jointIndices1 != other.jointIndices1 || jointWeights1 != other.jointWeights1) {
     attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
   }
-  if (jointWeights1 != other.jointWeights1) {
-    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
+  if (jointIndices2 != other.jointIndices2 || jointWeights2 != other.jointWeights2) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2;
+  }
+  if (jointIndices3 != other.jointIndices3 || jointWeights3 != other.jointWeights3) {
+    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3;
   }
   return attributes;
 }
 
-RawModel::RawModel() : vertexAttributes(0) {}
+RawModel::RawModel() : vertexAttributes(0){}
 
 void RawModel::AddVertexAttribute(const RawVertexAttribute attrib) {
   vertexAttributes |= attrib;
@@ -334,7 +334,7 @@ int RawModel::AddNode(const long id, const char* name, const long parentId) {
   return (int)nodes.size() - 1;
 }
 
-void RawModel::Condense() {
+void RawModel::Condense(const int maxSkinningWeights, const bool normalizeWeights) {
   // Only keep surfaces that are referenced by one or more triangles.
   {
     std::vector<RawSurface> oldSurfaces = surfaces;
@@ -401,6 +401,81 @@ void RawModel::Condense() {
     for (auto& triangle : triangles) {
       for (int j = 0; j < 3; j++) {
         triangle.verts[j] = AddVertex(oldVertices[triangle.verts[j]]);
+      }
+    }
+  }
+
+  {
+    int globalMaxWeights = 0;
+    for (auto& vertex: vertices) {
+
+      // Sort from largest to smallest weight.
+      std::sort(vertex.skinningInfo.begin(), vertex.skinningInfo.end(), std::greater<RawVertexSkinningInfo>());
+      
+      // Reduce to fit the requirements.
+      if (maxSkinningWeights < vertex.skinningInfo.size())
+        vertex.skinningInfo.resize(maxSkinningWeights);
+      globalMaxWeights = std::max(globalMaxWeights, (int) vertex.skinningInfo.size());
+
+      // Normalize weights if requested.
+      if (normalizeWeights) {
+        float weightSum = 0;
+        for (auto& jointWeight : vertex.skinningInfo)
+          weightSum += jointWeight.jointWeight;
+        const float weightSumRcp = 1.0 / weightSum;
+        for (auto& jointWeight : vertex.skinningInfo)
+          jointWeight.jointWeight *= weightSumRcp;
+      }
+    }
+
+    if (globalMaxWeights > 0) {
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0);
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0);
+    }
+    if (globalMaxWeights > 1) {
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1);
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1);
+    }
+    if (globalMaxWeights > 2) {
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2);
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2);
+    }
+    if (globalMaxWeights > 3) {
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3);
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3);
+    }
+
+    assert(globalMaxWeights <= RawModel::MAX_SUPPORTED_WEIGHTS);
+    // Copy to gltf friendly structure
+    for (auto& vertex : vertices) {
+      for (int i = 0; i < globalMaxWeights; i += 4) { // Ensure all vertices have the same number of streams
+        Vec4f weights{0.0};
+        Vec4i jointIds{0,0,0,0};
+        for (int j = i; j < i + 4 && j < vertex.skinningInfo.size(); j++) {
+          weights[j - i] = vertex.skinningInfo[j].jointWeight;
+          jointIds[j - i] = vertex.skinningInfo[j].jointIndex;
+        }
+        const int vertexStream = i / 4;
+        switch (vertexStream) {
+        case 0:
+          vertex.jointIndices0 = jointIds;
+          vertex.jointWeights0 = weights;
+          break;
+        case 1:
+          vertex.jointIndices1 = jointIds;
+          vertex.jointWeights1 = weights;
+          break;
+        case 2:
+          vertex.jointIndices2 = jointIds;
+          vertex.jointWeights2 = weights;
+          break;
+        case 3:
+          vertex.jointIndices3 = jointIds;
+          vertex.jointWeights3 = weights;
+          break;
+        default:
+          assert(0);
+        }
       }
     }
   }
@@ -580,7 +655,8 @@ void RawModel::CreateMaterialModels(
       if (keepAttribs != -1) {
         int keep = keepAttribs;
         if ((keepAttribs & RAW_VERTEX_ATTRIBUTE_POSITION) != 0) {
-          keep |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
+          keep |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 |
+            RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3;
         }
         if ((keepAttribs & RAW_VERTEX_ATTRIBUTE_AUTO) != 0) {
           keep |= RAW_VERTEX_ATTRIBUTE_POSITION;
@@ -632,6 +708,18 @@ void RawModel::CreateMaterialModels(
         }
         if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1) == 0) {
           vertex.jointWeights1 = defaultVertex.jointWeights1;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2) == 0) {
+          vertex.jointIndices2 = defaultVertex.jointIndices2;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2) == 0) {
+          vertex.jointWeights2 = defaultVertex.jointWeights2;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3) == 0) {
+          vertex.jointIndices3 = defaultVertex.jointIndices3;
+        }
+        if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3) == 0) {
+          vertex.jointWeights3 = defaultVertex.jointWeights3;
         }
       }
 

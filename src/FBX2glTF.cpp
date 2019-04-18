@@ -140,11 +140,24 @@ int main(int argc, char* argv[]) {
       gltfOptions.useBlendShapeTangents,
       "Include blend shape tangents, if reported present by the FBX SDK.");
 
+  app.add_flag(
+      "--normalize-weights",
+      gltfOptions.normalizeSkinningWeights,
+      "Normalize skinning weights.");
+
+  app.add_option(
+      "--skinning-weights",
+      gltfOptions.maxSkinningWeights,
+      "How many joint influences per vertex are allowed.",
+      true)
+      ->check(CLI::Range(1, RawModel::MAX_SUPPORTED_WEIGHTS));
+
   app.add_option(
          "-k,--keep-attribute",
          [&](std::vector<std::string> attributes) -> bool {
            gltfOptions.keepAttribs =
-             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1;
+             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES0 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS0 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES1 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS1 |
+             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES2 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS2 | RAW_VERTEX_ATTRIBUTE_JOINT_INDICES3 | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS3;
            for (std::string attribute : attributes) {
              if (attribute == "position") {
                gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION;
@@ -204,7 +217,7 @@ int main(int argc, char* argv[]) {
   app.add_option(
          "--draco-bits-for-normals",
          gltfOptions.draco.quantBitsNormal,
-         "How many bits to quantize nornals to.",
+         "How many bits to quantize normals to.",
          true)
       ->check(CLI::Range(1, 32))
       ->group("Draco");
@@ -310,7 +323,7 @@ int main(int argc, char* argv[]) {
   if (!texturesTransforms.empty()) {
     raw.TransformTextures(texturesTransforms);
   }
-  raw.Condense();
+  raw.Condense(gltfOptions.maxSkinningWeights, gltfOptions.normalizeSkinningWeights);
   raw.TransformGeometry(gltfOptions.computeNormals);
 
   std::ofstream outStream; // note: auto-flushes in destructor
