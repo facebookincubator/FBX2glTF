@@ -15,8 +15,6 @@
 
 #include "FBX2glTF.h"
 
-#define MAX_SKINNING_WEIGHTS 32
-
 enum RawVertexAttribute {
   RAW_VERTEX_ATTRIBUTE_POSITION = 1 << 0,
   RAW_VERTEX_ATTRIBUTE_NORMAL = 1 << 1,
@@ -61,8 +59,8 @@ struct RawVertex {
   Vec4f color{0.0f};
   Vec2f uv0{0.0f};
   Vec2f uv1{0.0f};
-  Vec4i jointIndices[(MAX_SKINNING_WEIGHTS - 1) / 4 + 1];
-  Vec4f jointWeights[(MAX_SKINNING_WEIGHTS - 1) / 4 + 1];
+  std::vector<Vec4i> jointIndices;
+  std::vector<Vec4f> jointWeights;
 
 
   std::vector<RawVertexSkinningInfo> skinningInfo;
@@ -372,7 +370,6 @@ struct RawNode {
 
 class RawModel {
  public:
-  static const int MAX_SUPPORTED_WEIGHTS = MAX_SKINNING_WEIGHTS;
 
   RawModel();
 
@@ -542,7 +539,7 @@ class RawModel {
   // Returns true if the vertices store the particular attribute.
   template <typename _attrib_type_>
   void GetArrayAttributeArray(std::vector<_attrib_type_>& out, 
-    const _attrib_type_ (RawVertex::*ptr)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+    const std::vector<_attrib_type_> RawVertex::*ptr,
     const int arrayOffset)
     const;
 
@@ -586,7 +583,7 @@ void RawModel::GetAttributeArray(
 template <typename _attrib_type_>
 void RawModel::GetArrayAttributeArray(
   std::vector<_attrib_type_>& out,
-  const _attrib_type_ (RawVertex::*ptr)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+  const std::vector<_attrib_type_> RawVertex::*ptr,
   const int arrayOffset) const {
   out.resize(vertices.size());
   for (size_t i = 0; i < vertices.size(); i++) {

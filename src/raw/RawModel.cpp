@@ -425,19 +425,20 @@ void RawModel::Condense(const int maxSkinningWeights, const bool normalizeWeight
     }
 
     
-    assert(globalMaxWeights <= RawModel::MAX_SUPPORTED_WEIGHTS);
+    assert(globalMaxWeights >= 0);
     // Copy to gltf friendly structure
     for (auto& vertex : vertices) {
-      for (int i = 0; i < globalMaxWeights; i += 4) {
+      vertex.jointIndices.reserve(globalMaxWeights);
+      vertex.jointWeights.reserve(globalMaxWeights);
+      for (int i = 0; i < globalMaxWeights; i += 4) { // ensure every vertex has the same amount of weights
         Vec4f weights{0.0};
         Vec4i jointIds{0,0,0,0};
         for (int j = i; j < i + 4 && j < vertex.skinningInfo.size(); j++) {
           weights[j - i] = vertex.skinningInfo[j].jointWeight;
           jointIds[j - i] = vertex.skinningInfo[j].jointIndex;
         }
-        const int vertexStream = i / 4;
-        vertex.jointIndices[vertexStream] = jointIds;
-        vertex.jointWeights[vertexStream] = weights;
+        vertex.jointIndices.push_back(jointIds);
+        vertex.jointWeights.push_back(weights);
       }
     }
   }
@@ -660,12 +661,10 @@ void RawModel::CreateMaterialModels(
           vertex.uv1 = defaultVertex.uv1;
         }
         if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) == 0) {
-          for (int i = 0; i < RawModel::MAX_SUPPORTED_WEIGHTS ; i++)
-            vertex.jointIndices[i] = defaultVertex.jointIndices[i];
+            vertex.jointIndices = defaultVertex.jointIndices;
         }
         if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) == 0) {
-          for (int i = 0; i < RawModel::MAX_SUPPORTED_WEIGHTS; i++)
-            vertex.jointWeights[i] = defaultVertex.jointWeights[i];
+            vertex.jointWeights = defaultVertex.jointWeights;
         }
       }
 

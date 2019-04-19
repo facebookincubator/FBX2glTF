@@ -536,7 +536,6 @@ ModelData* Raw2Gltf(
           for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
             const AttributeArrayDefinition<Vec4i> ATTR_JOINTS(
               std::string("JOINTS_") + std::to_string(i/4),
-              //"JOINTS_0",
               &RawVertex::jointIndices,
               GLT_VEC4I,
               draco::GeometryAttribute::GENERIC,
@@ -549,7 +548,6 @@ ModelData* Raw2Gltf(
           for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
             const AttributeArrayDefinition<Vec4f> ATTR_WEIGHTS(
               std::string("WEIGHTS_") + std::to_string(i/4),
-              //"WEIGHTS_0",
               &RawVertex::jointWeights,
               GLT_VEC4F,
               draco::GeometryAttribute::GENERIC,

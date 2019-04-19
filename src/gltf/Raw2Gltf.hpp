@@ -173,7 +173,7 @@ struct AttributeDefinition {
 template <class T>
 struct AttributeArrayDefinition {
   const std::string gltfName;
-  const T (RawVertex::*rawAttributeIx)[(RawModel::MAX_SUPPORTED_WEIGHTS -1 ) / 4 + 1];
+  const std::vector<T> RawVertex::*rawAttributeIx;
   const GLType glType;
   const int arrayOffset;
   const draco::GeometryAttribute::Type dracoAttribute;
@@ -181,7 +181,7 @@ struct AttributeArrayDefinition {
 
   AttributeArrayDefinition(
     const std::string gltfName,
-    const T (RawVertex::*rawAttributeIx)[(RawModel::MAX_SUPPORTED_WEIGHTS - 1) / 4 + 1],
+    const std::vector<T> RawVertex::*rawAttributeIx,
     const GLType& _glType,
     const draco::GeometryAttribute::Type dracoAttribute,
     const draco::DataType dracoComponentType,

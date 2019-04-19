@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
       gltfOptions.maxSkinningWeights,
       "How many joint influences per vertex are allowed.",
       true)
-      ->check(CLI::Range(1, RawModel::MAX_SUPPORTED_WEIGHTS));
+      ->check(CLI::Range(0, 512));
 
   app.add_option(
          "-k,--keep-attribute",
