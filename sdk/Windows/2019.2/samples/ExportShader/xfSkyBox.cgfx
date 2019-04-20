@@ -1,0 +1,142 @@
+/*********************************************************************NVMH3****
+Path:  NVSDK\Common\media\cgfx
+File:  $Id: //sw/devtools/FXComposer2/Alpha4+/SDK/MEDIA/CgFX1.4/xfSkyBox.cgfx#1 $
+
+Copyright NVIDIA Corporation 2002
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THIS SOFTWARE IS PROVIDED
+*AS IS* AND NVIDIA AND ITS SUPPLIERS DISCLAIM ALL WARRANTIES, EITHER EXPRESS
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  IN NO EVENT SHALL NVIDIA OR ITS SUPPLIERS
+BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL DAMAGES
+WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS,
+BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR ANY OTHER PECUNIARY LOSS)
+ARISING OUT OF THE USE OF OR INABILITY TO USE THIS SOFTWARE, EVEN IF NVIDIA HAS
+BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+
+Comments:
+	Projects a cube map across space, with that space defined by a user
+		coordinate system. Read this into maya, connect an extra transform's
+		WorldInverse matrix to "CoordSysIXf,"  and apply to a background
+		geometry (big sphere, cube, whatever)
+	$Date: 2006/04/10 $
+
+******************************************************************************/
+
+// string Category = "Effects\\Cg\\BRDF";
+// string keywords = "dx9,texture,anti-aliasing,derivatives,pointlight";
+// string description = "Analytic Anti-aliasing - No Texture Map";
+
+/************* UNTWEAKABLES **************/
+
+float4x4 WorldITXf : WorldInverseTranspose;
+float4x4 WorldViewProjXf : WorldViewProjection;
+float4x4 WorldXf : World;
+float4x4 ViewITXf : ViewInverseTranspose;
+float4x4 ViewIXf : ViewInverse;
+float4x4 WorldViewXf : WorldView;
+
+/************* TWEAKABLES **************/
+
+float3 SurfColor : Diffuse
+<
+    string UIName = "Surface Color";
+> = {1.0f, 1.0f, 1.0f};
+
+// float4 userCoords0 = {1,0,0,0};
+// float4 userCoords1 = {0,1,0,0};
+// float4 userCoords2 = {0,0,1,0};
+// float4 userCoords3 = {0,0,0,1};
+
+float4x4 CoordSysIXf : WorldInverse;
+
+float MasterAlpha <
+	string UIWidget = "slider";
+	float UIMin = 0.0;
+	float UIMax = 1.0;
+	float UIStep = 0.001;
+> = 0.0f;
+
+//////////////////////
+
+texture EnvTexture : Environment <
+	string ResourceName = "Default_reflection.dds";
+	string ResourceType = "Cube";
+>;
+
+samplerCUBE EnvSampler = sampler_state {
+	Texture = <EnvTexture>;
+	MinFilter = LinearMipMapLinear;
+	MagFilter = Linear;
+	WrapS = ClampToEdge;
+	WrapT = ClampToEdge;
+	WrapR = ClampToEdge;
+};
+
+/************* DATA STRUCTS **************/
+
+/* data from application vertex buffer */
+struct appdata {
+    float3 Position	: POSITION;
+};
+
+/* data passed from vertex shader to pixel shader */
+struct vertexOutput {
+    float4 HPosition	: POSITION;
+    float3 UserPos	: TEXCOORD0;
+};
+
+/*********** vertex shader ******/
+
+vertexOutput mainVS(appdata IN) {
+    vertexOutput OUT;
+    float4 Po = float4(IN.Position.xyz,1.0);
+    OUT.HPosition = mul(WorldViewProjXf, Po);
+    float4 Pw = mul(WorldXf, Po);
+    OUT.UserPos = mul(CoordSysIXf,Pw).xyz;
+    return OUT;
+}
+
+vertexOutput flipVS(appdata IN) {
+    vertexOutput OUT;
+    float4 Po = float4(IN.Position.xyz,1.0);
+    float4 Pw = mul(WorldXf, Po);
+    OUT.UserPos = mul(CoordSysIXf,Pw).xyz;
+    OUT.UserPos.y = -OUT.UserPos.y;
+    OUT.HPosition = mul(WorldViewProjXf, Po);
+    return OUT;
+}
+
+
+/********* pixel shader ********/
+
+// PS with box-filtered step function
+float4 mainPS(vertexOutput IN) : COLOR {
+    float3 reflColor = SurfColor * texCUBE(EnvSampler,-IN.UserPos).xyz;
+    // return float4(IN.UserPos.xyz,1.0f);
+    return float4(reflColor.xyz,MasterAlpha);
+}
+
+/************************************************************/
+
+technique yFlip {
+    pass p0 {		
+	VertexProgram = compile arbvp1 flipVS();
+	DepthTestEnable = true;
+	DepthMask = true;
+	CullFaceEnable = false;
+	FragmentProgram = compile arbfp1 mainPS();
+    }
+}
+
+technique user {
+    pass p0 {		
+	VertexProgram = compile arbvp1 mainVS();
+	DepthTestEnable = true;
+	DepthMask = true;
+	CullFaceEnable = false;
+	FragmentProgram = compile arbfp1 mainPS();
+    }
+}
+
+/***************************** eof ***/

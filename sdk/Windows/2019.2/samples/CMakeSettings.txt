@@ -1,0 +1,266 @@
+# ===================================================================================
+#
+# PRE-REQUISITES
+#
+# ===================================================================================
+
+STRING(REGEX REPLACE "/[^/]*$" "" FBX_CMAKE_ROOT "${CMAKE_CURRENT_LIST_FILE}")
+GET_FILENAME_COMPONENT(FBX_ROOT  "${FBX_CMAKE_ROOT}/.." ABSOLUTE)
+STRING(REGEX MATCH "[^/]+$" FBX_CMAKE_OUTPUT_FOLDER "${CMAKE_CURRENT_BINARY_DIR}")
+
+SET(FBX_CMAKELIST_DEPENDENT)
+IF(WIN32 AND CMAKE_SUPPRESS_REGENERATION)
+    SET(FBX_CMAKELIST_DEPENDENT "CMakeLists.txt")
+ENDIF(WIN32 AND CMAKE_SUPPRESS_REGENERATION)
+
+IF (NOT WIN32 AND NOT APPLE)
+   # assume we are on Linux
+   SET(LINUX 1)
+ENDIF()
+
+# ===================================================================================
+#
+# MACROS SECTION
+#
+# ===================================================================================
+
+MACRO(SETPOLICY policy state)
+    if(POLICY ${policy})
+        cmake_policy(SET ${policy} ${state})
+    endif()
+ENDMACRO(SETPOLICY policy state)
+
+
+MACRO(SET_SAMPLES_GLOBAL_FLAGS)
+    SET(FBX_TMP_TARGET_LIBS ${FBX_REQUIRED_LIBS_DEPENDENCY})
+    IF(NOT WIN32)
+        SET(FBX_TMP_TARGET_LIBS ${FBX_TMP_TARGET_LIBS} dl pthread)
+        IF(APPLE)
+            IF(NOT FBX_CLANG)
+                SET(FBX_LINKER_FLAGS "-framework Carbon -framework SystemConfiguration ${FBX_LINKER_FLAGS}")
+            ELSE(NOT FBX_CLANG)
+                SET(FBX_LINKER_FLAGS "-framework CoreFoundation -framework SystemConfiguration ${FBX_LINKER_FLAGS}")
+            ENDIF(NOT FBX_CLANG)
+            SET(FBX_TMP_TARGET_LIBS ${FBX_TMP_TARGET_LIBS} iconv)
+        ELSEIF(LINUX)
+            SET(FBX_LINKER_FLAGS ${FBX_LINKER_FLAGS} "-Wl,-rpath,${FBX_BUILD_ROOT}")
+        ENDIF()
+        IF(FBX_LINKER_FLAGS)
+            SET_TARGET_PROPERTIES(${FBX_TARGET_NAME} PROPERTIES LINK_FLAGS ${FBX_LINKER_FLAGS})
+        ENDIF()
+    ENDIF(NOT WIN32)
+
+    INCLUDE_DIRECTORIES(BEFORE "${FBX_ROOT}/include")
+    INCLUDE_DIRECTORIES(AFTER "${FBX_CMAKE_ROOT}/Common")
+
+    IF(WIN32)
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /W4 ${FBX_CC_RTLd}")
+        SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /W4 ${FBX_CC_RTLd}")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${FBX_CC_RTL}")
+        SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} ${FBX_CC_RTL}")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${FBX_CC_RTL}")
+        SET(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} ${FBX_CC_RTL}")
+    ELSE(WIN32)
+        SET(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+        IF(FBX_ARCH STREQUAL "x64")
+            SET(CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}")
+            SET(CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}")
+        ELSEIF(FBX_ARCH STREQUAL "x86")
+            SET(CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}")
+            SET(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
+        ENDIF()
+        IF (FBX_DEBUG)
+            SET(CMAKE_CXX_FLAGS "-D_DEBUG -g ${CMAKE_CXX_FLAGS}")
+            SET(CMAKE_C_FLAGS "-D_DEBUG -g ${CMAKE_C_FLAGS}")
+        ELSE()
+            SET(CMAKE_CXX_FLAGS "-D_NDEBUG -Os ${CMAKE_CXX_FLAGS}")
+            SET(CMAKE_C_FLAGS "-D_NDEBUG -Os ${CMAKE_C_FLAGS}")
+        ENDIF()
+        
+        IF(APPLE)
+            SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+            SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall")
+        ENDIF(APPLE)
+    ENDIF(WIN32)
+    
+    IF(FBX_SHARED)
+        ADD_DEFINITIONS(-DFBXSDK_SHARED)
+        IF(WIN32)
+            STRING(REGEX REPLACE "\\.lib" ".dll" DLL_FILE "${FBX_REQUIRED_LIBS_DEPENDENCY}")
+            ADD_CUSTOM_COMMAND(TARGET ${FBX_TARGET_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${DLL_FILE}
+                $<TARGET_FILE_DIR:${FBX_TARGET_NAME}>)
+        ENDIF()
+        
+        # copy the fbxsdk dynamic library to the output directory
+        ADD_CUSTOM_COMMAND(
+            TARGET ${FBX_TARGET_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FBX_SDK_ABS} ${FBX_BUILD_ROOT}/${FBX_SDK}
+        )
+    ENDIF(FBX_SHARED)
+
+    TARGET_LINK_LIBRARIES(${FBX_TARGET_NAME} ${FBX_TMP_TARGET_LIBS})
+    SET(FBX_TMP_TARGET_LIBS)
+ENDMACRO(SET_SAMPLES_GLOBAL_FLAGS)
+
+
+MACRO(FBX_PROJECT project subdir)
+    SET(FBX_PROJECT_NAME   ${project})
+    SET(FBX_TARGET_NAME    ${project})
+    SET(FBX_PROJECT_SUBDIR ${subdir} )
+    
+    SET(TMP_COMPILER ${FBX_COMPILER})
+    IF(FBX_RTL_SUFFX)
+        SET(TMP_COMPILER ${FBX_COMPILER}${FBX_RTL_SUFFX})
+    ENDIF()
+    IF(NOT WIN32)
+        IF (NOT FBX_SHARED)
+            SET(TMP_COMPILER ${FBX_COMPILER}-static)
+        ENDIF()
+    ENDIF()
+    
+    IF (WIN32)
+        SET(FBX_BUILD_ROOT "${FBX_ROOT}/bin/${TMP_COMPILER}") #${CMAKE_CFG_INTDIR} is automatically added by CMake
+    ELSEIF(LINUX OR APPLE)
+        SET(FBX_BUILD_ROOT "${FBX_ROOT}/bin/${FBX_ARCH}/${TMP_COMPILER}/${FBX_VARIANT}")
+    ELSE()
+        MESSAGE(FATAL_ERROR "Unsupported platform.")
+        RETURN()
+    ENDIF()
+    
+    PROJECT(${project} ${ARGN})
+    SET(PROJECT_BINARY_DIR     "${FBX_BUILD_ROOT}")
+    SET(EXECUTABLE_OUTPUT_PATH "${FBX_BUILD_ROOT}")
+    SET(LIBRARY_OUTPUT_PATH    "${FBX_BUILD_ROOT}")
+    
+    # Put the Variant part back into FBX_BUILD_ROOT
+    IF (WIN32)
+        SET(FBX_BUILD_ROOT "${FBX_ROOT}/bin/${TMP_COMPILER}/${CMAKE_CFG_INTDIR}")
+    ENDIF()
+ENDMACRO(FBX_PROJECT project subdir)
+
+
+# ===================================================================================
+#
+# COMMON SECTION
+#
+# ===================================================================================
+IF(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER ${CMAKE_MIN_REQ_VERSION})
+    IF (${CMAKE_MAJOR_VERSION} LESS 3)
+        SETPOLICY(CMP0005 OLD)
+        SETPOLICY(CMP0003 OLD)
+        SETPOLICY(CMP0011 OLD)
+    ELSE()
+        SETPOLICY(CMP0003 NEW)
+        SETPOLICY(CMP0011 NEW)
+    ENDIF()
+    SETPOLICY(CMP0042 OLD)
+    SETPOLICY(CMP0045 OLD)
+ENDIF()
+
+SET(FBX_SHARED)         # can be set at command line with -DFBX_SHARED=1
+SET(FBX_STATIC_RTL)     # can be set at command line with -DFBX_STATIC_RTL=1 (use static MSVCRT (/MT), otherwise use dynamic MSVCRT (/MD))
+SET(FBX_VARIANT)        # can be set at command line with -DFBX_VARIANT=debug or release (Unix only)
+SET(FBX_ARCH)           # can be set at command line with -DFBX_ARCH=x64 or x86 (Unix only)
+SET(FBX_LINKER_FLAGS)
+
+IF (FBX_SHARED AND FBX_STATIC_RTL)
+    SET(FBX_STATIC_RTL)
+    MESSAGE("\nBoth FBX_SHARED and FBX_STATIC_RTL have been defined. They are mutually exclusive, considering FBX_SHARED only.")
+ENDIF()
+
+IF(NOT FBX_VARIANT)
+    SET(FBX_VARIANT "debug")
+ENDIF()
+
+SET(FBX_DEBUG)
+IF (FBX_VARIANT MATCHES "debug")
+    SET(FBX_DEBUG 1)
+ENDIF()
+
+IF(NOT FBX_ARCH)
+    SET(FBX_ARCH "x64")
+    IF(WIN32 AND NOT CMAKE_CL_64)
+        SET(FBX_ARCH "x86")
+    ENDIF()
+ENDIF()
+
+IF(WIN32)
+    SET(CMAKE_USE_RELATIVE_PATHS 1)
+    SET(LIB_EXTENSION ".lib")
+ELSE(WIN32)
+    SET(LIB_EXTENSION ".a")
+    IF(FBX_SHARED)
+        IF(APPLE)
+            SET(LIB_EXTENSION ".dylib")
+        ELSEIF(LINUX)
+            SET(LIB_EXTENSION ".so")
+        ENDIF()
+    ENDIF()
+ENDIF(WIN32)
+
+SET(FBX_SDK libfbxsdk${LIB_EXTENSION})
+IF(WIN32)
+    IF(CMAKE_CONFIGURATION_TYPES)      
+        set(CMAKE_CONFIGURATION_TYPES Debug Release RelWithDebInfo)
+        set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "Reset the configurations to what we need" FORCE)
+    ENDIF()
+    
+    SET(FBX_VARIANT "$(Configuration)")
+    IF(MSVC_VERSION EQUAL 1700)
+        SET(FBX_COMPILER "vs2012")
+    ELSEIF(MSVC_VERSION EQUAL 1800)
+        SET(FBX_COMPILER "vs2013")
+    ELSEIF(MSVC_VERSION EQUAL 1900)
+        SET(FBX_COMPILER "vs2015")
+    ELSEIF(MSVC_VERSION EQUAL 1911)
+        SET(FBX_COMPILER "vs2017")
+    ENDIF()
+    SET(FBX_TARGET_LIBS_PATH "${FBX_ROOT}/lib/${FBX_COMPILER}/${FBX_ARCH}/${FBX_VARIANT}")
+    SET(FBX_SDK_ABS ${FBX_TARGET_LIBS_PATH}/${FBX_SDK})
+    SET(FBX_REQUIRED_LIBS_DEPENDENCY ${FBX_SDK_ABS})
+    IF(NOT FBX_SHARED)
+        IF(FBX_STATIC_RTL)
+            SET(FBX_CC_RTL "/MT")
+            SET(FBX_CC_RTLd "/MTd")
+            SET(FBX_RTL_SUFFX "-mt")
+        ELSE()
+            SET(FBX_CC_RTL "/MD")
+            SET(FBX_CC_RTLd "/MDd")
+            SET(FBX_RTL_SUFFX "-md")
+        ENDIF()        
+        SET(FBX_REQUIRED_LIBS_DEPENDENCY 
+            ${FBX_TARGET_LIBS_PATH}/libfbxsdk${FBX_RTL_SUFFX}${LIB_EXTENSION} 
+            ${FBX_TARGET_LIBS_PATH}/libxml2${FBX_RTL_SUFFX}${LIB_EXTENSION} 
+            ${FBX_TARGET_LIBS_PATH}/zlib${FBX_RTL_SUFFX}${LIB_EXTENSION})
+    ENDIF()
+ELSE()
+    MESSAGE("Detecting compiler version used")
+    EXEC_PROGRAM(${CMAKE_CXX_COMPILER} ARGS --version OUTPUT_VARIABLE CMAKE_CXX_COMPILER_VERSION)
+    IF(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        MESSAGE("Detected Clang ${CMAKE_CXX_COMPILER_VERSION}")
+        SET(FBX_COMPILER "clang")
+        SET(FBX_CLANG 1)
+    ELSE()
+        SET(FBX_COMPILER "gcc")
+        IF(CMAKE_CXX_COMPILER_VERSION MATCHES " [4-9]\\.[0-9].*")
+            MESSAGE( "Detected GCC >= 4.0" )
+        ELSE()
+            MESSAGE(FATAL_ERROR  "Detected " ${GCC_PREFIX} " only GCC 4.x and higher supported")
+        ENDIF()
+    ENDIF()
+
+    IF(APPLE)
+        SET(FBX_TARGET_LIBS_PATH "${FBX_ROOT}/lib/${FBX_COMPILER}/${FBX_VARIANT}")
+        IF(FBX_COMPILER STREQUAL "gcc")
+            SET(FBX_TARGET_LIBS_PATH "${FBX_ROOT}/lib/${FBX_COMPILER}/ub/${FBX_VARIANT}")
+        ENDIF()
+        SET(FBX_EXTRA_LIBS_PATH ${FBX_TARGET_LIBS_PATH}/lib)
+    ELSEIF(LINUX)
+        SET(FBX_TARGET_LIBS_PATH "${FBX_ROOT}/lib/${FBX_COMPILER}/${FBX_ARCH}/${FBX_VARIANT}")
+        SET(FBX_EXTRA_LIBS_PATH ${FBX_TARGET_LIBS_PATH}/lib)
+    ENDIF()
+    SET(FBX_SDK_ABS ${FBX_EXTRA_LIBS_PATH}fbxsdk${LIB_EXTENSION})
+    SET(FBX_REQUIRED_LIBS_DEPENDENCY ${FBX_SDK_ABS} z xml2)
+ENDIF()
