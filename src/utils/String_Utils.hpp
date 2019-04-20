@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cctype>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -16,39 +18,17 @@
 
 #if defined(_MSC_VER)
 #define strncasecmp _strnicmp
-#define strcasecmp _stricmp
 #endif
 
 namespace StringUtils {
 
-static const unsigned int MAX_PATH_LENGTH = 1024;
-
-enum PathSeparator { PATH_WIN = '\\', PATH_UNIX = '/' };
-
-PathSeparator operator!(const PathSeparator& s);
-
-PathSeparator GetPathSeparator();
-const std::string NormalizePath(const std::string& path);
-
-const std::string GetCleanPathString(
-    const std::string& path,
-    const PathSeparator separator = PATH_WIN);
-
-template <size_t size>
-void GetCleanPath(char (&dest)[size], const char* path, const PathSeparator separator = PATH_WIN) {
-  size_t len = size - 1;
-  strncpy(dest, path, len);
-  char* destPtr = dest;
-  while ((destPtr = strchr(destPtr, !separator)) != nullptr) {
-    *destPtr = separator;
-  }
+inline std::string ToLower(std::string s) {
+  std::transform(s.begin(), s.end(), s.begin(), [](uint8_t c) { return std::tolower(c); });
+  return s;
 }
 
-const std::string GetFolderString(const std::string& path);
-const std::string GetFileNameString(const std::string& path);
-const std::string GetFileBaseString(const std::string& path);
-const std::string GetFileSuffixString(const std::string& path);
-
-int CompareNoCase(const std::string& s1, const std::string& s2);
+inline int CompareNoCase(const std::string& s1, const std::string& s2) {
+  return strncasecmp(s1.c_str(), s2.c_str(), std::max(s1.length(), s2.length()));
+}
 
 } // namespace StringUtils

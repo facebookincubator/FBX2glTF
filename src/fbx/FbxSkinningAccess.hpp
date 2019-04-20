@@ -37,7 +37,7 @@ class FbxSkinningAccess {
     return jointNodes[jointIndex];
   }
 
-  const long GetJointId(const int jointIndex) const {
+  const uint64_t GetJointId(const int jointIndex) const {
     return jointIds[jointIndex];
   }
 
@@ -49,7 +49,7 @@ class FbxSkinningAccess {
     return jointInverseGlobalTransforms[jointIndex];
   }
 
-  const long GetRootNode() const {
+  const uint64_t GetRootNode() const {
     assert(rootIndex != -1);
     return jointIds[rootIndex];
   }
@@ -70,7 +70,7 @@ class FbxSkinningAccess {
 
  private:
   int rootIndex;
-  std::vector<long> jointIds;
+  std::vector<uint64_t> jointIds;
   std::vector<FbxNode*> jointNodes;
   std::vector<FbxMatrix> jointSkinningTransforms;
   std::vector<FbxMatrix> jointInverseGlobalTransforms;
