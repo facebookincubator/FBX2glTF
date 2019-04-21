@@ -13,8 +13,8 @@
 
 bool LoadFBXFile(
     RawModel& raw,
-    const char* fbxFileName,
-    const char* textureExtensions,
+    const std::string fbxFileName,
+    const std::set<std::string>& textureExtensions,
     const GltfOptions& options);
 
 json TranscribeProperty(FbxProperty& prop);

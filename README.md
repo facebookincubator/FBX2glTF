@@ -1,4 +1,4 @@
-# FBX2glTF
+﻿# FBX2glTF
 
 This is a command line tool for converting 3D model assets on Autodesk's
 venerable [FBX](https://www.autodesk.com/products/fbx/overview) format to
@@ -28,48 +28,67 @@ Or perhaps, as part of a more complex pipeline:
 
 You can always run the binary with --help to see what options it takes:
 ```
-FBX2glTF 2.0: Generate a glTF 2.0 representation of an FBX model.
-Usage:
-  FBX2glTF [OPTION...] [<FBX File>]
+FBX2glTF 0.9.6: Generate a glTF 2.0 representation of an FBX model.
+Usage: FBX2glTF [OPTIONS] [FBX Model]
 
-  -i, --input arg               The FBX model to convert.
-  -o, --output arg              Where to generate the output, without suffix.
-  -e, --embed                   Inline buffers as data:// URIs within
-                                generated non-binary glTF.
-  -b, --binary                  Output a single binary format .glb file.
-  -d, --draco                   Apply Draco mesh compression to geometries.
-      --flip-u                  Flip all U texture coordinates.
-      --flip-v                  Flip all V texture coordinates (default
-                                behaviour!)
-      --no-flip-v               Suppress the default flipping of V texture
-                                coordinates
-      --pbr-metallic-roughness  Try to glean glTF 2.0 native PBR attributes
-                                from the FBX.
-      --khr-materials-unlit     Use KHR_materials_unlit extension to specify
-                                Unlit shader.
-      --animation-files         Read multiple fbx animation files.
-      --blend-shape-normals     Include blend shape normals, if reported
-                                present by the FBX SDK.
-      --blend-shape-tangents    Include blend shape tangents, if reported
-                                present by the FBX SDK.
-      --long-indices arg        Whether to use 32-bit indices
-                                (never|auto|always).
-      --compute-normals arg     When to compute normals for vertices
-                                (never|broken|missing|always).
-  -k, --keep-attribute arg      Used repeatedly to build a limiting set of
-                                vertex attributes to keep.
-  -v, --verbose                 Enable verbose output.
-  -h, --help                    Show this help.
-  -V, --version                 Display the current program version.
+Positionals:
+  FBX Model FILE              The FBX model to convert.
+
+Options:
+  -h,--help                   Print this help message and exit
+  -v,--verbose                Include blend shape tangents, if reported present by the FBX SDK.
+  -V,--version
+  -i,--input FILE             The FBX model to convert.
+  -o,--output TEXT            Where to generate the output, without suffix.
+  -e,--embed                  Inline buffers as data:// URIs within generated non-binary glTF.
+  -b,--binary                 Output a single binary format .glb file.
+  --long-indices (never|auto|always)
+                              Whether to use 32-bit indices.
+  --compute-normals (never|broken|missing|always)
+                              When to compute vertex normals from mesh geometry.
+  --anim-framerate (bake24|bake30|bake60)
+                              Select baked animation framerate.
+  --flip-u                    Flip all U texture coordinates.
+  --no-flip-u                 Don't flip U texture coordinates.
+  --flip-v                    Flip all V texture coordinates.
+  --no-flip-v                 Don't flip V texture coordinates.
+  --no-khr-lights-punctual    Don't use KHR_lights_punctual extension to export FBX lights.
+  --animation-files         Read multiple fbx animation files.
+  --user-properties           Transcribe FBX User Properties into glTF node and material 'extras'.
+  --blend-shape-normals       Include blend shape normals, if reported present by the FBX SDK.
+  --blend-shape-tangents      Include blend shape tangents, if reported present by the FBX SDK.
+  -k,--keep-attribute (position|normal|tangent|binormial|color|uv0|uv1|auto) ...
+                              Used repeatedly to build a limiting set of vertex attributes to keep.
+
+
+Materials:
+  --pbr-metallic-roughness    Try to glean glTF 2.0 native PBR attributes from the FBX.
+  --khr-materials-unlit       Use KHR_materials_unlit extension to request an unlit shader.
+
+
+Draco:
+  -d,--draco                  Apply Draco mesh compression to geometries.
+  --draco-compression-level INT in [0 - 10]=7
+                              The compression level to tune Draco to.
+  --draco-bits-for-position INT in [1 - 32]=14
+                              How many bits to quantize position to.
+  --draco-bits-for-uv INT in [1 - 32]=10
+                              How many bits to quantize UV coordinates to.
+  --draco-bits-for-normals INT in [1 - 32]=10
+                              How many bits to quantize nornals to.
+  --draco-bits-for-colors INT in [1 - 32]=8
+                              How many bits to quantize colors to.
+  --draco-bits-for-other INT in [1 - 32]=8
+                              How many bits to quantize all other vertex attributes to.
 ```
 
 Some of these switches are not obvious:
 
 - `--embed` is the way to get a single distributable file without using the
-  binary format. It encodes the binary buffer(s) as a single enormous
-  base64-encoded `data://` URI. This is a very slow and space-consuming way to
-  accomplish what the binary format was invented to do simply and efficiently,
-  but it can be useful e.g. for loaders that don't understand the .glb format.
+  binary format. It encodes the binary buffer(s) as a single base64-encoded
+  `data://` URI. This is a very slow and space-consuming way to accomplish what
+  the binary format was invented to do simply and efficiently, but it can be
+  useful e.g. for loaders that don't understand the .glb format.
 - `--flip-u` and `--flip-v`, when enabled, will apply a `x -> (1.0 - x)`
   function to all `u` or `v` texture coordinates respectively. The `u` version
   is perhaps not commonly used, but flipping `v` is **the default behaviour**.
@@ -109,48 +128,45 @@ Some of these switches are not obvious:
 
 ## Building it on your own
 
-This build process has been tested on Linux, Mac OS X and Windows. It requires
-CMake 3.5+ and a reasonably C++11 compliant toolchain.
+Building FBX2glTF has become slightly more ornery because <TODO> explanation.
 
 We currently depend on the open source projects
 [Draco](https://github.com/google/draco),
 [MathFu](https://github.com/google/mathfu),
 [Json](https://github.com/nlohmann/json),
 [cppcodec](https://github.com/tplgy/cppcodec),
-[cxxopts](https://github.com/jarro2783/cxxopts),
+[CLI11](https://github.com/CLIUtils/CLI11),
+[stb](https://github.com/nothings/stb),
 and [fmt](https://github.com/fmtlib/fmt);
-all of which are automatically downloaded, configured and built.
+all of which are automatically downloaded and/or built.
 
-You must manually download and install the
+You must however manually download and install the
 [Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) and
 accept its license agreement.
 
-**At present, only version 2018.1.1 of the FBX SDK is supported**. The
+**At present, only version 2019.2 of the FBX SDK is supported**. The
 build system will not successfully locate any other version.
 
 ### Linux and MacOS X
-Compilation on Unix machines should be as simple as:
+Compilation on Unix machines might look like:
 
 ```
-  > cd <FBX2glTF directory>
-  > cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=Release
-  > make -Cbuild -j4 install
+    <TODO>
 ```
 
 If all goes well, you will end up with a statically linked executable.
 
 ### Windows
 
+<TODO> this needs updating
+
 Windows users may [download](https://cmake.org/download) CMake for Windows,
 install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
 checkout (choose a build directory distinct from the source).
 
 As part of this process, you will be asked to choose which generator
-to use. **At present, only Visual Studio 2017 is supported.** Older
+to use. **At present, only Visual Studio 2017 or 2019 is supported.** Older
 versions of the IDE are unlikely to successfully build the tool.
-
-*(MinGW support is plausible. The difficulty is linking statically against the
-FBX SDK .lib file. Contributions welcome.)*
 
 Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
 entirely ignored here; it is when you open the generated solution that
