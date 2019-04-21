@@ -12,7 +12,7 @@
 std::shared_ptr<BufferViewData> GltfModel::GetAlignedBufferView(
     BufferData& buffer,
     const BufferViewData::GL_ArrayType target) {
-  unsigned long bufferSize = this->binary->size();
+  uint32_t bufferSize = to_uint32(this->binary->size());
   if ((bufferSize % 4) > 0) {
     bufferSize += (4 - (bufferSize % 4));
     this->binary->resize(bufferSize);
@@ -27,7 +27,7 @@ GltfModel::AddRawBufferView(BufferData& buffer, const char* source, uint32_t byt
   bufferView->byteLength = bytes;
 
   // make space for the new bytes (possibly moving the underlying data)
-  unsigned long bufferSize = this->binary->size();
+  uint32_t bufferSize = to_uint32(this->binary->size());
   this->binary->resize(bufferSize + bytes);
 
   // and copy them into place
@@ -52,7 +52,7 @@ std::shared_ptr<BufferViewData> GltfModel::AddBufferViewForFile(
 
     std::vector<char> fileBuffer(size);
     if (file.read(fileBuffer.data(), size)) {
-      result = AddRawBufferView(buffer, fileBuffer.data(), size);
+      result = AddRawBufferView(buffer, fileBuffer.data(), to_uint32(size));
     } else {
       fmt::printf("Warning: Couldn't read %lu bytes from %s, skipping file.\n", size, filename);
     }

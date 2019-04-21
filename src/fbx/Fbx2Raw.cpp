@@ -721,8 +721,19 @@ static void ReadNodeHierarchy(
   }
 }
 
-static void ReadAnimations(RawModel& raw, FbxScene* pScene) {
+static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& options) {
   FbxTime::EMode eMode = FbxTime::eFrames24;
+  switch (options.animationFramerate) {
+    case AnimationFramerateOptions::BAKE24:
+      eMode = FbxTime::eFrames24;
+      break;
+    case AnimationFramerateOptions::BAKE30:
+      eMode = FbxTime::eFrames30;
+      break;
+    case AnimationFramerateOptions::BAKE60:
+      eMode = FbxTime::eFrames60;
+      break;
+  }
   const double epsilon = 1e-5f;
 
   const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
@@ -916,36 +927,58 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene) {
   }
 }
 
-static std::string GetInferredFileName(
+static std::string FindFileLoosely(
     const std::string& fbxFileName,
     const std::string& directory,
     const std::vector<std::string>& directoryFileList) {
   if (FileUtils::FileExists(fbxFileName)) {
     return fbxFileName;
   }
-  // Get the file name with file extension.
-  const std::string fileName =
-      StringUtils::GetFileNameString(StringUtils::GetCleanPathString(fbxFileName));
+
+  // From e.g. C:/Assets/Texture.jpg, extract 'Texture.jpg'
+  const std::string fileName = FileUtils::GetFileName(fbxFileName);
 
   // Try to find a match with extension.
   for (const auto& file : directoryFileList) {
-    if (StringUtils::CompareNoCase(fileName, file) == 0) {
-      return std::string(directory) + file;
+    if (StringUtils::CompareNoCase(fileName, FileUtils::GetFileName(file)) == 0) {
+      return directory + "/" + file;
     }
   }
 
   // Get the file name without file extension.
-  const std::string fileBase = StringUtils::GetFileBaseString(fileName);
+  const std::string fileBase = FileUtils::GetFileBase(fileName);
 
-  // Try to find a match without file extension.
+  // Try to find a match that ignores file extension
   for (const auto& file : directoryFileList) {
-    // If the two extension-less base names match.
-    if (StringUtils::CompareNoCase(fileBase, StringUtils::GetFileBaseString(file)) == 0) {
-      // Return the name with extension of the file in the directory.
-      return std::string(directory) + file;
+    if (StringUtils::CompareNoCase(fileBase, FileUtils::GetFileBase(file)) == 0) {
+      return directory + "/" + file;
     }
   }
 
+  return "";
+}
+
+/**
+ * Try to locate the best match to the given texture filename, as provided in the FBX,
+ * possibly searching through the provided folders for a reasonable-looking match.
+ *
+ * Returns empty string if no match can be found, else the absolute path of the file.
+ **/
+static std::string FindFbxTexture(
+    const std::string& textureFileName,
+    const std::vector<std::string>& folders,
+    const std::vector<std::vector<std::string>>& folderContents) {
+  // it might exist exactly as-is on the running machine's filesystem
+  if (FileUtils::FileExists(textureFileName)) {
+    return textureFileName;
+  }
+  // else look in other designated folders
+  for (int ii = 0; ii < folders.size(); ii++) {
+    const auto& fileLocation = FindFileLoosely(textureFileName, folders[ii], folderContents[ii]);
+    if (!fileLocation.empty()) {
+      return FileUtils::GetAbsolutePath(fileLocation);
+    }
+  }
   return "";
 }
 
@@ -960,50 +993,60 @@ static std::string GetInferredFileName(
 */
 static void FindFbxTextures(
     FbxScene* pScene,
-    const char* fbxFileName,
-    const char* extensions,
+    const std::string& fbxFileName,
+    const std::set<std::string>& extensions,
     std::map<const FbxTexture*, FbxString>& textureLocations) {
-  // Get the folder the FBX file is in.
-  const std::string folder = StringUtils::GetFolderString(fbxFileName);
+  // figure out what folder the FBX file is in,
+  const auto& fbxFolder = FileUtils::getFolder(fbxFileName);
+  std::vector<std::string> folders{
+      // first search filename.fbm folder which the SDK itself expands embedded textures into,
+      fbxFolder + "/" + FileUtils::GetFileBase(fbxFileName) + ".fbm", // filename.fbm
+      // then the FBX folder itself,
+      fbxFolder,
+      // then finally our working directory
+      FileUtils::GetCurrentFolder(),
+  };
 
-  // Check if there is a filename.fbm folder to which embedded textures were extracted.
-  const std::string fbmFolderName = folder + StringUtils::GetFileBaseString(fbxFileName) + ".fbm/";
-
-  // Search either in the folder with embedded textures or in the same folder as the FBX file.
-  const std::string searchFolder = FileUtils::FolderExists(fbmFolderName) ? fbmFolderName : folder;
-
-  // Get a list with all the texture files from either the folder with embedded textures or the same
-  // folder as the FBX file.
-  std::vector<std::string> fileList = FileUtils::ListFolderFiles(searchFolder.c_str(), extensions);
+  // List the contents of each of these folders (if they exist)
+  std::vector<std::vector<std::string>> folderContents;
+  for (const auto& folder : folders) {
+    if (FileUtils::FolderExists(folder)) {
+      folderContents.push_back(FileUtils::ListFolderFiles(folder, extensions));
+    } else {
+      folderContents.push_back({});
+    }
+  }
 
   // Try to match the FBX texture names with the actual files on disk.
   for (int i = 0; i < pScene->GetTextureCount(); i++) {
     const FbxFileTexture* pFileTexture = FbxCast<FbxFileTexture>(pScene->GetTexture(i));
-    if (pFileTexture == nullptr) {
-      continue;
+    if (pFileTexture != nullptr) {
+      const std::string fileLocation =
+          FindFbxTexture(pFileTexture->GetFileName(), folders, folderContents);
+      // always extend the mapping (even for files we didn't find)
+      textureLocations.emplace(pFileTexture, fileLocation.c_str());
+      if (fileLocation.empty()) {
+        fmt::printf(
+            "Warning: could not find a image file for texture: %s.\n", pFileTexture->GetName());
+      } else if (verboseOutput) {
+        fmt::printf("Found texture '%s' at: %s\n", pFileTexture->GetName(), fileLocation);
+      }
     }
-    const std::string inferredName =
-        GetInferredFileName(pFileTexture->GetFileName(), searchFolder, fileList);
-    if (inferredName.empty()) {
-      fmt::printf(
-          "Warning: could not find a local image file for texture: %s.\n"
-          "Original filename: %s\n",
-          pFileTexture->GetName(),
-          pFileTexture->GetFileName());
-    }
-    // always extend the mapping, even for files we didn't find
-    textureLocations.emplace(pFileTexture, inferredName.c_str());
   }
 }
 
-bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExtensions) {
+bool LoadFBXFile(
+    RawModel& raw,
+    const std::string fbxFileName,
+    const std::set<std::string>& textureExtensions,
+    const GltfOptions& options) {
   FbxManager* pManager = FbxManager::Create();
   FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
   pManager->SetIOSettings(pIoSettings);
 
   FbxImporter* pImporter = FbxImporter::Create(pManager, "");
 
-  if (!pImporter->Initialize(fbxFileName, -1, pManager->GetIOSettings())) {
+  if (!pImporter->Initialize(fbxFileName.c_str(), -1, pManager->GetIOSettings())) {
     if (verboseOutput) {
       fmt::printf("%s\n", pImporter->GetStatus().GetErrorString());
     }
@@ -1042,7 +1085,7 @@ bool LoadFBXFile(RawModel& raw, const char* fbxFileName, const char* textureExte
 
   ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
   ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
-  ReadAnimations(raw, pScene);
+  ReadAnimations(raw, pScene, options);
 
   pScene->Destroy();
   pManager->Destroy();

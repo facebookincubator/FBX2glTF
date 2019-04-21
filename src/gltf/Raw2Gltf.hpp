@@ -120,7 +120,7 @@ const GLType GLT_QUATF = {CT_FLOAT, 4, "VEC4"};
  * The base of any indexed glTF entity.
  */
 struct Holdable {
-  uint32_t ix;
+  uint32_t ix = UINT_MAX;
 
   virtual json serialize() const = 0;
 };

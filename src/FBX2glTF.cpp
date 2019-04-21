@@ -13,13 +13,6 @@
 #include <unordered_map>
 #include <vector>
 
-#if defined(__unix__) || defined(__APPLE__)
-
-#include <sys/stat.h>
-
-#define _stricmp strcasecmp
-#endif
-
 #include <CLI11.hpp>
 
 #include "FBX2glTF.h"
@@ -102,6 +95,26 @@ int main(int argc, char* argv[]) {
          },
          "When to compute vertex normals from mesh geometry.")
       ->type_name("(never|broken|missing|always)");
+
+  app.add_option(
+         "--anim-framerate",
+         [&](std::vector<std::string> choices) -> bool {
+           for (const std::string choice : choices) {
+             if (choice == "bake24") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE24;
+             } else if (choice == "bake30") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE30;
+             } else if (choice == "bake60") {
+               gltfOptions.animationFramerate = AnimationFramerateOptions::BAKE60;
+             } else {
+               fmt::printf("Unknown --anim-framerate: %s\n", choice);
+               throw CLI::RuntimeError(1);
+             }
+           }
+           return true;
+         },
+         "Select baked animation framerate.")
+      ->type_name("(bake24|bake30|bake60)");
 
   const auto opt_flip_u = app.add_flag("--flip-u", "Flip all U texture coordinates.");
   const auto opt_no_flip_u = app.add_flag("--no-flip-u", "Don't flip U texture coordinates.");
@@ -271,10 +284,7 @@ int main(int argc, char* argv[]) {
 
   if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
-    outputPath = fmt::format(
-        ".{}{}",
-        (const char)StringUtils::GetPathSeparator(),
-        StringUtils::GetFileBaseString(inputPath));
+    outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }
   // the output folder in .gltf mode, not used for .glb
   std::string outputFolder;
@@ -282,14 +292,17 @@ int main(int argc, char* argv[]) {
   // the path of the actual .glb or .gltf file
   std::string modelPath;
   if (gltfOptions.outputBinary) {
-    // in binary mode, we write precisely where we're asked
-    modelPath = outputPath + ".glb";
-
+    const auto& suffix = FileUtils::GetFileSuffix(outputPath);
+    // add .glb to output path, unless it already ends in exactly that
+    if (suffix.has_value() && suffix.value() == "glb") {
+      modelPath = outputPath;
+    } else {
+      modelPath = outputPath + ".glb";
+    }
   } else {
     // in gltf mode, we create a folder and write into that
-    outputFolder =
-        fmt::format("{}_out{}", outputPath.c_str(), (const char)StringUtils::GetPathSeparator());
-    modelPath = outputFolder + StringUtils::GetFileNameString(outputPath) + ".gltf";
+    outputFolder = fmt::format("{}_out/", outputPath.c_str());
+    modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
     fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
@@ -302,7 +315,7 @@ int main(int argc, char* argv[]) {
   if (verboseOutput) {
     fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath.c_str(), "png;jpg;jpeg")) {
+  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
     fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }
