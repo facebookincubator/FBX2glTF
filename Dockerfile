@@ -17,6 +17,7 @@ COPY . /fbx2gltf
 
 WORKDIR /fbx2gltf
 
+# Pull the fbx sdk
 RUN git lfs pull
 
 # Build and install
