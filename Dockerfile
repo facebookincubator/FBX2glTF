@@ -13,9 +13,6 @@ RUN apt-get update && \
     pip install conan && \
     conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
-# Install FBX SDK
-WORKDIR /fbxsdktemp
-
 COPY . /fbx2gltf
 
 WORKDIR /fbx2gltf
