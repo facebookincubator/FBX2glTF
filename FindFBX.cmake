@@ -24,27 +24,22 @@ else()
 endif()
 
 if (NOT DEFINED FBXSDK_VERSION)
-  set(FBXSDK_VERSION "2018.1.1")
+  set(FBXSDK_VERSION "2019.2")
 endif()
 
 set(_fbxsdk_vstudio_version "vs2017")
 
 message("Looking for FBX SDK version: ${FBXSDK_VERSION}")
 
-if (DEFINED FBXSDK_SDKS)
-  get_filename_component(FBXSDK_SDKS_ABS ${FBXSDK_SDKS} ABSOLUTE)
-
-  set(FBXSDK_APPLE_ROOT   "${FBXSDK_SDKS_ABS}/Darwin/${FBXSDK_VERSION}")
-  set(FBXSDK_LINUX_ROOT   "${FBXSDK_SDKS_ABS}/Linux/${FBXSDK_VERSION}")
-  set(FBXSDK_WINDOWS_ROOT "${FBXSDK_SDKS_ABS}/Windows/${FBXSDK_VERSION}")
-else()
-  set(FBXSDK_APPLE_ROOT
-    "/Applications/Autodesk/FBX SDK/${FBXSDK_VERSION}")
-  set(FBXSDK_LINUX_ROOT
-    "/usr")
-  set(FBXSDK_WINDOWS_ROOT
-    "C:/Program Files/Autodesk/FBX/FBX SDK/${FBXSDK_VERSION}")
+if (NOT DEFINED FBXSDK_SDKS)
+   set(FBXSDK_SDKS "${CMAKE_CURRENT_SOURCE_DIR}/sdk")
 endif()
+
+get_filename_component(FBXSDK_SDKS_ABS ${FBXSDK_SDKS} ABSOLUTE)
+
+set(FBXSDK_APPLE_ROOT   "${FBXSDK_SDKS_ABS}/Darwin/${FBXSDK_VERSION}")
+set(FBXSDK_LINUX_ROOT   "${FBXSDK_SDKS_ABS}/Linux/${FBXSDK_VERSION}")
+set(FBXSDK_WINDOWS_ROOT "${FBXSDK_SDKS_ABS}/Windows/${FBXSDK_VERSION}")
 
 if (APPLE)
   set(_fbxsdk_root "${FBXSDK_APPLE_ROOT}")

@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #include "FbxSkinningAccess.hpp"
@@ -75,7 +74,9 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         }
       }
       for (int i = 0; i < controlPointCount; i++) {
-        const float weightSumRcp = 1.0 / (vertexJointWeights[i][0] + vertexJointWeights[i][1] + vertexJointWeights[i][2] + vertexJointWeights[i][3]);
+        const float weightSumRcp = 1.0 /
+            (vertexJointWeights[i][0] + vertexJointWeights[i][1] + vertexJointWeights[i][2] +
+             vertexJointWeights[i][3]);
         vertexJointWeights[i] *= weightSumRcp;
       }
     }

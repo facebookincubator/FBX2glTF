@@ -1,5 +1,8 @@
 # FBX2glTF
 
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
+
+
 This is a command line tool for converting 3D model assets on the
 well-established [FBX](https://www.autodesk.com/products/fbx/overview) format to
 [glTF 2.0](https://github.com/KhronosGroup/glTF/tree/master/specification/2.0),
@@ -53,6 +56,9 @@ The home of this tool is [here](https://github.com/facebookincubator/FBX2glTF).
 
 # Legal
 
+FBX2glTF is licensed under the [3-clause BSD license](LICENSE).
+
+```
 This software contains Autodesk® FBX® code developed by Autodesk, Inc. Copyright
 2017 Autodesk, Inc. All rights, reserved. Such code is provided “as is” and
 Autodesk, Inc. disclaims any and all warranties, whether express or implied,
@@ -64,4 +70,4 @@ of substitute goods or services; loss of use, data, or profits; or business
 interruption) however caused and on any theory of liability, whether in
 contract, strict liability, or tort (including negligence or otherwise) arising
 in any way out of such code.
-
+```

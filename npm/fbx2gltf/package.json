@@ -19,7 +19,6 @@
   "homepage": "https://github.com/facebookincubator/FBX2glTF",
   "files": [
     "LICENSE",
-    "PATENTS",
     "README.md",
     "bin",
     "index.js"
