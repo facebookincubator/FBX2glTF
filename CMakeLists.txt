@@ -17,12 +17,6 @@ set(CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
-  message(FATAL_ERROR
-    "The Conan package manager must run ('install') first. ${typical_usage_str}")
-endif()
-include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
-
 # FBX
 foreach (FBXSDK_VERSION "2019.2")
   find_package(FBX)
@@ -38,6 +32,12 @@ if (NOT FBXSDK_FOUND)
     " - Linux: ${FBXSDK_LINUX_ROOT}"
   )
 endif()
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
+  message(FATAL_ERROR
+    "The Conan package manager must run ('install') first. ${typical_usage_str}")
+endif()
+include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
