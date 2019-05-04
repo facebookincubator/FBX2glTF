@@ -742,24 +742,35 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
 
     pScene->SetCurrentAnimationStack(pAnimStack);
 
-    FbxTakeInfo* takeInfo = pScene->GetTakeInfo(animStackName);
-    if (takeInfo == nullptr) {
-      fmt::printf("Warning:: animation '%s' has no Take information. Skipping.\n", animStackName);
-      // not all animstacks have a take
-      continue;
+    FbxLongLong firstFrameIndex = -1;
+    FbxLongLong lastFrameIndex = -1;
+    for (int layerIx = 0; layerIx < pAnimStack->GetMemberCount(); layerIx++) {
+      auto* layer = pAnimStack->GetMember<FbxAnimLayer>(layerIx);
+      for (int nodeIx = 0; nodeIx < layer->GetMemberCount(); nodeIx++) {
+        auto* node = layer->GetMember<FbxAnimCurveNode>(nodeIx);
+        FbxTimeSpan nodeTimeSpan;
+        if (node->GetAnimationInterval(nodeTimeSpan)) {
+          FbxLongLong firstNodeFrame = nodeTimeSpan.GetStart().GetFrameCount(eMode);
+          FbxLongLong lastNodeFrame = nodeTimeSpan.GetStop().GetFrameCount(eMode);
+          if (firstFrameIndex == -1 || firstNodeFrame < firstFrameIndex) {
+            firstFrameIndex = firstNodeFrame;
+          }
+          if (lastFrameIndex == -1 || lastNodeFrame < lastFrameIndex) {
+            lastFrameIndex = lastNodeFrame;
+          }
+        }
+      }
     }
+    RawAnimation animation;
+    animation.name = animStackName;
+
+    fmt::printf(
+        "Animation %s: [%lu - %lu]\n", std::string(animStackName), firstFrameIndex, lastFrameIndex);
+
     if (verboseOutput) {
       fmt::printf("animation %zu: %s (%d%%)", animIx, (const char*)animStackName, 0);
     }
 
-    FbxTime start = takeInfo->mLocalTimeSpan.GetStart();
-    FbxTime end = takeInfo->mLocalTimeSpan.GetStop();
-
-    RawAnimation animation;
-    animation.name = animStackName;
-
-    FbxLongLong firstFrameIndex = start.GetFrameCount(eMode);
-    FbxLongLong lastFrameIndex = end.GetFrameCount(eMode);
     for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
       FbxTime pTime;
       // first frame is always at t = 0.0
