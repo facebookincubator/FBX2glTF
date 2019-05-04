@@ -28,7 +28,9 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         const int* clusterIndices = cluster->GetControlPointIndices();
         const double* clusterWeights = cluster->GetControlPointWeights();
 
-        assert(cluster->GetLinkMode() == FbxCluster::eNormalize);
+        assert(
+            cluster->GetLinkMode() == FbxCluster::eNormalize ||
+            cluster->GetLinkMode() == FbxCluster::eTotalOne);
 
         // Transform link matrix.
         FbxAMatrix transformLinkMatrix;
