@@ -1,0 +1,38 @@
+# version format
+version: 1.0.{build}
+
+branches:
+  only:
+    - master
+    - feat/appveyor-build
+
+skip_tags: true
+
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PYTHON: "C:\\Python36-x64"
+  FBXSDK_SDKS: sdk
+
+stack: python %PYTHON%
+
+install:
+  - cmd: echo "Downloading conan..."
+  - cmd: set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - cmd: python --version
+  - cmd: python -m pip install --upgrade pip
+  - cmd: pip install conan
+  - cmd: conan user # Create the conan data directory
+  - cmd: conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+  - cmd: conan --version
+
+build_script:
+  - cmd: conan install . -i build -s build_type=Release -s compiler="Visual Studio" -s compiler.version=15
+  - cmd: conan build -bf build .
+  - cmd: move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
+
+artifacts:
+  - path: build/Release/FBX2glTF-windows-x64.exe
+
+test: off
+deploy: off
