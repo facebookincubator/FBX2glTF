@@ -742,21 +742,44 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
 
     pScene->SetCurrentAnimationStack(pAnimStack);
 
+    /**
+     * Individual animations are often concatenated on the timeline, and the
+     * only certain way to identify precisely what interval they occupy is to
+     * depth-traverse the entire animation stack, and examine the actual keys.
+     *
+     * There is a deprecated concept of an "animation take" which is meant to
+     * provide precisely this time interval information, but the data is not
+     * actually derived by the SDK from source-of-truth data structures, but
+     * rather provided directly by the FBX exporter, and not sanity checked.
+     *
+     * Some exporters calculate it correctly. Others do not. In any case, we
+     * now ignore it completely.
+     */
     FbxLongLong firstFrameIndex = -1;
     FbxLongLong lastFrameIndex = -1;
     for (int layerIx = 0; layerIx < pAnimStack->GetMemberCount(); layerIx++) {
-      auto* layer = pAnimStack->GetMember<FbxAnimLayer>(layerIx);
+      FbxAnimLayer* layer = pAnimStack->GetMember<FbxAnimLayer>(layerIx);
       for (int nodeIx = 0; nodeIx < layer->GetMemberCount(); nodeIx++) {
         auto* node = layer->GetMember<FbxAnimCurveNode>(nodeIx);
         FbxTimeSpan nodeTimeSpan;
-        if (node->GetAnimationInterval(nodeTimeSpan)) {
-          FbxLongLong firstNodeFrame = nodeTimeSpan.GetStart().GetFrameCount(eMode);
-          FbxLongLong lastNodeFrame = nodeTimeSpan.GetStop().GetFrameCount(eMode);
-          if (firstFrameIndex == -1 || firstNodeFrame < firstFrameIndex) {
-            firstFrameIndex = firstNodeFrame;
+        // Multiple curves per curve node is not even supported by the SDK.
+        for (int curveIx = 0; curveIx < node->GetCurveCount(0); curveIx++) {
+          FbxAnimCurve* curve = node->GetCurve(0U, curveIx);
+          if (curve == nullptr) {
+            continue;
           }
-          if (lastFrameIndex == -1 || lastNodeFrame < lastFrameIndex) {
-            lastFrameIndex = lastNodeFrame;
+          // simply take the interval as first key to last key
+          int firstKeyIndex = 0;
+          int lastKeyIndex = std::max(firstKeyIndex, curve->KeyGetCount() - 1);
+          FbxLongLong firstCurveFrame = curve->KeyGetTime(firstKeyIndex).GetFrameCount(eMode);
+          FbxLongLong lastCurveFrame = curve->KeyGetTime(lastKeyIndex).GetFrameCount(eMode);
+
+          // the final interval is the union of all node curve intervals
+          if (firstFrameIndex == -1 || firstCurveFrame < firstFrameIndex) {
+            firstFrameIndex = firstCurveFrame;
+          }
+          if (lastFrameIndex == -1 || lastCurveFrame < lastFrameIndex) {
+            lastFrameIndex = lastCurveFrame;
           }
         }
       }
