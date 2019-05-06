@@ -13,10 +13,7 @@ class FBX2glTFConan(ConanFile):
     generators = "cmake_find_package", "cmake_paths"
 
     def build(self):
-        if os.environ.get('FBXSDK_SDKS') == None:
-            print("Please set the environment variable FBXSDK_SDKS.")
-            return
         cmake = CMake(self)
-        cmake.definitions["FBXSDK_SDKS"] = os.getenv('FBXSDK_SDKS')
+        cmake.definitions["FBXSDK_SDKS"] = os.getenv('FBXSDK_SDKS', 'sdk')
         cmake.configure()
         cmake.build()
