@@ -12,6 +12,10 @@ class FBX2glTFConan(ConanFile):
                 ("fmt/5.3.0@bincrafters/stable"))
     generators = "cmake_find_package", "cmake_paths"
 
+    def configure(self):
+        if self.settings.compiler.libcxx == "libstdc++":
+            raise Exception("Rerun 'conan install' with argument: '-s compiler.libcxx=libstdc++11'")
+
     def build(self):
         cmake = CMake(self)
         cmake.definitions["FBXSDK_SDKS"] = os.getenv('FBXSDK_SDKS', 'sdk')
