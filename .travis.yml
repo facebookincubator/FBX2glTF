@@ -13,5 +13,5 @@ install:
   - conan user
 
 script:
-  - conan install . -i build -s build_type=Release
+  - conan install . -i build -s build_type=Release -s compiler.libcxx=libstdc++11
   - conan build . -bf build
