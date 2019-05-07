@@ -640,6 +640,15 @@ int RawModel::GetNodeById(const long nodeId) const {
   return -1;
 }
 
+int RawModel::GetNodeByName(const char* name) const {
+  for (size_t i = 0; i < nodes.size(); i++) {
+    if (nodes[i].name == name) {
+      return (int)i;
+    }
+  }
+  return -1;
+}
+
 int RawModel::GetSurfaceById(const long surfaceId) const {
   for (size_t i = 0; i < surfaces.size(); i++) {
     if (surfaces[i].id == surfaceId) {

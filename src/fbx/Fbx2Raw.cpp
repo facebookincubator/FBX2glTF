@@ -720,7 +720,7 @@ static void ReadNodeHierarchy(
   }
 }
 
-static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& options) {
+static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& options, bool nodeNameLookup) {
   FbxTime::EMode eMode = FbxTime::eFrames24;
   switch (options.animationFramerate) {
     case AnimationFramerateOptions::BAKE24:
@@ -816,7 +816,14 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
       bool hasMorphs = false;
 
       RawChannel channel;
-      channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
+      if (nodeNameLookup) {
+        channel.nodeIndex = raw.GetNodeByName(pNode->GetName());
+      } else {
+        channel.nodeIndex = raw.GetNodeById(pNode->GetUniqueID());
+      }
+      if (channel.nodeIndex == -1) {
+        continue;
+      }
 
       for (FbxLongLong frameIndex = firstFrameIndex; frameIndex <= lastFrameIndex; frameIndex++) {
         FbxTime pTime;
@@ -1068,15 +1075,7 @@ static void FindFbxTextures(
   }
 }
 
-bool LoadFBXFile(
-    RawModel& raw,
-    const std::string fbxFileName,
-    const std::set<std::string>& textureExtensions,
-    const GltfOptions& options) {
-  FbxManager* pManager = FbxManager::Create();
-  FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
-  pManager->SetIOSettings(pIoSettings);
-
+static FbxScene* LoadScene(FbxManager* pManager, const std::string fbxFileName) {
   FbxImporter* pImporter = FbxImporter::Create(pManager, "");
 
   if (!pImporter->Initialize(fbxFileName.c_str(), -1, pManager->GetIOSettings())) {
@@ -1084,8 +1083,7 @@ bool LoadFBXFile(
       fmt::printf("%s\n", pImporter->GetStatus().GetErrorString());
     }
     pImporter->Destroy();
-    pManager->Destroy();
-    return false;
+    return nullptr;
   }
 
   FbxScene* pScene = FbxScene::Create(pManager, "fbxScene");
@@ -1093,13 +1091,8 @@ bool LoadFBXFile(
   pImporter->Destroy();
 
   if (pScene == nullptr) {
-    pImporter->Destroy();
-    pManager->Destroy();
-    return false;
+    return nullptr;
   }
-
-  std::map<const FbxTexture*, FbxString> textureLocations;
-  FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
 
   // Use Y up for glTF
   FbxAxisSystem::MayaYUp.ConvertScene(pScene);
@@ -1113,14 +1106,54 @@ bool LoadFBXFile(
   if (sceneSystemUnit != FbxSystemUnit::cm) {
     FbxSystemUnit::cm.ConvertScene(pScene);
   }
+
+  return pScene;
+}
+
+bool LoadFBXFile(
+    RawModel& raw,
+    const std::string fbxFileName,
+    const std::set<std::string>& textureExtensions,
+    const GltfOptions& options) {
+  FbxManager* pManager = FbxManager::Create();
+  FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
+  pManager->SetIOSettings(pIoSettings);
+
+  FbxScene* pScene = LoadScene(pManager, fbxFileName);
+  if (pScene == nullptr) {
+    pManager->Destroy();
+    return false;
+  }
+
   // this is always 0.01, but let's opt for clarity.
   scaleFactor = FbxSystemUnit::m.GetConversionFactorFrom(FbxSystemUnit::cm);
 
+  std::map<const FbxTexture*, FbxString> textureLocations;
+  FindFbxTextures(pScene, fbxFileName, textureExtensions, textureLocations);
+
   ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
   ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
-  ReadAnimations(raw, pScene, options);
+  ReadAnimations(raw, pScene, options, false);
 
   pScene->Destroy();
+
+  // read additional animation files
+  bool readAnimationFiles = options.readAnimationFiles;
+  int animationFileNumber = 1;
+  while (readAnimationFiles) {
+    std::string animationFileName = StringUtils::GetFolderString(fbxFileName) +
+        StringUtils::GetFileBaseString(fbxFileName) +
+        std::to_string(animationFileNumber) + ".fbx";
+    FbxScene* pAnimationScene = LoadScene(pManager, animationFileName.c_str());
+    if (pAnimationScene != nullptr) {
+      ReadAnimations(raw, pAnimationScene, options, true);
+      pAnimationScene->Destroy();
+      animationFileNumber++;
+    } else {
+      readAnimationFiles = false;
+    }
+  }
+
   pManager->Destroy();
 
   return true;
