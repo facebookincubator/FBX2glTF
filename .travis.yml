@@ -1,0 +1,17 @@
+os: linux
+
+dist: xenial
+
+language: python
+python: "3.7"
+
+compiler:
+  - gcc
+
+install:
+  - pip install conan
+  - conan user
+
+script:
+  - conan install . -i build -s build_type=Release
+  - conan build . -bf build
