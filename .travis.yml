@@ -1,0 +1,18 @@
+os: linux
+
+dist: xenial
+
+language: python
+python: "3.7"
+
+compiler:
+  - gcc
+
+install:
+  - pip install conan
+  - conan user
+  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
+script:
+  - conan install . -i build -s build_type=Release -s compiler.libcxx=libstdc++11
+  - conan build . -bf build
