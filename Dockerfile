@@ -10,15 +10,16 @@ RUN apt-get update && \
     pip install conan && \
     conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
+# Install FBX SDK
+RUN mkdir -p /fbx2gltf/sdk/Linux/2019.2 && \
+    curl -L https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/20192/fbx20192_fbxsdk_linux.tar.gz -o fbx20192_fbxsdk_linux.tar.gz && \
+    tar -xvf fbx20192_fbxsdk_linux.tar.gz && \
+    echo "yes\nn" | ./fbx20192_fbxsdk_linux /fbx2gltf/sdk/Linux/2019.2 && \
+    rm -rf /fbxsdktemp
+
 COPY . /fbx2gltf
 
 WORKDIR /fbx2gltf
-
-# Install FBX SDK
-RUN curl -L https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/20192/fbx20192_fbxsdk_linux.tar.gz -o fbx20192_fbxsdk_linux.tar.gz && \
-	tar -xvf fbx20192_fbxsdk_linux.tar.gz && \
-	echo "yes\nn" | ./fbx20192_fbxsdk_linux /fbx2gltf/sdk/Linux/2019.2 && \
-	rm -rf /fbxsdktemp
 
 # Build and install
 RUN conan install . -i docker-build -s build_type=Release -s compiler=gcc -s compiler.version=5 -s compiler.libcxx=libstdc++11 && \
