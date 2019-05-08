@@ -1,21 +1,24 @@
 os: linux
-
 dist: xenial
-
 language: python
-python: "3.7"
-
+python: '3.7'
 compiler:
-  - gcc
-
+- gcc
 install:
-  - pip install conan
-  - conan user
-  - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-
+- pip install conan
+- conan user
+- conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 script:
-  - conan install . -i build -s build_type=Release -s compiler.libcxx=libstdc++11
-  - conan build . -bf build
-
+- conan install . -i build -s build_type=Release -s compiler.libcxx=libstdc++11
+- conan build . -bf build
 notifications:
   webhooks: https://code.facebook.com/travis/webhook/
+deploy:
+  provider: releases
+  api_key:
+    secure: WQvUaRBiBwAV1KBiRXR5kQOQVOu20jWPfVsFgghBwKPN1td6dfZ377BmsZc7aUzqWN32Xhh52ciNc8MD57Q9PjbHe/85qjM78rI2KS51nj76p/zJK0kXXqBPKuMYrpVLNMJBs0P0/RUPGPDEwh8BL8QHJiqAnROmvu8Bqfo7EDgIXgVsMzpDbtgINcB41Y25AZTrzz1kvowB9+kAEa9iTtufdrgBZi+B0Rp1sCvTqa3ap9nRmTk1ue7MhSQT8uAQT90raMjmviX7357OEYSqpHZ1qzxnWp1k5gPvGruhHKaiND2zsd+EWIJnnOwWhEoPYaorU+ZXvpiiLcqxO6eDJeUbeo6sumB03rzBxoTBwlYHwnjdGAEWO28tljcLYXtpoAx6Qe19ub7NOrkYCbq7BzCILAqzPDR98cWDlOgSBt3rQ9icVvdHjYquCUFxkERRg80W+RAQfT8acSCyfxNu9APxcbptTmtNYVcc+I8hPJGiU17nTNgMOPZS2LeoO2KXwUrkxnc1AaVXKUAwoC4k1Z7xeLmAj0LZQThN6GnHwgXH0wTR6fS7vvKRlv510g2/IMqq9IZ4l/m3C9TPH/KT6O8fJvwH/1H9xI0hk8JW0aEDKIOmbCJVFEvYxLHQNCkvC3MCKbs5tKtte/xW6PIS/kc+urLhuDvMVt4+ILVBHl4=
+  file: build/FBX2glTF
+  skip_cleanup: true
+  on:
+    repo: facebookincubator/FBX2glTF
+    tags: true
