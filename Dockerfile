@@ -21,8 +21,8 @@ RUN curl -L https://www.autodesk.com/content/dam/autodesk/www/adn/fbx/20192/fbx2
 	rm -rf /fbxsdktemp
 
 # Build and install
-RUN conan install . -i build -s build_type=Release -e FBXSDK_SDKS=/fbx2gltf/sdk && \
-    conan build -bf build . && \
-    cp build/FBX2glTF /usr/bin && \
+RUN conan install . -i docker-build -s build_type=Release -s compiler=gcc -s compiler.version=5 -s compiler.libcxx=libstdc++11 && \
+    conan build -bf docker-build . && \
+    cp docker-build/FBX2glTF /usr/bin && \
     cd / && \
-    rm -rf /fbx2gltf
+    rm -rf /fbx2gltf /root/.conan
