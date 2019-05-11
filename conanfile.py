@@ -13,7 +13,7 @@ class FBX2glTFConan(ConanFile):
     generators = "cmake_find_package", "cmake_paths"
 
     def configure(self):
-        if self.settings.compiler.libcxx == "libstdc++":
+        if self.settings.compiler == "gcc" and self.settings.libcxx == "libstdc++":
             raise Exception("Rerun 'conan install' with argument: '-s compiler.libcxx=libstdc++11'")
 
     def build(self):
