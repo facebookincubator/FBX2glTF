@@ -290,14 +290,17 @@ int main(int argc, char* argv[]) {
 
   // the path of the actual .glb or .gltf file
   std::string modelPath;
-  if (gltfOptions.outputBinary) {
-    const auto& suffix = FileUtils::GetFileSuffix(outputPath);
-    // add .glb to output path, unless it already ends in exactly that
-    if (suffix.has_value() && suffix.value() == "glb") {
+  const auto& suffix = FileUtils::GetFileSuffix(outputPath);
+  if (gltfOptions.outputBinary || suffix.value() == "glb") {
+      // add .glb to output path, unless it already ends in exactly that
+      if (suffix.has_value() && suffix.value() == "glb") {
+          modelPath = outputPath;
+      } else {
+          modelPath = outputPath + ".glb";
+      }
+  } else if(suffix.value() == "gltf") {
       modelPath = outputPath;
-    } else {
-      modelPath = outputPath + ".glb";
-    }
+      outputFolder = FileUtils::getFolder(outputPath) + "/";
   } else {
     // in gltf mode, we create a folder and write into that
     outputFolder = fmt::format("{}_out/", outputPath.c_str());
