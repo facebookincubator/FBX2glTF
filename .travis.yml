@@ -11,13 +11,14 @@ install:
 script:
 - conan install . -i build -s build_type=Release -s compiler.libcxx=libstdc++11
 - conan build . -bf build
+- mv build/FBX2glTF build/FBX2glTF-linux-x64 # generalise
 notifications:
   webhooks: https://code.facebook.com/travis/webhook/
 deploy:
   provider: releases
   api_key:
-    secure: "kZQclwrnOCigDctNwxxmk5zVVq4PY5TnGc4MUR1lisp3MIrcBhSdI8ox300bs5QUsNgz5G+l6fxMem6mok91F58ItTc4+aA8Dq0Y5CoXfgws9mt/cFk9NNU8pqltK+CQqiAwL38zG6FYb4soCcKFlw47XapgZDkQAUQW+Jv/pP5EM0Agk0ZFf6/Ahq9wfr2Ht7mvDVFdr1S6YHPMO0fjCxF8qIIzSH1FNsLyQJ6E4sC+5aH9izl10VxzAWa8DvM3sTF+45fTwMwPtB+BBJ0UPem2TcJQmF/X6ZnrRugbGHn23Li02S9xzOwczKS3e2cMfEp2JLj7bswyvq50SDS/ldSBVwFJjGemDp10xZx7LB6CObI/RqRMhN7gyLrD9WTvaFPjnuZ8pDElOz59JB/waKqVIbXqhFlIXmz2UpaFRb+1Dg9u7R6++4ZvwTyP3qe9+8YAPI/JtLld4z5YXJGwnYdXvSmadcetzabMsSVTxdsj8RheC1zBLm9bBqe6V4vtf1D52IQmaZyCxBTdc3afVYhuazJwMUDSxxgA3bLh4sANqWpOKxbIVepnQxa3eLlyLWcR4iqPkxY4RhHYZK9sM53WXaS3L+tZfyInbCZDgaP/YpLGQw35Qv1Cl+oNO3zL0DpklNV+Cb5DXfuicuGQfjiRWuhfwLBptJ3cTZq/70I="
-  file: build/FBX2glTF
+    secure: V9CTmZKM7yvsT/WCesJ/tLTuapSf0oIp73zyZrwID7zQtXaq1QJSna4tWM2T0qeZIYhniH1/mqEr2jZVW1txmYn9ZxUMH1Nmp9zzOGl/q+JlRrJUi6HRUWWhCMz003L90whngyOcGI+T7rHtcVcby4owVsze15SrQqqV74NXI8DYNIbNgQR1Nwmqsrg0QirFPEBaIKDAiKonnRDWKPy2P8vqnN9fLhj00uHLwuvahlKAnWFEbNnFbiRScKifB+Mlo6Pf6r64iikrxS2jBxAgSsvPLkuemWLmaHTeGbJMM82aqh5vGSvgYcExvZi+0RdXeIcBdv/jaivM/xge4aZ+4P+IJoX32ZNCcYFMsqES+a6TztkywMs2k1r5gV6LrTjeXJsINSW+BDFdmrwmkudETc4gelQgkMmEkdCwFHENtZGl65z8HJDQKcu9F8NQlhNU7Z5rwQNLmYccvktSDhwbFSG5eq2kFFfcbVx3ovvn1voRTNnyhhVD2ZnLepSQInAVkZbaLkE90bQ+t9icf8uDdHDn17zOQaAZuecPlSW1y4XUCJnZCi0JPLhdSmQYiF60LHYI6xDneC8pmIz8kCUbk921zu8bJBy7zKHmfHy2vqNlPKuRULRIs5QzY31jf2PVZHzB5zX3KSqx9Dd+3DtgbLX2HLaZnANbkQc0rr1X2kk=
+  file: build/FBX2glTF-linux-x64
   skip_cleanup: true
   on:
     repo: facebookincubator/FBX2glTF
