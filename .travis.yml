@@ -14,7 +14,7 @@ compiler: gcc
 language: generic
 cache:
   directories:
-  - .conan
+  - ${HOME}/.conan
 
 before_install:
 - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew install git-lfs; git lfs install; fi
