@@ -6,7 +6,7 @@ matrix:
         - APP_NAME="FBX2glTF-linux-x64"
         - CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
     - os: osx
-      osx_image: xcode10.2
+      osx_image: xcode10.1
       env:
         - APP_NAME="FBX2glTF-darwin-x64"
         - CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
@@ -22,7 +22,8 @@ script:
 - conan build . -bf build
 - mv build/FBX2glTF build/${APP_NAME}
 notifications:
-  webhooks: https://code.facebook.com/travis/webhook/
+  webhooks:
+    - "https://code.facebook.com/travis/webhook/"
 deploy:
   provider: releases
   api_key:
