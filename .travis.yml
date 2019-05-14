@@ -17,7 +17,7 @@ cache:
   - .conan
 
 before_install:
-- brew install git-lfs
+- if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew install git-lfs; git lfs install; fi
 install:
 - git clone --depth 1 git://github.com/astropy/ci-helpers.git
 - source ci-helpers/travis/setup_conda.sh
