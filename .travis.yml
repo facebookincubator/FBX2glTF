@@ -6,13 +6,12 @@ matrix:
         - APP_NAME="FBX2glTF-linux-x64"
         - CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
     - os: osx
-      osx_image: xcode10.1
+      osx_image: xcode10.2
       env:
         - APP_NAME="FBX2glTF-darwin-x64"
         - CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
 compiler: gcc
-language: python
-python: '3.7'
+language: generic
 install:
 - pip install conan
 - conan user
