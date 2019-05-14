@@ -13,6 +13,12 @@ matrix:
 compiler: gcc
 language: generic
 install:
+- git clone --depth 1 git://github.com/astropy/ci-helpers.git
+- source ci-helpers/travis/setup_conda.sh
+- conda config --set always_yes yes
+- conda info -a
+- conda create -n travis_env python=3.7 pip
+- conda activate travis_env
 - pip install conan
 - conan user
 - conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
