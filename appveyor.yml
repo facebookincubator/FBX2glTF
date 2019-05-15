@@ -31,8 +31,20 @@ build_script:
   - cmd: conan build -bf build .
   - cmd: move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
 
+test: off
+
 artifacts:
   - path: build/Release/FBX2glTF-windows-x64.exe
 
-test: off
-deploy: off
+deploy:
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  description: ''
+  provider: GitHub
+  auth_token:
+    secure: RnycxjEjIgpRKZ6l09OX869trx2jNX0B10wrfjt3wul2sSJfbG4ZeHJSbqtPpqQt
+  artifact: build/Release/FBX2glTF-windows-x64.exe
+  draft: true
+  prerelease: true
+  on:
+#    branch: master                 # release from master branch only
+    APPVEYOR_REPO_TAG: true        # deploy on tag push only
