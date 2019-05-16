@@ -37,7 +37,7 @@ deploy:
   description: ''
   provider: GitHub
   auth_token:
-    secure: RnycxjEjIgpRKZ6l09OX869trx2jNX0B10wrfjt3wul2sSJfbG4ZeHJSbqtPpqQt
+    secure: OSvhQP0O9uaH+OFOJpbGiiBMRTOJ+H/VJHqVBhq39RNDnOfUEr/yjJNKh3JSdNqj
   artifact: build/Release/FBX2glTF-windows-x64.exe
   draft: true
   prerelease: true
