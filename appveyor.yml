@@ -12,6 +12,11 @@ stack: python %PYTHON%
 cache:
   - C:\Users\appveyor\.conan\data -> appveyor.yml
 
+init:
+  - git config --global filter.lfs.required false
+  - git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
+  - git config --global filter.lfs.process "git-lfs filter-process --skip"
+
 install:
   - cinst zstandard
   - ps: Start-FileDownload 'https://github.com/zellski/FBXSDK-Windows/archive/2019.2.tar.gz'
