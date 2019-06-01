@@ -12,7 +12,7 @@ found [here](https://github.com/facebookincubator/FBX2glTF/releases).
 Bleeding-edge binaries are periodically built and publicly available [here](https://dev.azure.com/parwinzell/FBX2glTF/): click a build (usually the most recent), then the 'Artefacts' dropdown in the upper right. 
 
 [![Build Status](https://travis-ci.com/facebookincubator/FBX2glTF.svg?branch=master)](https://travis-ci.com/facebookincubator/FBX2glTF)
-[![Build status](https://ci.appveyor.com/api/projects/status/l828tf8trdn40x1d/branch/master?svg=true)](https://ci.appveyor.com/project/zellski/fbx2gltf/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/5mq4vbc44vmyec4w?svg=true)](https://ci.appveyor.com/project/Facebook/fbx2gltf)
 
 ## Running
 
