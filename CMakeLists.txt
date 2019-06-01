@@ -41,14 +41,16 @@ include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
-find_package(Iconv QUIET)
+
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-find_package(boost_filesystem REQUIRED)
-find_package(boost_optional REQUIRED)
-find_package(libxml2 REQUIRED)
-find_package(zlib REQUIRED)
-find_package(fmt REQUIRED)
+find_package(boost_filesystem MODULE REQUIRED)
+find_package(boost_optional MODULE REQUIRED)
+find_package(libxml2 MODULE REQUIRED)
+find_package(zlib MODULE REQUIRED)
+find_package(fmt MODULE REQUIRED)
+find_package(libiconv MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -202,12 +204,13 @@ target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
   boost_filesystem::boost_filesystem
   boost_optional::boost_optional
-  fmt::fmt
-  libxml2::libxml2
-  zlib::zlib
   ${DRACO_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
+  fmt::fmt
+  libxml2::libxml2
+  zlib::zlib
+  libiconv::libiconv
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
@@ -219,6 +222,7 @@ target_include_directories(libFBX2glTF PUBLIC
   fmt::fmt
   libxml2::libxml2
   zlib::zlib
+  libiconv::libiconv
 )
 
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
@@ -230,11 +234,6 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${FIFO_MAP_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
 )
-
-if (Iconv_FOUND)
-  target_link_libraries(libFBX2glTF Iconv::Iconv)
-  target_include_directories(libFBX2glTF SYSTEM PUBLIC Iconv::Iconv)
-endif()
 
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"
