@@ -1,3 +1,6 @@
+git:
+  lfs_skip_smudge: true
+
 matrix:
   include:
     - os: linux
@@ -5,20 +8,28 @@ matrix:
       env: 
         - APP_NAME="FBX2glTF-linux-x64"
         - CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
+        - FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Linux/archive/2019.2.tar.gz"
     - os: osx
       osx_image: xcode10.2
       env:
         - APP_NAME="FBX2glTF-darwin-x64"
         - CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
+        - FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Darwin/archive/2019.2.tar.gz"
 compiler: gcc
 language: generic
 cache:
   directories:
   - ${HOME}/.conan
 
-before_install:
-- if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then brew install git-lfs; git lfs install; fi
+addons:
+  apt:
+    packages: zstd
+  homebrew:
+    packages: zstd
+
 install:
+- curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1
+- zstd -d -r --rm sdk
 - git clone --depth 1 git://github.com/astropy/ci-helpers.git
 - source ci-helpers/travis/setup_conda.sh
 - conda config --set always_yes yes
@@ -29,8 +40,6 @@ install:
 - conan user
 - conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
-before_script:
-- git lfs pull
 script:
 - conan install . -i build -s build_type=Release ${CONAN_CONFIG}
 - conan build . -bf build
