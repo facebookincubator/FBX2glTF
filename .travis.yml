@@ -1,3 +1,7 @@
+env:
+  matrix:
+    - GIT_LFS_SKIP_SMUDGE=1
+
 matrix:
   include:
     - os: linux
@@ -22,8 +26,6 @@ addons:
   homebrew:
     packages: zstd
 
-before_install:
-- if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then git lfs install; fi
 install:
 - git clone --depth 1 git://github.com/astropy/ci-helpers.git
 - source ci-helpers/travis/setup_conda.sh
@@ -35,8 +37,6 @@ install:
 - conan user
 - conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
-before_script:
-- git lfs pull
 script:
 - conan install . -i build -s build_type=Release ${CONAN_CONFIG}
 - conan build . -bf build
