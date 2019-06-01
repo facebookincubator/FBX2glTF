@@ -22,7 +22,7 @@ install:
   - ps: Start-FileDownload 'https://github.com/zellski/FBXSDK-Windows/archive/2019.2.tar.gz'
   - 7z e 2019.2.tar.gz
   - 7z x 2019.2.tar
-  - ps: move -v .\FBXSDK-Windows\sdk\ .
+  - ps: move -v .\FBXSDK-Windows-2019.2\sdk\ .
   - ps: zstd -d -r --rm sdk
   - cmd: echo "Downloading conan..."
   - cmd: set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
