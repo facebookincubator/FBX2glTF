@@ -1,6 +1,5 @@
-env:
-  matrix:
-    - GIT_LFS_SKIP_SMUDGE=1
+git:
+  lfs_skip_smudge: true
 
 matrix:
   include:
