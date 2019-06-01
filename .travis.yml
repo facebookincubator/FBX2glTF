@@ -28,7 +28,7 @@ addons:
     packages: zstd
 
 install:
-- curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1
+- curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1 --wildcards */sdk
 - zstd -d -r --rm sdk
 - git clone --depth 1 git://github.com/astropy/ci-helpers.git
 - source ci-helpers/travis/setup_conda.sh

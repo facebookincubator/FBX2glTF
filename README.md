@@ -164,7 +164,7 @@ else
 > cd FBX2glTF
 
 # Fetch and unpack FBX SDK
-> curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1
+> curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1 --wildcards */sdk
 # Then decompress the contents
 > zstd -d -r --rm sdk
 
