@@ -46,30 +46,12 @@ find_package(Iconv QUIET)
 # stuff we get from Conan
 find_package(boost_filesystem REQUIRED)
 find_package(boost_optional REQUIRED)
+find_package(libxml2 REQUIRED)
+find_package(zlib REQUIRED)
 find_package(fmt REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if (WIN32)
-  # this will suffice for now; don't really care about 32-bit
-  set(LIBXML2_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
-  set(LIBXML2_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/libxml2-mt.lib)
-  set(LIBXML2_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/libxml2-mt.lib)
-  if (NOT LIBXML2_INCLUDE_DIRS OR NOT LIBXML2_LIBRARIES)
-    message(FATAL_ERROR "Cannot find libxml2.lib in the expected location.")
-  endif()
-
-  set(ZLIB_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
-  set(ZLIB_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/zlib-mt.lib)
-  set(ZLIB_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/zlib-mt.lib)
-  if (NOT ZLIB_LIBRARIES)
-    message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
-  endif()
-else()
-  find_package(LibXml2 REQUIRED)
-  find_package(ZLIB REQUIRED)
-endif()
 
 # DRACO
 ExternalProject_Add(Draco
@@ -221,6 +203,8 @@ target_link_libraries(libFBX2glTF
   boost_filesystem::boost_filesystem
   boost_optional::boost_optional
   fmt::fmt
+  libxml2::libxml2
+  zlib::zlib
   ${DRACO_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
@@ -228,25 +212,13 @@ target_link_libraries(libFBX2glTF
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (WIN32)
-  target_link_libraries(libFBX2glTF
-    optimized ${LIBXML2_LIBRARIES}
-    debug ${LIBXML2_LIBRARIES_DEBUG}
-    optimized ${ZLIB_LIBRARIES}
-    debug ${ZLIB_LIBRARIES_DEBUG}
-  )
-else()
-  target_link_libraries(libFBX2glTF
-    ${LIBXML2_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-  )
-endif()
-
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   boost_filesystem::boost_filesystem
   boost_optional::boost_optional
   fmt::fmt
+  libxml2::libxml2
+  zlib::zlib
 )
 
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
@@ -257,8 +229,6 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${MATHFU_INCLUDE_DIRS}
   ${FIFO_MAP_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
-  ${LIBXML2_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIRS}
 )
 
 if (Iconv_FOUND)

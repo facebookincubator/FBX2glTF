@@ -9,7 +9,7 @@ a modern runtime asset delivery format.
 Precompiled binaries releases for Windows, Mac OS X and Linux may be
 found [here](https://github.com/facebookincubator/FBX2glTF/releases).
 
-Bleeding-edge binaries are periodically built and publicly available [here](https://dev.azure.com/parwinzell/FBX2glTF/): click a build (usually the most recent), then the 'Artefacts' dropdown in the upper right. 
+Bleeding-edge binaries for Windows may be found [here](https://ci.appveyor.com/project/Facebook/fbx2gltf/build/artifacts). Linux and Mac OS X to come; meanwhile, you can [build your own](#building-it-on-your-own).
 
 [![Build Status](https://travis-ci.com/facebookincubator/FBX2glTF.svg?branch=master)](https://travis-ci.com/facebookincubator/FBX2glTF)
 [![Build status](https://ci.appveyor.com/api/projects/status/5mq4vbc44vmyec4w?svg=true)](https://ci.appveyor.com/project/Facebook/fbx2gltf)
@@ -127,8 +127,6 @@ Some of these switches are not obvious:
 
 ## Building it on your own
 
-Building FBX2glTF has become slightly more ornery because <TODO> explanation.
-
 We currently depend on the open source projects
 [Draco](https://github.com/google/draco),
 [MathFu](https://github.com/google/mathfu),
@@ -139,25 +137,51 @@ We currently depend on the open source projects
 and [fmt](https://github.com/fmtlib/fmt);
 all of which are automatically downloaded and/or built.
 
-You must however manually download and install the
-[Autodesk FBX SDK](https://www.autodesk.com/products/fbx/overview) and
-accept its license agreement.
-
 **At present, only version 2019.2 of the FBX SDK is supported**. The
 build system will not successfully locate any other version.
 
 ### Linux and MacOS X
-Compilation on Unix machines might look like:
+Your development environment will need to have:
+- build essentials (gcc for Linux, clang for Mac)
+- cmake
+- python 3.* and associated pip3/pip command
+- zstd
+
+Then, compilation on Unix machines will look something like:
 
 ```
-    <TODO>
+# Determine SDK location & build settings for Linux vs (Recent) Mac OS X
+> if [[ "$OSTYPE" == "darwin" ]]; then
+    export CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
+    export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Darwin/archive/2019.2.tar.gz"
+else
+    export CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
+    export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Linux/archive/2019.2.tar.gz"
+  fi
+
+# Fetch Project
+> GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/facebookincubator/FBX2glTF.git
+> cd FBX2glTF
+
+# Fetch and unpack FBX SDK
+> curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1
+# Then decompress the contents
+> zstd -d -r --rm sdk
+
+# Install and configure Conan, if needed
+> pip3 install conan # or sometimes just "pip"; you may need to install Python/PIP
+> conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+
+# Initialize & run build
+> conan install . -i build -s build_type=Release ${CONAN_CONFIG}
+> conan build . -bf build
 ```
 
-If all goes well, you will end up with a statically linked executable.
+If all goes well, you will end up with a statically linked executable in `./build/FBX2glTF`.
 
 ### Windows
 
-<TODO> this needs updating
+<TODO> the below is out of date
 
 Windows users may [download](https://cmake.org/download) CMake for Windows,
 install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
