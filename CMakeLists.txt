@@ -42,13 +42,15 @@ include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
+
 # stuff we get from Conan
-find_package(boost_filesystem REQUIRED)
-find_package(boost_optional REQUIRED)
-find_package(libxml2 REQUIRED)
-find_package(zlib REQUIRED)
-find_package(fmt REQUIRED)
-find_package(libiconv REQUIRED)
+find_package(boost_filesystem MODULE REQUIRED)
+find_package(boost_optional MODULE REQUIRED)
+find_package(libxml2 MODULE REQUIRED)
+find_package(zlib MODULE REQUIRED)
+find_package(fmt MODULE REQUIRED)
+find_package(libiconv MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
