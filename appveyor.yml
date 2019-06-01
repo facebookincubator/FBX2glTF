@@ -10,7 +10,7 @@ environment:
 stack: python %PYTHON%
 
 cache:
-  - C:\Users\appveyor\.conan\data -> appveyor.yml
+  - C:\Users\appveyor\.conan\data -> appveyor.yml, conanfile.py
 
 init:
   - git config --global filter.lfs.required false
