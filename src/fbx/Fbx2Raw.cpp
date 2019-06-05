@@ -778,7 +778,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
           if (firstFrameIndex == -1 || firstCurveFrame < firstFrameIndex) {
             firstFrameIndex = firstCurveFrame;
           }
-          if (lastFrameIndex == -1 || lastCurveFrame < lastFrameIndex) {
+          if (lastFrameIndex == -1 || lastCurveFrame > lastFrameIndex) {
             lastFrameIndex = lastCurveFrame;
           }
         }
