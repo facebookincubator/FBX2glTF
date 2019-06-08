@@ -9,6 +9,7 @@
 #pragma once
 
 #include "gltf/Raw2Gltf.hpp"
+#include "AccessorData.hpp"
 
 struct AnimationData : Holdable {
   AnimationData(std::string name);

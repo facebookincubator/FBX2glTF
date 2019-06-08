@@ -10,7 +10,6 @@
 
 #include <utility>
 
-#include "AccessorData.hpp"
 #include "NodeData.hpp"
 
 AnimationData::AnimationData(std::string name)
