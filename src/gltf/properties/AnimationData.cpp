@@ -13,8 +13,18 @@
 #include "AccessorData.hpp"
 #include "NodeData.hpp"
 
-AnimationData::AnimationData(std::string name, const AccessorData& timeAccessor)
-    : Holdable(), name(std::move(name)), timeAccessor(timeAccessor.ix) {}
+AnimationData::AnimationData(std::string name)
+	: Holdable(),
+	name(std::move(name)) {}
+
+AnimationData::AnimationData(std::string name, std::shared_ptr<draco::KeyframeAnimation> dracoKeyframeAnimation)
+    : Holdable(), 
+	name(std::move(name)),
+	dracoKeyframeAnimation(dracoKeyframeAnimation){}
+
+void AnimationData::AddTimestamps(const AccessorData& timeAccessor) {
+	this->timeAccessor = timeAccessor.ix;
+}
 
 // assumption: 1-to-1 relationship between channels and samplers; this is a simplification on what
 // glTF can express, but it means we can rely on samplerIx == channelIx throughout an animation

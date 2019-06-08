@@ -185,12 +185,27 @@ int main(int argc, char* argv[]) {
       ->type_size(-1)
       ->type_name("(position|normal|tangent|binormial|color|uv0|uv1|auto)");
 
-  app.add_flag(
-         "-d,--draco", gltfOptions.draco.enabled, "Apply Draco mesh compression to geometries.")
-      ->group("Draco");
+	app.add_option(
+		"-d,--draco",
+		[&](std::vector<std::string> choices) -> bool {
+			for (const std::string choice : choices) {
+				if (choice == "mesh") {
+					gltfOptions.draco.enabledMesh = true;
+				} else if (choice == "animation") {
+					gltfOptions.draco.enabledAnimation = true;
+				} else {
+					fmt::printf("Unknown -d,--draco: %s\n", choice);
+					throw CLI::RuntimeError(1);
+				}
+			}
+			return true;
+		},
+		"Apply Draco mesh|animation compression to geometries|animation data.")
+		->type_size(-1)
+		->type_name("(mesh|animation)");
 
   app.add_option(
-         "--draco-compression-level",
+         "--draco-mesh-compression-level",
          gltfOptions.draco.compressionLevel,
          "The compression level to tune Draco to.",
          true)
@@ -202,7 +217,7 @@ int main(int argc, char* argv[]) {
          gltfOptions.draco.quantBitsPosition,
          "How many bits to quantize position to.",
          true)
-      ->check(CLI::Range(1, 32))
+      ->check(CLI::Range(1, 30))
       ->group("Draco");
 
   app.add_option(
@@ -210,7 +225,7 @@ int main(int argc, char* argv[]) {
          gltfOptions.draco.quantBitsTexCoord,
          "How many bits to quantize UV coordinates to.",
          true)
-      ->check(CLI::Range(1, 32))
+      ->check(CLI::Range(1, 30))
       ->group("Draco");
 
   app.add_option(
@@ -218,7 +233,7 @@ int main(int argc, char* argv[]) {
          gltfOptions.draco.quantBitsNormal,
          "How many bits to quantize nornals to.",
          true)
-      ->check(CLI::Range(1, 32))
+      ->check(CLI::Range(1, 30))
       ->group("Draco");
 
   app.add_option(
@@ -226,7 +241,7 @@ int main(int argc, char* argv[]) {
          gltfOptions.draco.quantBitsColor,
          "How many bits to quantize colors to.",
          true)
-      ->check(CLI::Range(1, 32))
+      ->check(CLI::Range(1, 30))
       ->group("Draco");
 
   app.add_option(
@@ -234,8 +249,32 @@ int main(int argc, char* argv[]) {
          gltfOptions.draco.quantBitsGeneric,
          "How many bits to quantize all other vertex attributes to.",
          true)
-      ->check(CLI::Range(1, 32))
+      ->check(CLI::Range(1, 30))
       ->group("Draco");
+
+	app.add_option(
+		"--draco-animation-compression-level",
+		gltfOptions.draco.animationCompressionLevel,
+		"The animation compression level to tune Draco to.",
+		true)
+		->check(CLI::Range(0, 10))
+		->group("Draco");
+
+	app.add_option(
+		"--draco-bits-for-timestamp",
+		gltfOptions.draco.quantBitsTimestamp,
+		"How many bits to quantize timestamp to.",
+		true)
+		->check(CLI::Range(1, 30))
+		->group("Draco");
+
+	app.add_option(
+		"--draco-bits-for-keyframe",
+		gltfOptions.draco.quantBitsKeyframe,
+		"How many bits to quantize keyframe to.",
+		true)
+		->check(CLI::Range(1, 30))
+		->group("Draco");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -249,11 +288,11 @@ int main(int argc, char* argv[]) {
   std::vector<std::function<Vec2f(Vec2f)>> texturesTransforms;
   if (do_flip_u || do_flip_v) {
     if (do_flip_u && do_flip_v) {
-      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], 1.0 - uv[1]); });
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], 1.0f - uv[1]); });
     } else if (do_flip_u) {
-      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0 - uv[0], uv[1]); });
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(1.0f - uv[0], uv[1]); });
     } else {
-      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0 - uv[1]); });
+      texturesTransforms.emplace_back([](Vec2f uv) { return Vec2f(uv[0], 1.0f - uv[1]); });
     }
   }
   if (verboseOutput) {
@@ -366,7 +405,7 @@ int main(int argc, char* argv[]) {
 
   if (data_render_model->binary->empty() == false) {
     const unsigned char* binaryData = &(*data_render_model->binary)[0];
-    unsigned long binarySize = data_render_model->binary->size();
+    size_t binarySize = data_render_model->binary->size();
     if (fwrite(binaryData, binarySize, 1, fp) != 1) {
       fmt::fprintf(
           stderr, "ERROR: Failed to write %lu bytes to file '%s'.\n", binarySize, binaryPath);

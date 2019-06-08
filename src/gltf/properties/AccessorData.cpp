@@ -25,8 +25,10 @@ json AccessorData::serialize() const {
       {"componentType", type.componentType.glType}, {"type", type.dataType}, {"count", count}};
   if (bufferView >= 0) {
     result["bufferView"] = bufferView;
-    result["byteOffset"] = byteOffset;
   }
+	if (byteOffset >= 0) {
+		result["byteOffset"] = byteOffset;
+	}
   if (!min.empty()) {
     result["min"] = min;
   }

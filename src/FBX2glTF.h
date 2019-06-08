@@ -90,15 +90,26 @@ struct GltfOptions {
   /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
   bool embedResources{false};
 
-  /** Whether and how to use KHR_draco_mesh_compression to minimize static geometry size. */
+  /** Whether and how to use KHR_draco_mesh_compression & Draco_animation_compression to minimize static geometry size. */
   struct {
-    bool enabled = false;
-    int compressionLevel = 7;
-    int quantBitsPosition = 14;
-    int quantBitsTexCoord = 10;
-    int quantBitsNormal = 10;
-    int quantBitsColor = 8;
-    int quantBitsGeneric = 8;
+    bool enabledMesh = false;
+		int compressionLevel = 7;
+		int quantBitsPosition = 14;
+		int quantBitsTexCoord = 10;
+		int quantBitsNormal = 10;
+		int quantBitsColor = 8;
+		int quantBitsGeneric = 8;
+//  		int compressionLevel = -1;	// 7
+//  		int quantBitsPosition = -1;	// 14
+//  		int quantBitsTexCoord = -1;	// 10
+//  		int quantBitsNormal = -1;		// 10
+//  		int quantBitsColor = -1;		// 8
+//  		int quantBitsGeneric = -1;	// 8
+
+		bool enabledAnimation = false;
+		int animationCompressionLevel = -1;	// 5
+		int quantBitsTimestamp = -1;
+		int quantBitsKeyframe = -1;
   } draco;
 
   /** Whether to include FBX User Properties as 'extras' metadata in glTF nodes. */
