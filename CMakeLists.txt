@@ -217,12 +217,6 @@ target_link_libraries(libFBX2glTF
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
-  boost_filesystem::boost_filesystem
-  boost_optional::boost_optional
-  fmt::fmt
-  libxml2::libxml2
-  zlib::zlib
-  libiconv::libiconv
 )
 
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
