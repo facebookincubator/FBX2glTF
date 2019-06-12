@@ -50,7 +50,6 @@ find_package(boost_optional MODULE REQUIRED)
 find_package(libxml2 MODULE REQUIRED)
 find_package(zlib MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
-find_package(libiconv MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -210,10 +209,17 @@ target_link_libraries(libFBX2glTF
   fmt::fmt
   libxml2::libxml2
   zlib::zlib
-  libiconv::libiconv
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
+
+if (APPLE)
+ find_package(Iconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF Iconv)
+else()
+ find_package(libiconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF libiconv::libiconv)
+endif()
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
