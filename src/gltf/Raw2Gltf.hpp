@@ -101,40 +101,40 @@ struct GLType {
     ((T*)buf)[3] = quaternion.scalar();
   }
 
-	template <class T>
-	const std::vector<T>& toStdVec(const std::vector<T>& scalars) const {
-		return scalars;
-	}
+  template <class T>
+  const std::vector<T>& toStdVec(const std::vector<T>& scalars) const {
+    return scalars;
+  }
 
-	template <class T, int d>
-	std::vector<T> toStdVec(const std::vector<mathfu::Vector<T, d>>& vectors) const {
-		std::vector<T> vec(vectors.size() * d);
-		std::vector<uint8_t> component(sizeof(T) * d);
-		for (uint32_t ii = 0; ii < vectors.size(); ii++) {
-			uint8_t* ptr = &component[0];
-			this->write(ptr, vectors[ii]);
-			const T* typePtr = (const T*)ptr;
-			for (uint32_t jj = 0; jj < d; ++jj) {
-				vec[ii * d + jj] = *(typePtr + jj);
-			}
-		}
-		return vec;
-	}
+  template <class T, int d>
+  std::vector<T> toStdVec(const std::vector<mathfu::Vector<T, d>>& vectors) const {
+    std::vector<T> vec(vectors.size() * d);
+    std::vector<uint8_t> component(sizeof(T) * d);
+    for (uint32_t ii = 0; ii < vectors.size(); ii++) {
+      uint8_t* ptr = &component[0];
+      this->write(ptr, vectors[ii]);
+      const T* typePtr = (const T*)ptr;
+      for (uint32_t jj = 0; jj < d; ++jj) {
+        vec[ii * d + jj] = *(typePtr + jj);
+      }
+    }
+    return vec;
+  }
 
-	template <class T>
-	std::vector<T> toStdVec(const std::vector<mathfu::Quaternion<T>>& quaternions) const {
-		std::vector<T> vec(quaternions.size() * 4);
-		std::vector<uint8_t> component(sizeof(T) * 4);
-		for (uint32_t ii = 0; ii < quaternions.size(); ii++) {
-			uint8_t* ptr = &component[0];
-			this->write(ptr, quaternions[ii]);
-			const T* typePtr = (const T*)ptr;
-			for (uint32_t jj = 0; jj < 4; ++jj) {
-				vec[ii * 4 + jj] = *(typePtr + jj);
-			}
-		}
-		return vec;
-	}
+  template <class T>
+  std::vector<T> toStdVec(const std::vector<mathfu::Quaternion<T>>& quaternions) const {
+    std::vector<T> vec(quaternions.size() * 4);
+    std::vector<uint8_t> component(sizeof(T) * 4);
+    for (uint32_t ii = 0; ii < quaternions.size(); ii++) {
+      uint8_t* ptr = &component[0];
+      this->write(ptr, quaternions[ii]);
+      const T* typePtr = (const T*)ptr;
+      for (uint32_t jj = 0; jj < 4; ++jj) {
+        vec[ii * 4 + jj] = *(typePtr + jj);
+      }
+    }
+    return vec;
+  }
 
   const ComponentType componentType;
   const uint8_t count;
@@ -195,29 +195,29 @@ struct AttributeDefinition {
 
 template <class T>
 struct ChannelDefinition {
-	const std::string path;
-	const std::vector<T>& channelData;
-	const GLType glType;
-	const draco::DataType dracoComponentType;
+  const std::string path;
+  const std::vector<T>& channelData;
+  const GLType glType;
+  const draco::DataType dracoComponentType;
 
-	ChannelDefinition(
-		const std::string path,
-		const std::vector<T>& channelData,
-		const GLType& glType,
-		const draco::DataType dracoComponentType)
-		: path(std::move(path)),
-		channelData(channelData),
-		glType(glType),
-		dracoComponentType(dracoComponentType) {}
+  ChannelDefinition(
+    const std::string path,
+    const std::vector<T>& channelData,
+    const GLType& glType,
+    const draco::DataType dracoComponentType)
+    : path(std::move(path)),
+    channelData(channelData),
+    glType(glType),
+    dracoComponentType(dracoComponentType) {}
 
-	ChannelDefinition(
-		const std::string path,
-		const std::vector<T>& channelData,
-		const GLType& glType)
-		: path(std::move(path)),
-		channelData(channelData),
-		glType(glType),
-		dracoComponentType(draco::DataType::DT_INVALID) {}
+  ChannelDefinition(
+    const std::string path,
+    const std::vector<T>& channelData,
+    const GLType& glType)
+    : path(std::move(path)),
+    channelData(channelData),
+    glType(glType),
+    dracoComponentType(draco::DataType::DT_INVALID) {}
 };
 
 struct AccessorData;

@@ -26,9 +26,9 @@ json AccessorData::serialize() const {
   if (bufferView >= 0) {
     result["bufferView"] = bufferView;
   }
-	if (byteOffset >= 0) {
-		result["byteOffset"] = byteOffset;
-	}
+  if (byteOffset >= 0) {
+    result["byteOffset"] = byteOffset;
+  }
   if (!min.empty()) {
     result["min"] = min;
   }

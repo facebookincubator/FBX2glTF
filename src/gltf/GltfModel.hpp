@@ -122,46 +122,46 @@ class GltfModel {
     return accessor;
   };
 
-	template <class T>
-	std::shared_ptr<AccessorData> AddTimestampsToAnimation(
-		BufferData& buffer,
-		AnimationData& animationData,
-		const std::vector<T>& timestamps,
-		const GLType& glType,
-		const draco::DataType dracoComponentType) {
-		std::shared_ptr<AccessorData> accessor;
-		if (dracoComponentType != draco::DT_INVALID && animationData.dracoKeyframeAnimation != nullptr) {
-			accessor = accessors.hold(new AccessorData(glType));
-			accessor->count = to_uint32(timestamps.size());
-			animationData.AddDracoTimestamps(*accessor, timestamps);
-		} else {
-			accessor = AddAccessorAndView(buffer, glType, timestamps);
-			animationData.AddTimestamps(*accessor);
-		}
-		return accessor;
-	};
+  template <class T>
+  std::shared_ptr<AccessorData> AddTimestampsToAnimation(
+    BufferData& buffer,
+    AnimationData& animationData,
+    const std::vector<T>& timestamps,
+    const GLType& glType,
+    const draco::DataType dracoComponentType) {
+    std::shared_ptr<AccessorData> accessor;
+    if (dracoComponentType != draco::DT_INVALID && animationData.dracoKeyframeAnimation != nullptr) {
+      accessor = accessors.hold(new AccessorData(glType));
+      accessor->count = to_uint32(timestamps.size());
+      animationData.AddDracoTimestamps(*accessor, timestamps);
+    } else {
+      accessor = AddAccessorAndView(buffer, glType, timestamps);
+      animationData.AddTimestamps(*accessor);
+    }
+    return accessor;
+  };
 
-	template <class T>
-	std::shared_ptr<AccessorData> AddChannelToAnimation(
-		BufferData& buffer,
-		AnimationData& animationData,
-		const NodeData& nDat,
-		const ChannelDefinition<T>& channelDef) {
-		std::shared_ptr<AccessorData> accessor;
-		if (channelDef.dracoComponentType != draco::DT_INVALID && animationData.dracoKeyframeAnimation != nullptr) {
-			accessor = accessors.hold(new AccessorData(channelDef.glType));
-			accessor->count = to_uint32(channelDef.channelData.size());
-			animationData.AddDracoNodeChannel(
-				nDat,
-				*accessor,
-				channelDef.path,
-				channelDef);
-		} else {
-			accessor = AddAccessorAndView(buffer, channelDef.glType, channelDef.channelData);
-			animationData.AddNodeChannel(nDat, *accessor, channelDef.path);
-		}
-		return accessor;
-	};
+  template <class T>
+  std::shared_ptr<AccessorData> AddChannelToAnimation(
+    BufferData& buffer,
+    AnimationData& animationData,
+    const NodeData& nDat,
+    const ChannelDefinition<T>& channelDef) {
+    std::shared_ptr<AccessorData> accessor;
+    if (channelDef.dracoComponentType != draco::DT_INVALID && animationData.dracoKeyframeAnimation != nullptr) {
+      accessor = accessors.hold(new AccessorData(channelDef.glType));
+      accessor->count = to_uint32(channelDef.channelData.size());
+      animationData.AddDracoNodeChannel(
+        nDat,
+        *accessor,
+        channelDef.path,
+        channelDef);
+    } else {
+      accessor = AddAccessorAndView(buffer, channelDef.glType, channelDef.channelData);
+      animationData.AddNodeChannel(nDat, *accessor, channelDef.path);
+    }
+    return accessor;
+  };
 
   template <class T>
   void serializeHolder(json& glTFJson, std::string key, const Holder<T> holder) {

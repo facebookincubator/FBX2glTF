@@ -13,16 +13,16 @@
 #include "NodeData.hpp"
 
 AnimationData::AnimationData(std::string name)
-	: Holdable(),
-	name(std::move(name)) {}
+  : Holdable(),
+  name(std::move(name)) {}
 
 AnimationData::AnimationData(std::string name, std::shared_ptr<draco::KeyframeAnimation> dracoKeyframeAnimation)
-    : Holdable(), 
-	name(std::move(name)),
-	dracoKeyframeAnimation(dracoKeyframeAnimation){}
+  : Holdable(),
+  name(std::move(name)),
+  dracoKeyframeAnimation(dracoKeyframeAnimation) {}
 
 void AnimationData::AddTimestamps(const AccessorData& timeAccessor) {
-	this->timeAccessor = timeAccessor.ix;
+  this->timeAccessor = timeAccessor.ix;
 }
 
 // assumption: 1-to-1 relationship between channels and samplers; this is a simplification on what

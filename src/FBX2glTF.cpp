@@ -185,24 +185,24 @@ int main(int argc, char* argv[]) {
       ->type_size(-1)
       ->type_name("(position|normal|tangent|binormial|color|uv0|uv1|auto)");
 
-	app.add_option(
-		"-d,--draco",
-		[&](std::vector<std::string> choices) -> bool {
-			for (const std::string choice : choices) {
-				if (choice == "mesh") {
-					gltfOptions.draco.enabledMesh = true;
-				} else if (choice == "animation") {
-					gltfOptions.draco.enabledAnimation = true;
-				} else {
-					fmt::printf("Unknown -d,--draco: %s\n", choice);
-					throw CLI::RuntimeError(1);
-				}
-			}
-			return true;
-		},
-		"Apply Draco mesh|animation compression to geometries|animation data.")
-		->type_size(-1)
-		->type_name("(mesh|animation)");
+  app.add_option(
+      "-d,--draco",
+      [&](std::vector<std::string> choices) -> bool {
+      for (const std::string choice : choices) {
+        if (choice == "mesh") {
+          gltfOptions.draco.enabledMesh = true;
+        } else if (choice == "animation") {
+          gltfOptions.draco.enabledAnimation = true;
+        } else {
+          fmt::printf("Unknown -d,--draco: %s\n", choice);
+          throw CLI::RuntimeError(1);
+        }
+      }
+      return true;
+    },
+      "Apply Draco mesh|animation compression to geometries|animation data.")
+      ->type_size(-1)
+      ->type_name("(mesh|animation)");
 
   app.add_option(
          "--draco-mesh-compression-level",
@@ -252,29 +252,29 @@ int main(int argc, char* argv[]) {
       ->check(CLI::Range(1, 30))
       ->group("Draco");
 
-	app.add_option(
-		"--draco-animation-compression-level",
-		gltfOptions.draco.animationCompressionLevel,
-		"The animation compression level to tune Draco to.",
-		true)
-		->check(CLI::Range(0, 10))
-		->group("Draco");
+  app.add_option(
+        "--draco-animation-compression-level",
+        gltfOptions.draco.animationCompressionLevel,
+        "The animation compression level to tune Draco to.",
+        true)
+      ->check(CLI::Range(0, 10))
+      ->group("Draco");
 
-	app.add_option(
-		"--draco-bits-for-timestamp",
-		gltfOptions.draco.quantBitsTimestamp,
-		"How many bits to quantize timestamp to.",
-		true)
-		->check(CLI::Range(1, 30))
-		->group("Draco");
+  app.add_option(
+      "--draco-bits-for-timestamp",
+      gltfOptions.draco.quantBitsTimestamp,
+      "How many bits to quantize timestamp to.",
+      true)
+    ->check(CLI::Range(1, 30))
+    ->group("Draco");
 
-	app.add_option(
-		"--draco-bits-for-keyframe",
-		gltfOptions.draco.quantBitsKeyframe,
-		"How many bits to quantize keyframe to.",
-		true)
-		->check(CLI::Range(1, 30))
-		->group("Draco");
+  app.add_option(
+      "--draco-bits-for-keyframe",
+      gltfOptions.draco.quantBitsKeyframe,
+      "How many bits to quantize keyframe to.",
+      true)
+    ->check(CLI::Range(1, 30))
+    ->group("Draco");
 
   CLI11_PARSE(app, argc, argv);
 

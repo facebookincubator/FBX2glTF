@@ -30,22 +30,22 @@ struct AnimationData : Holdable {
   // glTF can express, but it means we can rely on samplerIx == channelIx throughout an animation
   void AddNodeChannel(const NodeData& node, const AccessorData& accessor, std::string path);
 
-	template <class T>
-	void AddDracoNodeChannel(
-		const NodeData& node,
-		const AccessorData& accessor,
-		const std::string& path,
-		const ChannelDefinition<T>& keyframe) {
-		assert(channels.size() == samplers.size());
-		uint32_t ix = to_uint32(channels.size());
-		channels.emplace_back(channel_t(ix, node, std::move(path)));
-		samplers.emplace_back(sampler_t(timeAccessor, accessor.ix));
+  template <class T>
+  void AddDracoNodeChannel(
+    const NodeData& node,
+    const AccessorData& accessor,
+    const std::string& path,
+    const ChannelDefinition<T>& keyframe) {
+    assert(channels.size() == samplers.size());
+    uint32_t ix = to_uint32(channels.size());
+    channels.emplace_back(channel_t(ix, node, std::move(path)));
+    samplers.emplace_back(sampler_t(timeAccessor, accessor.ix));
 
-		dracoKeyframeAnimation->AddKeyframes(
-			keyframe.dracoComponentType, 
-			keyframe.glType.count, 
-			keyframe.glType.toStdVec(keyframe.channelData));
-	}
+    dracoKeyframeAnimation->AddKeyframes(
+      keyframe.dracoComponentType,
+      keyframe.glType.count,
+      keyframe.glType.toStdVec(keyframe.channelData));
+  }
 
   json serialize() const override;
 
