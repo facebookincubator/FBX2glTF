@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.5)
 project(FBX2glTF)
 
+set(typical_usage_str
+  "Example usage:\n\
+  > mkdir -p build_debug\n\
+  > conan install . -i build_debug -s build_type=Debug -e FBXSDK_SDKS=/home/zell/FBXSDK\n\
+  > conan build . -bf build_debug")
+
 if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
   message(FATAL_ERROR
-    "Building from within the source tree is not supported.\n"
-    "Hint: mkdir -p build; cmake -H. -Bbuild; make -Cbuild\n")
+    "Building from within the source tree is not supported! ${typical_usage_str}")
 endif ()
 
 set(CMAKE_CXX_STANDARD 11)
@@ -28,34 +33,26 @@ if (NOT FBXSDK_FOUND)
   )
 endif()
 
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
+  message(FATAL_ERROR
+    "The Conan package manager must run ('install') first. ${typical_usage_str}")
+endif()
+include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
+
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
-find_package(Iconv QUIET)
+
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
+
+# stuff we get from Conan
+find_package(boost_filesystem MODULE REQUIRED)
+find_package(boost_optional MODULE REQUIRED)
+find_package(libxml2 MODULE REQUIRED)
+find_package(zlib MODULE REQUIRED)
+find_package(fmt MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if (WIN32)
-  # this will suffice for now; don't really care about 32-bit
-  set(LIBXML2_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
-  set(LIBXML2_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/libxml2-mt.lib)
-  set(LIBXML2_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/libxml2-mt.lib)
-  if (NOT LIBXML2_INCLUDE_DIRS OR NOT LIBXML2_LIBRARIES)
-    message(FATAL_ERROR "Cannot find libxml2.lib in the expected location.")
-  endif()
-
-  set(ZLIB_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
-  set(ZLIB_LIBRARIES ${FBXSDK_ROOT}/lib/vs2017/x64/release/zlib-mt.lib)
-  set(ZLIB_LIBRARIES_DEBUG ${FBXSDK_ROOT}/lib/vs2017/x64/debug/zlib-mt.lib)
-  if (NOT ZLIB_LIBRARIES)
-    message(FATAL_ERROR "Cannot find zlib.lib in the expected location.")
-  endif()
-
-else()
-  find_package(LibXml2 REQUIRED)
-  find_package(ZLIB REQUIRED)
-endif()
-
 
 # DRACO
 ExternalProject_Add(Draco
@@ -109,22 +106,6 @@ ExternalProject_Add(CPPCodec
   INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping CPPCodec install step."
 )
 set(CPPCODEC_INCLUDE_DIR "${CMAKE_BINARY_DIR}/cppcodec/src/CPPCodec")
-
-# FMT
-ExternalProject_Add(Fmt
-  PREFIX fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG 4.0.0
-  CMAKE_CACHE_ARGS  "-DFMT_DOC:BOOL=OFF" "-DFMT_INSTALL:BOOL=ON" "-DFMT_TEST:BOOL=OFF"
-  CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-)
-set(FMT_INCLUDE_DIR "${CMAKE_BINARY_DIR}/fmt/include")
-if (WIN32)
-   set(FMT_LIB "${CMAKE_BINARY_DIR}/fmt/lib/fmt.lib")
-else()
-   set(FMT_LIB "${CMAKE_BINARY_DIR}/fmt/lib/libfmt.a")
-endif()
 
 if (APPLE)
     find_library(CF_FRAMEWORK CoreFoundation)
@@ -190,7 +171,6 @@ set(LIB_SOURCE_FILES
         src/utils/File_Utils.hpp
         src/utils/Image_Utils.cpp
         src/utils/Image_Utils.hpp
-        src/utils/String_Utils.cpp
         src/utils/String_Utils.hpp
         third_party/CLI11/CLI11.hpp
 )
@@ -205,7 +185,6 @@ add_dependencies(libFBX2glTF
   MathFu
   FiFoMap
   CPPCodec
-  Fmt
 )
 
 if (NOT MSVC)
@@ -222,50 +201,39 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
+  boost_filesystem::boost_filesystem
+  boost_optional::boost_optional
   ${DRACO_LIB}
-  ${FMT_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
+  fmt::fmt
+  libxml2::libxml2
+  zlib::zlib
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (WIN32)
-  target_link_libraries(libFBX2glTF
-    optimized ${LIBXML2_LIBRARIES}
-    debug ${LIBXML2_LIBRARIES_DEBUG}
-    optimized ${ZLIB_LIBRARIES}
-    debug ${ZLIB_LIBRARIES_DEBUG}
-  )
+if (APPLE)
+ find_package(Iconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF Iconv)
 else()
-  target_link_libraries(libFBX2glTF
-    ${LIBXML2_LIBRARIES}
-    ${ZLIB_LIBRARIES}
-  )
+ find_package(libiconv MODULE REQUIRED)
+ target_link_libraries(libFBX2glTF libiconv::libiconv)
 endif()
 
-target_include_directories(libFBX2glTF SYSTEM PUBLIC
+target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
-  "third_party/stb"
-  "third_party/json"
 )
 
 target_include_directories(libFBX2glTF SYSTEM PUBLIC
-  Iconv::Iconv
+  "third_party/stb"
+  "third_party/json"
   ${FBXSDK_INCLUDE_DIR}
   ${DRACO_INCLUDE_DIR}
   ${MATHFU_INCLUDE_DIRS}
   ${FIFO_MAP_INCLUDE_DIR}
   ${CPPCODEC_INCLUDE_DIR}
-  ${FMT_INCLUDE_DIR}
-  ${LIBXML2_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIRS}
 )
-
-if (Iconv_FOUND)
-  target_link_libraries(libFBX2glTF Iconv::Iconv)
-  target_include_directories(libFBX2glTF SYSTEM PUBLIC Iconv::Iconv)
-endif()
 
 target_include_directories(appFBX2glTF PUBLIC
   "third_party/CLI11"

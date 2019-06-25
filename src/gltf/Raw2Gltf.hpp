@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #pragma once
@@ -120,7 +119,7 @@ const GLType GLT_QUATF = {CT_FLOAT, 4, "VEC4"};
  * The base of any indexed glTF entity.
  */
 struct Holdable {
-  uint32_t ix;
+  uint32_t ix = UINT_MAX;
 
   virtual json serialize() const = 0;
 };

@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #pragma once
@@ -49,7 +48,7 @@ struct PrimitiveData {
         componentCount * draco::DataTypeLength(attribute.dracoComponentType),
         0);
 
-    const int dracoAttId = dracoMesh->AddAttribute(att, true, attribArr.size());
+    const int dracoAttId = dracoMesh->AddAttribute(att, true, to_uint32(attribArr.size()));
     draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);
 
     std::vector<uint8_t> buf(sizeof(T));

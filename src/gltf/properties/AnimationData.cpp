@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #include "AnimationData.hpp"
@@ -24,7 +23,7 @@ void AnimationData::AddNodeChannel(
     const AccessorData& accessor,
     std::string path) {
   assert(channels.size() == samplers.size());
-  uint32_t ix = channels.size();
+  uint32_t ix = to_uint32(channels.size());
   channels.emplace_back(channel_t(ix, node, std::move(path)));
   samplers.emplace_back(sampler_t(timeAccessor, accessor.ix));
 }

@@ -1,0 +1,58 @@
+# version format
+version: 1.0.{build}
+
+environment:
+  matrix:
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      PYTHON: "C:\\Python36-x64"
+  FBXSDK_SDKS: sdk
+
+stack: python %PYTHON%
+
+#temporarily disabled
+#cache:
+#  - C:\Users\appveyor\.conan\data -> appveyor.yml, conanfile.py
+
+init:
+  - git config --global filter.lfs.required false
+  - git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
+  - git config --global filter.lfs.process "git-lfs filter-process --skip"
+
+install:
+  - cinst zstandard
+  - ps: Start-FileDownload 'https://github.com/zellski/FBXSDK-Windows/archive/2019.2.tar.gz'
+  - 7z e 2019.2.tar.gz
+  - 7z x 2019.2.tar
+  - ps: move -v .\FBXSDK-Windows-2019.2\sdk\ .
+  - ps: zstd -d -r --rm sdk
+  - cmd: echo "Downloading conan..."
+  - cmd: set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - cmd: python --version
+  - cmd: python -m pip install --upgrade pip
+  - cmd: pip install conan
+  - cmd: conan user # Create the conan data directory
+  - cmd: conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+  - cmd: conan --version
+
+build_script:
+  - cmd: conan install . -i build -s build_type=Release -s compiler="Visual Studio" -s compiler.version=15
+  - cmd: conan build -bf build .
+  - cmd: move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
+
+test: off
+
+artifacts:
+  - path: build/Release/FBX2glTF-windows-x64.exe
+
+deploy:
+  tag: $(APPVEYOR_REPO_TAG_NAME)
+  description: ''
+  provider: GitHub
+  auth_token:
+    secure: OSvhQP0O9uaH+OFOJpbGiiBMRTOJ+H/VJHqVBhq39RNDnOfUEr/yjJNKh3JSdNqj
+  artifact: build/Release/FBX2glTF-windows-x64.exe
+  draft: true
+  prerelease: true
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true

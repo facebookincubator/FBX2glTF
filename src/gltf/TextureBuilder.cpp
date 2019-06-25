@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #include "TextureBuilder.hpp"
@@ -49,8 +48,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
     if (rawTexIx >= 0) {
       const RawTexture& rawTex = raw.GetTexture(rawTexIx);
       const std::string& fileLoc = rawTex.fileLocation;
-      const std::string& name =
-          StringUtils::GetFileBaseString(StringUtils::GetFileNameString(fileLoc));
+      const std::string& name = FileUtils::GetFileBase(FileUtils::GetFileName(fileLoc));
       if (!fileLoc.empty()) {
         info.pixels = stbi_load(fileLoc.c_str(), &info.width, &info.height, &info.channels, 0);
         if (!info.pixels) {
@@ -142,7 +140,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
   ImageData* image;
   if (options.outputBinary) {
     const auto bufferView =
-        gltf.AddRawBufferView(*gltf.defaultBuffer, imgBuffer.data(), imgBuffer.size());
+        gltf.AddRawBufferView(*gltf.defaultBuffer, imgBuffer.data(), to_uint32(imgBuffer.size()));
     image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
   } else {
     const std::string imageFilename = mergedFilename + (png ? ".png" : ".jpg");
@@ -180,20 +178,30 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   }
 
   const RawTexture& rawTexture = raw.GetTexture(rawTexIndex);
-  const std::string textureName = StringUtils::GetFileBaseString(rawTexture.name);
-  const std::string relativeFilename = StringUtils::GetFileNameString(rawTexture.fileLocation);
+  const std::string textureName = FileUtils::GetFileBase(rawTexture.name);
+  const std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
 
   ImageData* image = nullptr;
   if (options.outputBinary) {
     auto bufferView = gltf.AddBufferViewForFile(*gltf.defaultBuffer, rawTexture.fileLocation);
     if (bufferView) {
-      std::string suffix = StringUtils::GetFileSuffixString(rawTexture.fileLocation);
-      image = new ImageData(relativeFilename, *bufferView, ImageUtils::suffixToMimeType(suffix));
+      const auto& suffix = FileUtils::GetFileSuffix(rawTexture.fileLocation);
+      std::string mimeType;
+      if (suffix) {
+        mimeType = ImageUtils::suffixToMimeType(suffix.value());
+      } else {
+        mimeType = "image/jpeg";
+        fmt::printf(
+            "Warning: Can't deduce mime type of texture '%s'; using %s.\n",
+            rawTexture.fileLocation,
+            mimeType);
+      }
+      image = new ImageData(relativeFilename, *bufferView, mimeType);
     }
 
   } else if (!relativeFilename.empty()) {
     image = new ImageData(relativeFilename, relativeFilename);
-    std::string outputPath = outputFolder + StringUtils::NormalizePath(relativeFilename);
+    std::string outputPath = outputFolder + "/" + relativeFilename;
     if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
       if (verboseOutput) {
         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);

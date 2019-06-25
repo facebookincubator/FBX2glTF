@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #pragma once
@@ -44,7 +43,7 @@ template <typename T>
 class Holder {
  public:
   std::shared_ptr<T> hold(T* ptr) {
-    ptr->ix = ptrs.size();
+    ptr->ix = to_uint32(ptrs.size());
     ptrs.emplace_back(ptr);
     return ptrs.back();
   }
@@ -114,7 +113,7 @@ class GltfModel {
       primitive.AddDracoAttrib(attrDef, attribArr);
 
       accessor = accessors.hold(new AccessorData(attrDef.glType));
-      accessor->count = attribArr.size();
+      accessor->count = to_uint32(attribArr.size());
     } else {
       auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
       accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));

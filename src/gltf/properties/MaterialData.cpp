@@ -1,10 +1,9 @@
 /**
- * Copyright (c) 2014-present, Facebook, Inc.
+ * Copyright (c) Facebook, Inc. and its affiliates.
  * All rights reserved.
  *
  * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
+ * LICENSE file in the root directory of this source tree.
  */
 
 #include "MaterialData.hpp"
@@ -59,13 +58,15 @@ void to_json(json& j, const PBRMetallicRoughness& d) {
   if (d.baseColorFactor.LengthSquared() > 0) {
     j["baseColorFactor"] = toStdVec(d.baseColorFactor);
   }
-  // we always copy metallic/roughness straight to the glTF:
-  //  - if there's a texture, they're linear multiplier
-  //  - if there's no texture, they're constants
-  j["metallicFactor"] = d.metallic;
-  j["roughnessFactor"] = d.roughness;
   if (d.metRoughTexture != nullptr) {
     j["metallicRoughnessTexture"] = *d.metRoughTexture;
+    // if a texture is provided, throw away metallic/roughness values
+    j["roughnessFactor"] = 1.0f;
+    j["metallicFactor"] = 1.0f;
+  } else {
+    // without a texture, however, use metallic/roughness as constants
+    j["metallicFactor"] = d.metallic;
+    j["roughnessFactor"] = d.roughness;
   }
 }
 
