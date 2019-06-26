@@ -18,15 +18,21 @@
 
 #include "FBX2glTF.h"
 
+struct FbxVertexSkinningInfo {
+  int jointId;
+  float weight;
+};
+
+
 class FbxSkinningAccess {
  public:
-  static const int MAX_WEIGHTS = 4;
 
   FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, FbxNode* pNode);
 
   bool IsSkinned() const {
-    return (vertexJointWeights.size() > 0);
+    return (vertexSkinning.size() > 0);
   }
+
 
   int GetNodeCount() const {
     return (int)jointNodes.size();
@@ -57,23 +63,17 @@ class FbxSkinningAccess {
     return inverseBindMatrices[jointIndex];
   }
 
-  const Vec4i GetVertexIndices(const int controlPointIndex) const {
-    return (!vertexJointIndices.empty()) ? vertexJointIndices[controlPointIndex]
-                                         : Vec4i(0, 0, 0, 0);
-  }
-
-  const Vec4f GetVertexWeights(const int controlPointIndex) const {
-    return (!vertexJointWeights.empty()) ? vertexJointWeights[controlPointIndex]
-                                         : Vec4f(0, 0, 0, 0);
+  const std::vector<FbxVertexSkinningInfo> GetVertexSkinningInfo(const int controlPointIndex) const {
+    return vertexSkinning[controlPointIndex];
   }
 
  private:
   int rootIndex;
-  std::vector<uint64_t> jointIds;
+  int maxBoneInfluences;
+  std::vector<long> jointIds;
   std::vector<FbxNode*> jointNodes;
   std::vector<FbxMatrix> jointSkinningTransforms;
   std::vector<FbxMatrix> jointInverseGlobalTransforms;
   std::vector<FbxAMatrix> inverseBindMatrices;
-  std::vector<Vec4i> vertexJointIndices;
-  std::vector<Vec4f> vertexJointWeights;
+  std::vector<std::vector<FbxVertexSkinningInfo>> vertexSkinning;
 };

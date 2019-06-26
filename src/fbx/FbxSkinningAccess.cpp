@@ -19,8 +19,7 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
         continue;
       }
       int controlPointCount = pMesh->GetControlPointsCount();
-      vertexJointIndices.resize(controlPointCount, Vec4i(0, 0, 0, 0));
-      vertexJointWeights.resize(controlPointCount, Vec4f(0.0f, 0.0f, 0.0f, 0.0f));
+      vertexSkinning.resize(controlPointCount);
 
       for (int clusterIndex = 0; clusterIndex < clusterCount; clusterIndex++) {
         FbxCluster* cluster = skin->GetCluster(clusterIndex);
@@ -56,31 +55,18 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
           if (clusterIndices[i] < 0 || clusterIndices[i] >= controlPointCount) {
             continue;
           }
-          if (clusterWeights[i] <= vertexJointWeights[clusterIndices[i]][MAX_WEIGHTS - 1]) {
+          if (clusterWeights[i] <= 0.0) {
             continue;
           }
-          vertexJointIndices[clusterIndices[i]][MAX_WEIGHTS - 1] = clusterIndex;
-          vertexJointWeights[clusterIndices[i]][MAX_WEIGHTS - 1] = (float)clusterWeights[i];
-          for (int j = MAX_WEIGHTS - 1; j > 0; j--) {
-            if (vertexJointWeights[clusterIndices[i]][j - 1] >=
-                vertexJointWeights[clusterIndices[i]][j]) {
-              break;
-            }
-            std::swap(
-                vertexJointIndices[clusterIndices[i]][j - 1],
-                vertexJointIndices[clusterIndices[i]][j]);
-            std::swap(
-                vertexJointWeights[clusterIndices[i]][j - 1],
-                vertexJointWeights[clusterIndices[i]][j]);
-          }
+
+          vertexSkinning[clusterIndices[i]].push_back(FbxVertexSkinningInfo{(int) clusterIndex, (float)clusterWeights[i]});
+
         }
       }
-      for (int i = 0; i < controlPointCount; i++) {
-        const float weightSumRcp = 1.0 /
-            (vertexJointWeights[i][0] + vertexJointWeights[i][1] + vertexJointWeights[i][2] +
-             vertexJointWeights[i][3]);
-        vertexJointWeights[i] *= weightSumRcp;
-      }
+      
+      for (int i = 0; i < vertexSkinning.size(); i++)
+        maxBoneInfluences = std::max((int) vertexSkinning[i].size(), maxBoneInfluences);
+
     }
   }
 

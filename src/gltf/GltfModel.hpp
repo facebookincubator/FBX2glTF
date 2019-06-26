@@ -123,6 +123,31 @@ class GltfModel {
   };
 
   template <class T>
+  std::shared_ptr<AccessorData> AddAttributeArrayToPrimitive(
+    BufferData& buffer,
+    const RawModel& surfaceModel,
+    PrimitiveData& primitive,
+    const AttributeArrayDefinition<T>& attrDef) {
+    // copy attribute data into vector
+    std::vector<T> attribArr;
+    surfaceModel.GetArrayAttributeArray<T>(attribArr, attrDef.rawAttributeIx, attrDef.arrayOffset);
+
+    std::shared_ptr<AccessorData> accessor;
+    if (attrDef.dracoComponentType != draco::DT_INVALID && primitive.dracoMesh != nullptr) {
+      primitive.AddDracoArrayAttrib(attrDef, attribArr);
+
+      accessor = accessors.hold(new AccessorData(attrDef.glType));
+      accessor->count = attribArr.size();
+    }
+    else {
+      auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
+      accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));
+    }
+    primitive.AddAttrib(attrDef.gltfName, *accessor);
+    return accessor;
+  };
+
+  template <class T>
   void serializeHolder(json& glTFJson, std::string key, const Holder<T> holder) {
     if (!holder.ptrs.empty()) {
       std::vector<json> bits;
