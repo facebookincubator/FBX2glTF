@@ -60,8 +60,7 @@ struct RawVertex {
   Vec2f uv1{0.0f};
   std::vector<Vec4i> jointIndices;
   std::vector<Vec4f> jointWeights;
-
-
+  
   std::vector<RawVertexSkinningInfo> skinningInfo;
   // end of members that directly correspond to vertex attributes
 

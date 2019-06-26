@@ -660,10 +660,10 @@ void RawModel::CreateMaterialModels(
           vertex.uv1 = defaultVertex.uv1;
         }
         if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) == 0) {
-            vertex.jointIndices = defaultVertex.jointIndices;
+          vertex.jointIndices = defaultVertex.jointIndices;
         }
         if ((keep & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) == 0) {
-            vertex.jointWeights = defaultVertex.jointWeights;
+          vertex.jointWeights = defaultVertex.jointWeights;
         }
       }
 
