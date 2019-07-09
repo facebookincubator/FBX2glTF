@@ -12,6 +12,8 @@
 #include "RoughnessMetallicMaterials.hpp"
 #include "TraditionalMaterials.hpp"
 
+static int warnMtrCount = 0;
+
 FbxMaterialsAccess::FbxMaterialsAccess(
     const FbxMesh* pMesh,
     const std::map<const FbxTexture*, FbxString>& textureLocations)
@@ -43,8 +45,15 @@ FbxMaterialsAccess::FbxMaterialsAccess(
       continue;
     }
 
-    FbxSurfaceMaterial* surfaceMaterial =
+    auto* surfaceMaterial =
         mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum);
+
+    if (!surfaceMaterial) {
+      if (++warnMtrCount == 1) {
+        fmt::printf("Warning: Reference to missing surface material.\n");
+        fmt::printf("         (Further warnings of this type squelched.)\n");
+      }
+    }
 
     if (materialNum >= summaries.size()) {
       summaries.resize(materialNum + 1);
@@ -57,7 +66,8 @@ FbxMaterialsAccess::FbxMaterialsAccess(
     if (materialNum >= userProperties.size()) {
       userProperties.resize(materialNum + 1);
     }
-    if (userProperties[materialNum].empty()) {
+    if (surfaceMaterial && userProperties[materialNum].empty()) {
+
       FbxProperty objectProperty = surfaceMaterial->GetFirstProperty();
       while (objectProperty.IsValid()) {
         if (objectProperty.GetFlag(FbxPropertyFlags::eUserDefined)) {
@@ -97,6 +107,9 @@ const std::vector<std::string> FbxMaterialsAccess::GetUserProperties(const int p
 std::unique_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterialInfo(
     FbxSurfaceMaterial* material,
     const std::map<const FbxTexture*, FbxString>& textureLocations) {
+  if (!material) {
+    return nullptr;
+  }
   std::unique_ptr<FbxMaterialInfo> res =
       FbxStingrayPBSMaterialResolver(material, textureLocations).resolve();
   if (res == nullptr) {
