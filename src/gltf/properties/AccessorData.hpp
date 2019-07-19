@@ -34,10 +34,10 @@ struct AccessorData : Holdable {
     return type.byteStride() * count;
   }
 
-  const int bufferView;
+  /*const*/ int bufferView;
   const GLType type;
 
-  unsigned int byteOffset;
+  /*unsigned*/ int byteOffset;
   unsigned int count;
   std::vector<float> min;
   std::vector<float> max;

@@ -149,6 +149,8 @@ ModelData* Raw2Gltf(
       nodesById.insert(std::make_pair(node.id, nodeData));
     }
 
+    std::vector<std::shared_ptr<AccessorData>> accessors;
+
     //
     // animations
     //
@@ -162,11 +164,22 @@ ModelData* Raw2Gltf(
         continue;
       }
 
-      auto accessor = gltf->AddAccessorAndView(buffer, GLT_FLOAT, animation.times);
-      accessor->min = {*std::min_element(std::begin(animation.times), std::end(animation.times))};
-      accessor->max = {*std::max_element(std::begin(animation.times), std::end(animation.times))};
+      AnimationData* animationData = nullptr;
+      if (options.draco.enabledAnimation) {
+        // create Draco KeyframeAnimation
+        auto dracoKeyframeAnimation(std::make_shared<draco::KeyframeAnimation>());
+        animationData = new AnimationData(animation.name, dracoKeyframeAnimation);
+      } else {
+        animationData = new AnimationData(animation.name);
+      }
+      AnimationData& aDat = *gltf->animations.hold(animationData);
 
-      AnimationData& aDat = *gltf->animations.hold(new AnimationData(animation.name, *accessor));
+      const auto timestampsAccessor =
+        gltf->AddTimestampsToAnimation<float>(buffer, aDat, animation.times, GLT_FLOAT, draco::DT_FLOAT32);
+      timestampsAccessor->min = { *std::min_element(std::begin(animation.times), std::end(animation.times)) };
+      timestampsAccessor->max = { *std::max_element(std::begin(animation.times), std::end(animation.times)) };
+      accessors.emplace_back(timestampsAccessor);
+
       if (verboseOutput) {
         fmt::printf(
             "Animation '%s' has %lu channels:\n",
@@ -191,26 +204,82 @@ ModelData* Raw2Gltf(
 
         NodeData& nDat = require(nodesById, node.id);
         if (!channel.translations.empty()) {
-          aDat.AddNodeChannel(
-              nDat,
-              *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.translations),
-              "translation");
+          const ChannelDefinition<Vec3f> CHANNEL_TRANSLATIONS(
+            "translation",
+            channel.translations,
+            GLT_VEC3F,
+            draco::DT_FLOAT32);
+          const auto _ =
+            gltf->AddChannelToAnimation<Vec3f>(buffer, aDat, nDat, CHANNEL_TRANSLATIONS);
+          accessors.emplace_back(_);
         }
         if (!channel.rotations.empty()) {
-          aDat.AddNodeChannel(
-              nDat, *gltf->AddAccessorAndView(buffer, GLT_QUATF, channel.rotations), "rotation");
+          const ChannelDefinition<Quatf> CHANNEL_ROTATIONS(
+            "rotation",
+            channel.rotations,
+            GLT_QUATF,
+            draco::DT_FLOAT32);
+          const auto _ =
+            gltf->AddChannelToAnimation<Quatf>(buffer, aDat, nDat, CHANNEL_ROTATIONS);
+          accessors.emplace_back(_);
         }
         if (!channel.scales.empty()) {
-          aDat.AddNodeChannel(
-              nDat, *gltf->AddAccessorAndView(buffer, GLT_VEC3F, channel.scales), "scale");
+          const ChannelDefinition<Vec3f> CHANNEL_SCALES(
+            "scale",
+            channel.scales,
+            GLT_VEC3F,
+            draco::DT_FLOAT32);
+          const auto _ =
+            gltf->AddChannelToAnimation<Vec3f>(buffer, aDat, nDat, CHANNEL_SCALES);
+          accessors.emplace_back(_);
         }
         if (!channel.weights.empty()) {
-          aDat.AddNodeChannel(
-              nDat,
-              *gltf->AddAccessorAndView(buffer, {CT_FLOAT, 1, "SCALAR"}, channel.weights),
-              "weights");
+          const ChannelDefinition<float> CHANNEL_WEIGHTS(
+            "weights",
+            channel.weights,
+            { CT_FLOAT, 1, "SCALAR" },
+            draco::DT_FLOAT32);
+          const auto _ =
+            gltf->AddChannelToAnimation<float>(buffer, aDat, nDat, CHANNEL_WEIGHTS);
+          accessors.emplace_back(_);
         }
       }
+
+      if (options.draco.enabledAnimation) {
+        draco::EncoderOptions encodeOptions = draco::EncoderOptions::CreateDefaultOptions();
+        if (options.draco.animationCompressionLevel != -1) {
+          int dracoSpeed = 10 - options.draco.animationCompressionLevel;
+          int en = dracoSpeed;
+          int de = dracoSpeed;
+          encodeOptions.SetSpeed(en, de);
+        }
+
+        if (-1 != options.draco.quantBitsTimestamp) {
+          // set quantization for timestamps.
+          encodeOptions.SetAttributeInt(0, "quantization_bits", options.draco.quantBitsTimestamp);
+        }
+
+        if (-1 != options.draco.quantBitsKeyframe) {
+          // set quantization for keyframes.
+          for (int i = 1; i <= aDat.dracoKeyframeAnimation->num_animations(); ++i) {
+            encodeOptions.SetAttributeInt(i, "quantization_bits", options.draco.quantBitsKeyframe);
+          }
+        }
+
+        draco::EncoderBuffer dracoBuffer;
+        draco::KeyframeAnimationEncoder encoder;
+        draco::Status status = encoder.EncodeKeyframeAnimation(*(aDat.dracoKeyframeAnimation), encodeOptions, &dracoBuffer);
+        assert(status.code() == draco::Status::OK);
+        auto view = gltf->AddRawBufferView(buffer, dracoBuffer.data(), to_uint32(dracoBuffer.size()));
+        dracoBuffer.Clear();
+
+        for (auto accessor : accessors)
+        {
+          accessor->bufferView = view->ix;
+          accessor->byteOffset = -1;
+        }
+      }
+      accessors.clear();
     }
 
     //
@@ -438,7 +507,7 @@ ModelData* Raw2Gltf(
            surfaceModel.GetVertexCount() > 65535);
 
       std::shared_ptr<PrimitiveData> primitive;
-      if (options.draco.enabled) {
+      if (options.draco.enabledMesh) {
         size_t triangleCount = surfaceModel.GetTriangleCount();
 
         // initialize Draco mesh with vertex index information
@@ -454,10 +523,12 @@ ModelData* Raw2Gltf(
           dracoMesh->SetFace(draco::FaceIndex(ii), face);
         }
 
-        AccessorData& indexes =
-            *gltf->accessors.hold(new AccessorData(useLongIndices ? GLT_UINT : GLT_USHORT));
-        indexes.count = to_uint32(3 * triangleCount);
-        primitive.reset(new PrimitiveData(indexes, mData, dracoMesh));
+        std::shared_ptr<AccessorData> indexes =
+          gltf->accessors.hold(new AccessorData(useLongIndices ? GLT_UINT : GLT_USHORT));
+        indexes->count = to_uint32(3 * triangleCount);
+        primitive.reset(new PrimitiveData(*indexes, mData, dracoMesh));
+        accessors.emplace_back(indexes);
+
       } else {
         const AccessorData& indexes = *gltf->AddAccessorWithView(
             *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
@@ -483,6 +554,7 @@ ModelData* Raw2Gltf(
 
           accessor->min = toStdVec(rawSurface.bounds.min);
           accessor->max = toStdVec(rawSurface.bounds.max);
+          accessors.emplace_back(accessor);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
           const AttributeDefinition<Vec3f> ATTR_NORMAL(
@@ -492,12 +564,13 @@ ModelData* Raw2Gltf(
               draco::GeometryAttribute::NORMAL,
               draco::DT_FLOAT32);
           const auto _ =
-              gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
-        }
+            gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
+          accessors.emplace_back(_);
+				}
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_TANGENT) != 0) {
           const AttributeDefinition<Vec4f> ATTR_TANGENT("TANGENT", &RawVertex::tangent, GLT_VEC4F);
-          const auto _ = gltf->AddAttributeToPrimitive<Vec4f>(
-              buffer, surfaceModel, *primitive, ATTR_TANGENT);
+          const auto _ = gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_TANGENT);
+          accessors.emplace_back(_);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0) {
           const AttributeDefinition<Vec4f> ATTR_COLOR(
@@ -508,6 +581,7 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           const auto _ =
               gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_COLOR);
+          accessors.emplace_back(_);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV0) != 0) {
           const AttributeDefinition<Vec2f> ATTR_TEXCOORD_0(
@@ -518,6 +592,7 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           const auto _ = gltf->AddAttributeToPrimitive<Vec2f>(
               buffer, surfaceModel, *primitive, ATTR_TEXCOORD_0);
+          accessors.emplace_back(_);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_UV1) != 0) {
           const AttributeDefinition<Vec2f> ATTR_TEXCOORD_1(
@@ -528,6 +603,7 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           const auto _ = gltf->AddAttributeToPrimitive<Vec2f>(
               buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
+          accessors.emplace_back(_);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
           const AttributeDefinition<Vec4i> ATTR_JOINTS(
@@ -538,6 +614,7 @@ ModelData* Raw2Gltf(
               draco::DT_UINT16);
           const auto _ =
               gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+          accessors.emplace_back(_);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
           const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
@@ -548,6 +625,7 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           const auto _ =
               gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+          accessors.emplace_back(_);
         }
 
         // each channel present in the mesh always ends up a target in the primitive
@@ -599,7 +677,7 @@ ModelData* Raw2Gltf(
           primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
         }
       }
-      if (options.draco.enabled) {
+      if (options.draco.enabledMesh) {
         // Set up the encoder.
         draco::Encoder encoder;
 
@@ -634,7 +712,15 @@ ModelData* Raw2Gltf(
 
         auto view = gltf->AddRawBufferView(buffer, dracoBuffer.data(), to_uint32(dracoBuffer.size()));
         primitive->NoteDracoBuffer(*view);
+        dracoBuffer.Clear();
+
+        for (auto accessor : accessors)
+        {
+          accessor->bufferView = view->ix;
+          accessor->byteOffset = -1;
+        }
       }
+      accessors.clear();
       mesh->AddPrimitive(primitive);
     }
 
@@ -800,9 +886,13 @@ ModelData* Raw2Gltf(
     if (!gltf->lights.ptrs.empty()) {
       extensionsUsed.push_back(KHR_LIGHTS_PUNCTUAL);
     }
-    if (options.draco.enabled) {
+    if (options.draco.enabledMesh) {
       extensionsUsed.push_back(KHR_DRACO_MESH_COMPRESSION);
       extensionsRequired.push_back(KHR_DRACO_MESH_COMPRESSION);
+    }
+    if (options.draco.enabledAnimation) {
+      extensionsUsed.push_back(DRACO_ANIMATION_COMPRESSION);
+      extensionsRequired.push_back(DRACO_ANIMATION_COMPRESSION);
     }
 
     json glTFJson{{"asset", {{"generator", "FBX2glTF v" + FBX2GLTF_VERSION}, {"version", "2.0"}}},

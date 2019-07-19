@@ -36,7 +36,7 @@ struct PrimitiveData {
       const AccessorData* tangents);
 
   template <class T>
-  void AddDracoAttrib(const AttributeDefinition<T> attribute, const std::vector<T>& attribArr) {
+  void AddDracoAttrib(const AttributeDefinition<T>& attribute, const std::vector<T>& attribArr) {
     draco::PointAttribute att;
     int8_t componentCount = attribute.glType.count;
     att.Init(

@@ -9,13 +9,43 @@
 #pragma once
 
 #include "gltf/Raw2Gltf.hpp"
+#include "AccessorData.hpp"
 
 struct AnimationData : Holdable {
-  AnimationData(std::string name, const AccessorData& timeAccessor);
+  AnimationData(std::string name);
+
+  AnimationData(std::string name, std::shared_ptr<draco::KeyframeAnimation> dracoKeyframeAnimation);
+
+  void AddTimestamps(const AccessorData& timeAccessor);
+
+	template <class T>
+	void AddDracoTimestamps(const AccessorData& timeAccessor, const std::vector<T>& timestamps) {
+		this->timeAccessor = timeAccessor.ix;
+
+		std::vector<draco::KeyframeAnimation::TimestampType> dracoTimestamps(timestamps.begin(), timestamps.end());
+		dracoKeyframeAnimation->SetTimestamps(dracoTimestamps);
+	}
 
   // assumption: 1-to-1 relationship between channels and samplers; this is a simplification on what
   // glTF can express, but it means we can rely on samplerIx == channelIx throughout an animation
   void AddNodeChannel(const NodeData& node, const AccessorData& accessor, std::string path);
+
+  template <class T>
+  void AddDracoNodeChannel(
+    const NodeData& node,
+    const AccessorData& accessor,
+    const std::string& path,
+    const ChannelDefinition<T>& keyframe) {
+    assert(channels.size() == samplers.size());
+    uint32_t ix = to_uint32(channels.size());
+    channels.emplace_back(channel_t(ix, node, std::move(path)));
+    samplers.emplace_back(sampler_t(timeAccessor, accessor.ix));
+
+    dracoKeyframeAnimation->AddKeyframes(
+      keyframe.dracoComponentType,
+      keyframe.glType.count,
+      keyframe.glType.toStdVec(keyframe.channelData));
+  }
 
   json serialize() const override;
 
@@ -35,9 +65,10 @@ struct AnimationData : Holdable {
   };
 
   const std::string name;
-  const uint32_t timeAccessor;
+  uint32_t timeAccessor;
   std::vector<channel_t> channels;
   std::vector<sampler_t> samplers;
+  std::shared_ptr<draco::KeyframeAnimation> dracoKeyframeAnimation;
 };
 
 void to_json(json& j, const AnimationData::channel_t& data);

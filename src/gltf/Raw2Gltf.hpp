@@ -14,6 +14,8 @@
 // This can be a macro under Windows, confusing Draco
 #undef ERROR
 #include <draco/compression/encode.h>
+#include <draco/animation/keyframe_animation.h>
+#include <draco/animation/keyframe_animation_encoder.h>
 
 #include "FBX2glTF.h"
 #include "raw/RawModel.hpp"
@@ -21,6 +23,7 @@
 const std::string KHR_DRACO_MESH_COMPRESSION = "KHR_draco_mesh_compression";
 const std::string KHR_MATERIALS_CMN_UNLIT = "KHR_materials_unlit";
 const std::string KHR_LIGHTS_PUNCTUAL = "KHR_lights_punctual";
+const std::string DRACO_ANIMATION_COMPRESSION = "Draco_animation_compression";
 
 const std::string extBufferFilename = "buffer.bin";
 
@@ -98,6 +101,41 @@ struct GLType {
     ((T*)buf)[3] = quaternion.scalar();
   }
 
+  template <class T>
+  const std::vector<T>& toStdVec(const std::vector<T>& scalars) const {
+    return scalars;
+  }
+
+  template <class T, int d>
+  std::vector<T> toStdVec(const std::vector<mathfu::Vector<T, d>>& vectors) const {
+    std::vector<T> vec(vectors.size() * d);
+    std::vector<uint8_t> component(sizeof(T) * d);
+    for (uint32_t ii = 0; ii < vectors.size(); ii++) {
+      uint8_t* ptr = &component[0];
+      this->write(ptr, vectors[ii]);
+      const T* typePtr = (const T*)ptr;
+      for (uint32_t jj = 0; jj < d; ++jj) {
+        vec[ii * d + jj] = *(typePtr + jj);
+      }
+    }
+    return vec;
+  }
+
+  template <class T>
+  std::vector<T> toStdVec(const std::vector<mathfu::Quaternion<T>>& quaternions) const {
+    std::vector<T> vec(quaternions.size() * 4);
+    std::vector<uint8_t> component(sizeof(T) * 4);
+    for (uint32_t ii = 0; ii < quaternions.size(); ii++) {
+      uint8_t* ptr = &component[0];
+      this->write(ptr, quaternions[ii]);
+      const T* typePtr = (const T*)ptr;
+      for (uint32_t jj = 0; jj < 4; ++jj) {
+        vec[ii * 4 + jj] = *(typePtr + jj);
+      }
+    }
+    return vec;
+  }
+
   const ComponentType componentType;
   const uint8_t count;
   const std::string dataType;
@@ -138,7 +176,7 @@ struct AttributeDefinition {
       const GLType& _glType,
       const draco::GeometryAttribute::Type dracoAttribute,
       const draco::DataType dracoComponentType)
-      : gltfName(gltfName),
+      : gltfName(std::move(gltfName)),
         rawAttributeIx(rawAttributeIx),
         glType(_glType),
         dracoAttribute(dracoAttribute),
@@ -148,11 +186,38 @@ struct AttributeDefinition {
       const std::string gltfName,
       const T RawVertex::*rawAttributeIx,
       const GLType& _glType)
-      : gltfName(gltfName),
+      : gltfName(std::move(gltfName)),
         rawAttributeIx(rawAttributeIx),
         glType(_glType),
         dracoAttribute(draco::GeometryAttribute::INVALID),
         dracoComponentType(draco::DataType::DT_INVALID) {}
+};
+
+template <class T>
+struct ChannelDefinition {
+  const std::string path;
+  const std::vector<T>& channelData;
+  const GLType glType;
+  const draco::DataType dracoComponentType;
+
+  ChannelDefinition(
+    const std::string path,
+    const std::vector<T>& channelData,
+    const GLType& glType,
+    const draco::DataType dracoComponentType)
+    : path(std::move(path)),
+    channelData(channelData),
+    glType(glType),
+    dracoComponentType(dracoComponentType) {}
+
+  ChannelDefinition(
+    const std::string path,
+    const std::vector<T>& channelData,
+    const GLType& glType)
+    : path(std::move(path)),
+    channelData(channelData),
+    glType(glType),
+    dracoComponentType(draco::DataType::DT_INVALID) {}
 };
 
 struct AccessorData;
