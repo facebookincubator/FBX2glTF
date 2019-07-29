@@ -1,5 +1,3 @@
-[FaceBook Doc](https://developers.facebook.com/docs/sharing/3d-posts/glb-tutorials/)
-
 # FBX2glTF
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -29,6 +27,8 @@ Or perhaps, as part of a more complex pipeline:
           --input ~/models/source/butterfly.fbx \
           --output ~/models/target/butterfly.glb
 ```
+
+There are also some friendly & hands-on instructions available [over at Facebook](https://developers.facebook.com/docs/sharing/3d-posts/glb-tutorials/#convert-from-fbx).
 
 ### CLI Switches
 
