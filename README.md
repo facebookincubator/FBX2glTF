@@ -28,6 +28,8 @@ Or perhaps, as part of a more complex pipeline:
           --output ~/models/target/butterfly.glb
 ```
 
+There are also some friendly & hands-on instructions available [over at Facebook](https://developers.facebook.com/docs/sharing/3d-posts/glb-tutorials/#convert-from-fbx).
+
 ### CLI Switches
 
 You can always run the binary with --help to see what options it takes:
