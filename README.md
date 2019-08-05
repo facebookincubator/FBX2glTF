@@ -183,20 +183,42 @@ If all goes well, you will end up with a statically linked executable in `./buil
 
 ### Windows
 
-<TODO> the below is out of date
+#### Install FBX SDK
 
-Windows users may [download](https://cmake.org/download) CMake for Windows,
-install it and [run it](https://cmake.org/runningcmake/) on the FBX2glTF
-checkout (choose a build directory distinct from the source).
+2019.2 version is required.
 
-As part of this process, you will be asked to choose which generator
-to use. **At present, only Visual Studio 2017 or 2019 is supported.** Older
-versions of the IDE are unlikely to successfully build the tool.
+#### Let FBX2glTF know where to find your FBX SDK
 
-Note that the `CMAKE_BUILD_TYPE` variable from the Unix Makefile system is
-entirely ignored here; it is when you open the generated solution that
-you will be choose one of the canonical build types — *Debug*,
-*Release*, *MinSizeRel*, and so on.
+By default, FBX2glTF will look into `<FBX2glTF-root-dir>/sdk/<your-platform>/<FBX-SDK-version>`.
+Usually you didn't install the FBX SDK into that directory.
+So simply create a symbolic link to the real FBX SDK here.
+
+The following scripts is powershell scripts.
+
+First you should create the `sdk` directory if it doesn't exist. cd it after all.
+
+```ps1
+> mkdir sdk
+> cd sdk
+```
+
+Now create the symbolic link. (You possibly need the admin privilege)
+
+```ps1
+> new-item -Path Windows -itemtype SymbolicLink -Value "path-to-fbx-sdk"
+```
+
+the `path-to-fbx-sdk` should be something like "C:\Program Files\Autodesk\FBX\FBX SDK".
+
+#### Install dependencies via [vcpkg](https://github.com/microsoft/vcpkg)
+
+```ps1
+> vcpkg install boost-filesystem:x64-windows boost-optional:x64-windows libxml2:x64-windows zlib:x64-windows fmt:x64-windows
+```
+
+#### Tell FBX2glTF you are going to use vcpkg instead of connan
+
+Add `-DFBX2GLTF_USE_VCPKG=ON` to cmake command line arguments.
 
 ## Conversion Process
 The actual translation begins with the FBX SDK parsing the input file, and ends

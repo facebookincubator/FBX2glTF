@@ -33,11 +33,13 @@ if (NOT FBXSDK_FOUND)
   )
 endif()
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
-  message(FATAL_ERROR
-    "The Conan package manager must run ('install') first. ${typical_usage_str}")
+if (NOT FBX2GLTF_USE_VCPKG)
+	if(NOT EXISTS "${CMAKE_BINARY_DIR}/conan_paths.cmake")
+	  message(FATAL_ERROR
+		"The Conan package manager must run ('install') first. ${typical_usage_str}")
+	endif()
+	include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 endif()
-include("${CMAKE_BINARY_DIR}/conan_paths.cmake")
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
@@ -45,30 +47,43 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-find_package(boost_filesystem MODULE REQUIRED)
-find_package(boost_optional MODULE REQUIRED)
-find_package(libxml2 MODULE REQUIRED)
-find_package(zlib MODULE REQUIRED)
-find_package(fmt MODULE REQUIRED)
+if (FBX2GLTF_USE_VCPKG)
+	find_package(Boost REQUIRED COMPONENTS filesystem)
+	# find_package(Boost REQUIRED COMPONENTS optional)
+	find_package(LibXml2 REQUIRED)
+	find_package(ZLIB REQUIRED)
+	find_package(fmt REQUIRED)
+else()
+	find_package(boost_filesystem MODULE REQUIRED)
+	find_package(boost_optional MODULE REQUIRED)
+	find_package(libxml2 MODULE REQUIRED)
+	find_package(zlib MODULE REQUIRED)
+	find_package(fmt MODULE REQUIRED)
+endif()
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # DRACO
-ExternalProject_Add(Draco
-  GIT_REPOSITORY https://github.com/google/draco
-  GIT_TAG 1.3.4
-  PREFIX draco
-  INSTALL_DIR
-  CMAKE_ARGS
-        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-        -DBUILD_FOR_GLTF=1
-)
-set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
-if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/dracoenc.lib")
-else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/libdracoenc.a")
+if (FBX2GLTF_USE_VCPKG)
+	find_path(DRACO_INCLUDE_DIR draco/compression/encode.h)
+	find_library(DRACO_LIB dracoenc.lib)
+else ()
+	ExternalProject_Add(Draco
+	  GIT_REPOSITORY https://github.com/google/draco
+	  GIT_TAG 1.3.4
+	  PREFIX draco
+	  INSTALL_DIR
+	  CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-DBUILD_FOR_GLTF=1
+	)
+	set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
+	if (WIN32)
+	   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/dracoenc.lib")
+	else()
+	   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/libdracoenc.a")
+	endif()
 endif()
 
 # MATHFU
@@ -180,12 +195,21 @@ set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
 add_executable(appFBX2glTF src/FBX2glTF.cpp)
 set_target_properties(appFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
 
-add_dependencies(libFBX2glTF
-  Draco
-  MathFu
-  FiFoMap
-  CPPCodec
-)
+if (FBX2GLTF_USE_VCPKG)
+	add_dependencies(libFBX2glTF
+	  # Draco
+	  MathFu
+	  FiFoMap
+	  CPPCodec
+	)
+else ()
+	add_dependencies(libFBX2glTF
+	  Draco
+	  MathFu
+	  FiFoMap
+	  CPPCodec
+	)
+endif()
 
 if (NOT MSVC)
   # Disable annoying & spammy warning from FBX SDK header file
@@ -199,23 +223,45 @@ if (NOT MSVC)
     )
 endif()
 
-target_link_libraries(libFBX2glTF
-  ${FRAMEWORKS}
-  boost_filesystem::boost_filesystem
-  boost_optional::boost_optional
-  ${DRACO_LIB}
-  optimized ${FBXSDK_LIBRARY}
-  debug ${FBXSDK_LIBRARY_DEBUG}
-  fmt::fmt
-  libxml2::libxml2
-  zlib::zlib
-  ${CMAKE_DL_LIBS}
-  ${CMAKE_THREAD_LIBS_INIT}
-)
+if (FBX2GLTF_USE_VCPKG)
+message(STATUS "xmllib ${LIBXML2_LIBRARIES}")
+  target_link_libraries(libFBX2glTF
+	  ${FRAMEWORKS}
+	  ${Boost_FILESYSTEM_LIBRARY}
+	  # boost_optional::boost_optional
+	  ${DRACO_LIB}
+	  optimized ${FBXSDK_LIBRARY}
+	  debug ${FBXSDK_LIBRARY_DEBUG}
+	  fmt::fmt
+	  # ${LIBXML2_LIBRARIES}
+	  optimized "${FBXSDK_LIBRARY}/../libxml2-md.lib"
+	  debug "${FBXSDK_LIBRARY_DEBUG}/../libxml2-md.lib"
+	  ZLIB::ZLIB
+	  ${CMAKE_DL_LIBS}
+	  ${CMAKE_THREAD_LIBS_INIT}
+	)
+else ()
+	target_link_libraries(libFBX2glTF
+	  ${FRAMEWORKS}
+	  boost_filesystem::boost_filesystem
+	  boost_optional::boost_optional
+	  ${DRACO_LIB}
+	  optimized ${FBXSDK_LIBRARY}
+	  debug ${FBXSDK_LIBRARY_DEBUG}
+	  fmt::fmt
+	  libxml2::libxml2
+	  zlib::zlib
+	  ${CMAKE_DL_LIBS}
+	  ${CMAKE_THREAD_LIBS_INIT}
+	)
+endif ()
 
 if (APPLE)
  find_package(Iconv MODULE REQUIRED)
  target_link_libraries(libFBX2glTF Iconv)
+elseif (MSVC)
+ find_package(unofficial-iconv CONFIG REQUIRED)
+ target_link_libraries(libFBX2glTF unofficial::iconv::libiconv unofficial::iconv::libcharset)
 else()
  find_package(libiconv MODULE REQUIRED)
  target_link_libraries(libFBX2glTF libiconv::libiconv)
