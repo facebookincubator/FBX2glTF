@@ -237,6 +237,8 @@ int main(int argc, char* argv[]) {
       ->check(CLI::Range(1, 32))
       ->group("Draco");
 
+  app.add_option("--fbx-temp-dir", gltfOptions.fbxTempDir, "Temprory directory to used by FBXSDK.")->check(CLI::ExistingDirectory);
+
   CLI11_PARSE(app, argc, argv);
 
   bool do_flip_u = false;
