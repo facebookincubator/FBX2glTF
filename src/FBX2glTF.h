@@ -122,4 +122,7 @@ struct GltfOptions {
   UseLongIndicesOptions useLongIndices = UseLongIndicesOptions::AUTO;
   /** Select baked animation framerate. */
   AnimationFramerateOptions animationFramerate = AnimationFramerateOptions::BAKE24;
+
+  /** Temporary directory used by FBX SDK. */
+  std::string fbxTempDir;
 };

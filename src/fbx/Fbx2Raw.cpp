@@ -34,6 +34,26 @@
 
 float scaleFactor;
 
+static std::string NativeToUTF8(const std::string &str) {
+#if _WIN32
+  char* u8cstr = nullptr;
+#if (_UNICODE || UNICODE)
+  FbxWCToUTF8(reinterpret_cast<const char*>(str.c_str()), u8cstr);
+#else
+  FbxAnsiToUTF8(str.c_str(), u8cstr);
+#endif
+  if (!u8cstr) {
+    return str;
+  } else {
+    std::string u8str = u8cstr;
+    delete[] u8cstr;
+    return u8str;
+  }
+#else
+  return str;
+#endif
+}
+
 static bool TriangleTexturePolarity(const Vec2f& uv0, const Vec2f& uv1, const Vec2f& uv2) {
   const Vec2f d0 = uv1 - uv0;
   const Vec2f d1 = uv2 - uv0;
@@ -1073,13 +1093,26 @@ bool LoadFBXFile(
     const std::string fbxFileName,
     const std::set<std::string>& textureExtensions,
     const GltfOptions& options) {
+  std::string fbxFileNameU8 = NativeToUTF8(fbxFileName);
   FbxManager* pManager = FbxManager::Create();
+
+  if (!options.fbxTempDir.empty()) {
+    pManager->GetXRefManager().AddXRefProject("embeddedFileProject", options.fbxTempDir.c_str());
+    FbxXRefManager::sEmbeddedFileProject = "embeddedFileProject";
+    pManager->GetXRefManager().AddXRefProject("configurationProject", options.fbxTempDir.c_str());
+    FbxXRefManager::sConfigurationProject = "configurationProject";
+    pManager->GetXRefManager().AddXRefProject("localizationProject", options.fbxTempDir.c_str());
+    FbxXRefManager::sLocalizationProject = "localizationProject";
+    pManager->GetXRefManager().AddXRefProject("temporaryFileProject", options.fbxTempDir.c_str());
+    FbxXRefManager::sTemporaryFileProject = "temporaryFileProject";
+  }
+
   FbxIOSettings* pIoSettings = FbxIOSettings::Create(pManager, IOSROOT);
   pManager->SetIOSettings(pIoSettings);
 
   FbxImporter* pImporter = FbxImporter::Create(pManager, "");
 
-  if (!pImporter->Initialize(fbxFileName.c_str(), -1, pManager->GetIOSettings())) {
+  if (!pImporter->Initialize(fbxFileNameU8.c_str(), -1, pManager->GetIOSettings())) {
     if (verboseOutput) {
       fmt::printf("%s\n", pImporter->GetStatus().GetErrorString());
     }
