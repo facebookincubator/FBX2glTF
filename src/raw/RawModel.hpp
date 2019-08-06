@@ -29,9 +29,9 @@ enum RawVertexAttribute {
 };
 
 struct RawBlendVertex {
-  Vec3f position{};
-  Vec3f normal{};
-  Vec4f tangent{};
+  Vec3f position{0.0f};
+  Vec3f normal{0.0f};
+  Vec4f tangent{0.0f};
 
   bool operator==(const RawBlendVertex& other) const {
     return position == other.position && normal == other.normal && tangent == other.tangent;
