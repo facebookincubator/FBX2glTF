@@ -123,6 +123,6 @@ struct GltfOptions {
   /** Select baked animation framerate. */
   AnimationFramerateOptions animationFramerate = AnimationFramerateOptions::BAKE24;
 
-  /** Temprory directory used by FBX SDK. */
+  /** Temporary directory used by FBX SDK. */
   std::string fbxTempDir;
 };
