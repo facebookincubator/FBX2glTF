@@ -22,6 +22,15 @@
 #include "utils/Image_Utils.hpp"
 #include "utils/String_Utils.hpp"
 
+size_t VertexHasher::operator()(const RawVertex& v) const {
+  size_t seed = 5381;
+  const auto hasher = std::hash<float>{};
+  seed ^= hasher(v.position[0]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  seed ^= hasher(v.position[1]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  seed ^= hasher(v.position[2]) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  return seed;
+}
+
 bool RawVertex::operator==(const RawVertex& other) const {
   return (position == other.position) && (normal == other.normal) && (tangent == other.tangent) &&
       (binormal == other.binormal) && (color == other.color) && (uv0 == other.uv0) &&
