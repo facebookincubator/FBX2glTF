@@ -292,26 +292,26 @@ int main(int argc, char* argv[]) {
   std::string modelPath;
   const auto& suffix = FileUtils::GetFileSuffix(outputPath);
 
-  // set to binary output to true if extension is glb
+  // Assume binary output if extension is glb
   if (suffix.has_value() && suffix.value() == "glb") {
-      gltfOptions.outputBinary = true;
+    gltfOptions.outputBinary = true;
   }
 
   if (gltfOptions.outputBinary) {
-      // add .glb to output path, unless it already ends in exactly that
-      if (suffix.has_value() && suffix.value() == "glb") {
-          modelPath = outputPath;
-      } else {
-          modelPath = outputPath + ".glb";
-      }
-  // if the extension is gltf set the output folder to the parent directory
-  } else if(suffix.has_value() && suffix.value() == "gltf") {
+    // add .glb to output path, unless it already ends in exactly that
+    if (suffix.has_value() && suffix.value() == "glb") {
       modelPath = outputPath;
-      outputFolder = FileUtils::getFolder(outputPath) + "/";
+    } else {
+      modelPath = outputPath + ".glb";
+    }
+    // if the extension is gltf set the output folder to the parent directory
+  } else if (suffix.has_value() && suffix.value() == "gltf") {
+    outputFolder = FileUtils::getFolder(outputPath) + "/";
+    modelPath = outputPath;
   } else {
     // in gltf mode, we create a folder and write into that
     outputFolder = fmt::format("{}_out/", outputPath.c_str());
-      modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
+    modelPath = outputFolder + FileUtils::GetFileName(outputPath) + ".gltf";
   }
   if (!FileUtils::CreatePath(modelPath.c_str())) {
     fmt::fprintf(stderr, "ERROR: Failed to create folder: %s'\n", outputFolder.c_str());
