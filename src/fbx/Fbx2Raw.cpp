@@ -536,12 +536,12 @@ static void ReadCamera(RawModel& raw, FbxScene* pScene, FbxNode* pNode) {
       break;
     }
     case FbxCamera::EApertureMode::eHorizontal: {
-      fovx = pCamera->FieldOfViewX;
+      fovx = pCamera->FieldOfView;
       fovy = HFOV2VFOV(fovx, apertureRatio);
       break;
     }
     case FbxCamera::EApertureMode::eVertical: {
-      fovy = pCamera->FieldOfViewY;
+      fovy = pCamera->FieldOfView;
       fovx = VFOV2HFOV(fovy, 1.0 / apertureRatio);
       break;
     }
