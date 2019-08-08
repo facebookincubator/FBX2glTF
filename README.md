@@ -153,13 +153,15 @@ Then, compilation on Unix machines will look something like:
 
 ```
 # Determine SDK location & build settings for Linux vs (Recent) Mac OS X
-> if [[ "$OSTYPE" == "darwin" ]]; then
+> if [[ "$OSTYPE" == "darwin"* ]]; then
     export CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
     export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Darwin/archive/2019.2.tar.gz"
-else
+elif [[ "$OSTYPE" == "linux"* ]]; then
     export CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
     export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Linux/archive/2019.2.tar.gz"
-  fi
+else
+    echo "This snippet only handles Mac OS X and Linux."
+fi
 
 # Fetch Project
 > GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/facebookincubator/FBX2glTF.git
