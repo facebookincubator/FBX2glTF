@@ -34,7 +34,7 @@ There are also some friendly & hands-on instructions available [over at Facebook
 
 You can always run the binary with --help to see what options it takes:
 ```
-FBX2glTF 0.9.6: Generate a glTF 2.0 representation of an FBX model.
+FBX2glTF 0.9.7: Generate a glTF 2.0 representation of an FBX model.
 Usage: FBX2glTF [OPTIONS] [FBX Model]
 
 Positionals:
@@ -64,6 +64,7 @@ Options:
   --blend-shape-tangents      Include blend shape tangents, if reported present by the FBX SDK.
   -k,--keep-attribute (position|normal|tangent|binormial|color|uv0|uv1|auto) ...
                               Used repeatedly to build a limiting set of vertex attributes to keep.
+  --fbx-temp-dir DIR          Temporary directory to be used by FBX SDK.
 
 
 Materials:
