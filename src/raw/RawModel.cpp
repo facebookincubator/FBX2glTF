@@ -142,7 +142,8 @@ int RawModel::AddMaterial(const RawMaterial& material) {
       material.type,
       material.textures,
       material.info,
-      material.userProperties);
+      material.userProperties,
+      material.isDoubleSided);
 }
 
 int RawModel::AddMaterial(
@@ -151,7 +152,8 @@ int RawModel::AddMaterial(
     const RawMaterialType materialType,
     const int textures[RAW_TEXTURE_USAGE_MAX],
     std::shared_ptr<RawMatProps> materialInfo,
-    const std::vector<std::string>& userProperties) {
+    const std::vector<std::string>& userProperties,
+    const bool isDoubleSided ) {
   for (size_t i = 0; i < materials.size(); i++) {
     if (materials[i].name != name) {
       continue;
@@ -184,6 +186,7 @@ int RawModel::AddMaterial(
   material.type = materialType;
   material.info = materialInfo;
   material.userProperties = userProperties;
+  material.isDoubleSided = isDoubleSided;
 
   for (int i = 0; i < RAW_TEXTURE_USAGE_MAX; i++) {
     material.textures[i] = textures[i];
