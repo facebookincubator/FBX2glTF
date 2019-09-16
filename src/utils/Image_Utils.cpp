@@ -55,6 +55,8 @@ ImageProperties GetImageProperties(char const* filePath) {
   if (success && channels == 4 && imageHasTransparentPixels(f)) {
     result.occlusion = IMAGE_TRANSPARENT;
   }
+
+  fclose(f);
   return result;
 }
 
