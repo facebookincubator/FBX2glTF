@@ -469,7 +469,7 @@ static void ReadMesh(
     const RawMaterialType materialType =
         GetMaterialType(raw, textures, vertexTransparency, skinning.IsSkinned());
     const int rawMaterialIndex = raw.AddMaterial(
-        materialId, materialName, materialType, textures, rawMatProps, userProperties);
+        materialId, materialName, materialType, textures, rawMatProps, userProperties, false );
 
     raw.AddTriangle(
         rawVertexIndices[0],

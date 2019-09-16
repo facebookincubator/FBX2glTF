@@ -269,6 +269,7 @@ struct RawMaterial {
   std::shared_ptr<RawMatProps> info;
   int textures[RAW_TEXTURE_USAGE_MAX];
   std::vector<std::string> userProperties;
+  bool isDoubleSided;
 };
 
 enum RawLightType {
@@ -381,7 +382,8 @@ class RawModel {
       const RawMaterialType materialType,
       const int textures[RAW_TEXTURE_USAGE_MAX],
       std::shared_ptr<RawMatProps> materialInfo,
-      const std::vector<std::string>& userProperties);
+      const std::vector<std::string>& userProperties,
+      const bool isDoubleSided );
   int AddLight(
       const char* name,
       RawLightType lightType,
