@@ -14,12 +14,12 @@ MeshData::MeshData(const std::string& name, const std::vector<float>& weights)
 
 json MeshData::serialize() const {
   json jsonPrimitivesArray = json::array();
-  json targetNames = json::array();
+  json jsonTargetNamesArray = json::array();
   for (const auto& primitive : primitives) {
     jsonPrimitivesArray.push_back(*primitive);
     if (!primitive->targetNames.empty()) {
       for (auto targetName : primitive->targetNames) {
-        targetNames.push_back(targetName);
+        jsonTargetNamesArray.push_back(targetName);
       }
     }
   }
@@ -27,8 +27,8 @@ json MeshData::serialize() const {
   if (!weights.empty()) {
     result["weights"] = weights;
   }
-  if (!targetNames.empty()) {
-    result["extras"]["targetNames"] = targetNames;
+  if (!jsonTargetNamesArray.empty()) {
+    result["extras"]["targetNames"] = jsonTargetNamesArray;
   }
   return result;
 }
