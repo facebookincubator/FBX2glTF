@@ -68,6 +68,7 @@ struct PrimitiveData {
   const MeshMode mode;
 
   std::vector<std::tuple<int, int, int>> targetAccessors{};
+  std::vector<std::string> targetNames{};
 
   std::map<std::string, int> attributes;
   std::map<std::string, int> dracoAttributes;

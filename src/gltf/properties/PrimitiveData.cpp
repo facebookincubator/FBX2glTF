@@ -45,6 +45,7 @@ void PrimitiveData::AddTarget(
       positions->ix,
       normals != nullptr ? normals->ix : -1,
       tangents != nullptr ? tangents->ix : -1));
+  targetNames.push_back(positions->name);
 }
 
 void to_json(json& j, const PrimitiveData& d) {
