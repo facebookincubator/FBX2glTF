@@ -18,7 +18,7 @@ const binaries = {
 /**
  * Converts an FBX to a GTLF or GLB file.
  * @param string srcFile path to the source file.
- * @param string destFile path to the destination file.
+ * @param string destFile path to the destination file or destination path.
  * This must end in `.glb` or `.gltf` (case matters).
  * @param string[] [opts] options to pass to the converter tool.
  * @return Promise<string> a promise that yields the full path to the converted
@@ -33,19 +33,31 @@ function convert(srcFile, destFile, opts = []) {
         throw new Error(`Unsupported OS: ${os.type()}`);
       }
 
-      let destExt;
-      if (destFile.endsWith('.glb')) {
-        destExt = '.glb';
-        opts.includes('--binary') || opts.push('--binary');
-      } else if (destFile.endsWith('.gltf')) {
-        destExt = '.gltf';
-      } else {
+      let destExt = path.extname(destFile).toLowerCase();
+
+      if (!destExt) {
+        destExt = '.gltf'
+
+        const srcFilename = path.basename(srcFile, path.extname(srcFile))
+        destFile = path.join(destFile, srcFilename + destExt)
+      }
+
+      if (destExt !== '.glb' && destExt !== '.gltf') {
         throw new Error(`Unsupported file extension: ${destFile}`);
+      }
+
+      const binary = opts.includes('--binary') || opts.includes('-b');
+
+      if (binary && destExt !== '.glb') {
+        destExt = '.glb';
+      } else if (!binary && destExt === 'glb') {
+        opts.push('--binary');
       }
 
       let srcPath = fs.realpathSync(srcFile);
       let destDir = fs.realpathSync(path.dirname(destFile));
-      let destPath = path.join(destDir, path.basename(destFile, destExt));
+      let destFilename = path.basename(destFile, path.extname(destFile)) + destExt;
+      let destPath = path.join(destDir, destFilename);
 
       let args = opts.slice(0);
       args.push('--input', srcPath, '--output', destPath);
@@ -72,7 +84,7 @@ function convert(srcFile, destFile, opts = []) {
           reject(new Error(`Converter output:\n` +
                            (output.length ? output : "<none>")));
         } else {
-          resolve(destPath + destExt);
+          resolve(destPath);
         }
       });
 
