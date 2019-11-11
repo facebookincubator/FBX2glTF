@@ -470,6 +470,10 @@ ModelData* Raw2Gltf(
       //
       // surface vertices
       //
+      // Base Accessors needed for Sparse Accessors
+      std::shared_ptr<AccessorData> pAccBase;
+      std::shared_ptr<AccessorData> nAccBase;
+      std::shared_ptr<AccessorData> tAccBase;
       {
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_POSITION) != 0) {
           const AttributeDefinition<Vec3f> ATTR_POSITION(
@@ -483,6 +487,8 @@ ModelData* Raw2Gltf(
 
           accessor->min = toStdVec(rawSurface.bounds.min);
           accessor->max = toStdVec(rawSurface.bounds.max);
+
+          pAccBase = accessor;
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_NORMAL) != 0) {
           const AttributeDefinition<Vec3f> ATTR_NORMAL(
@@ -493,11 +499,13 @@ ModelData* Raw2Gltf(
               draco::DT_FLOAT32);
           const auto _ =
               gltf->AddAttributeToPrimitive<Vec3f>(buffer, surfaceModel, *primitive, ATTR_NORMAL);
+          nAccBase = _;
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_TANGENT) != 0) {
           const AttributeDefinition<Vec4f> ATTR_TANGENT("TANGENT", &RawVertex::tangent, GLT_VEC4F);
           const auto _ = gltf->AddAttributeToPrimitive<Vec4f>(
               buffer, surfaceModel, *primitive, ATTR_TANGENT);
+          tAccBase = _;
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_COLOR) != 0) {
           const AttributeDefinition<Vec4f> ATTR_COLOR(
@@ -559,43 +567,106 @@ ModelData* Raw2Gltf(
 
           std::vector<Vec3f> positions, normals;
           std::vector<Vec4f> tangents;
+
+          std::vector<TriangleIndex> sparseIndices;
+
           for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj++) {
             auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
             shapeBounds.AddPoint(blendVertex.position);
-            positions.push_back(blendVertex.position);
-            if (options.useBlendShapeTangents && channel.hasNormals) {
-              normals.push_back(blendVertex.normal);
+
+            bool isSparseVertex = !options.enableSparseBlendShapes; // If sparse is off, add all vertices
+            // Check to see whether position, normal or tangent deviates from base mesh and flag as sparse.
+            if (blendVertex.position.Length()>0.00){
+                isSparseVertex = true;
             }
-            if (options.useBlendShapeTangents && channel.hasTangents) {
-              tangents.push_back(blendVertex.tangent);
+            if (options.useBlendShapeNormals && channel.hasNormals && blendVertex.normal.Length()>0.00) {
+                isSparseVertex = true;
+            }
+            if (options.useBlendShapeTangents && channel.hasTangents && blendVertex.tangent.Length()>0.00) {
+                isSparseVertex = true;
+            }
+
+            if(isSparseVertex==true){
+              sparseIndices.push_back(jj);
+              positions.push_back(blendVertex.position);
+              if (options.useBlendShapeNormals && channel.hasNormals) {
+                normals.push_back(blendVertex.normal);
+              }
+              if (options.useBlendShapeTangents && channel.hasTangents) {
+                tangents.push_back(blendVertex.tangent);
+              }
             }
           }
-          std::shared_ptr<AccessorData> pAcc = gltf->AddAccessorWithView(
-              *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
-              GLT_VEC3F,
-              positions,
+/*
+          std::shared_ptr<AccessorData> pAccIx = gltf->AddAccessorWithView(
+              *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
+              useLongIndices ? GLT_UINT : GLT_USHORT,
+              sparseIndices,
               channel.name);
-          pAcc->min = toStdVec(shapeBounds.min);
-          pAcc->max = toStdVec(shapeBounds.max);
-
+ */
+          std::shared_ptr<AccessorData> pAcc;
           std::shared_ptr<AccessorData> nAcc;
-          if (!normals.empty()) {
-            nAcc = gltf->AddAccessorWithView(
+          std::shared_ptr<AccessorData> tAcc;
+
+          if(options.enableSparseBlendShapes){
+            fmt::printf("\rSparse Index Count: %d \n", sparseIndices.size());
+            // Build Orphan Bufferview for Sparse Indices
+            std::shared_ptr<BufferViewData> indexBufferView =
+                                gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
+            gltf->CopyToBufferView(*indexBufferView, sparseIndices, useLongIndices ? GLT_UINT : GLT_USHORT);
+
+            pAcc = gltf->AddSparseAccessorWithView(
+                *pAccBase,
+                *indexBufferView,
+                useLongIndices ? GLT_UINT : GLT_USHORT,
+                *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
+                GLT_VEC3F,
+                positions,
+                channel.name);
+            if (!normals.empty()) {
+              nAcc = gltf->AddSparseAccessorWithView(
+                  *nAccBase,
+                  *indexBufferView,
+                  useLongIndices ? GLT_UINT : GLT_USHORT,
+                  *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
+                  GLT_VEC3F,
+                  normals,
+                  channel.name);
+            }
+            if (!tangents.empty()) {
+              tAcc = gltf->AddSparseAccessorWithView(
+                  *nAccBase,
+                  *indexBufferView,
+                  useLongIndices ? GLT_UINT : GLT_USHORT,
+                  *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
+                  GLT_VEC4F,
+                  tangents,
+                  channel.name);
+            }
+          }else{
+            pAcc = gltf->AddAccessorWithView(
                 *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
                 GLT_VEC3F,
-                normals,
+                positions,
                 channel.name);
+            if (!normals.empty()) {
+              nAcc = gltf->AddAccessorWithView(
+                  *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
+                  GLT_VEC3F,
+                  normals,
+                  channel.name);
+            }
+            if (!tangents.empty()) {
+              nAcc = gltf->AddAccessorWithView(
+                  *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
+                  GLT_VEC4F,
+                  tangents,
+                  channel.name);
+            }
           }
 
-          std::shared_ptr<AccessorData> tAcc;
-          if (!tangents.empty()) {
-            nAcc = gltf->AddAccessorWithView(
-                *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER),
-                GLT_VEC4F,
-                tangents,
-                channel.name);
-          }
-
+          pAcc->min = toStdVec(shapeBounds.min);
+          pAcc->max = toStdVec(shapeBounds.max);
           primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
         }
       }
