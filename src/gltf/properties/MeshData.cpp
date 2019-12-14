@@ -17,7 +17,7 @@ json MeshData::serialize() const {
   json jsonTargetNamesArray = json::array();
   for (const auto& primitive : primitives) {
     jsonPrimitivesArray.push_back(*primitive);
-    if (!primitive->targetNames.empty()) {
+    if (!primitive->targetNames.empty() && jsonTargetNamesArray.empty()) {
       for (auto targetName : primitive->targetNames) {
         jsonTargetNamesArray.push_back(targetName);
       }
