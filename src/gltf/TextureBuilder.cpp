@@ -177,15 +177,61 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
     return iter->second;
   }
 
-  const RawTexture& rawTexture = raw.GetTexture(rawTexIndex);
-  const std::string textureName = FileUtils::GetFileBase(rawTexture.name);
-  const std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
+
+  RawTexture rawTexture = raw.GetTexture(rawTexIndex);
+  std::string textureName = FileUtils::GetFileBase(rawTexture.name);
+  std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
+  auto suffix = FileUtils::GetFileSuffix(rawTexture.fileLocation);
+
+  //TGAs are not supported by GLTF spec, convert to PNG
+  if(suffix.has_value() && suffix->compare("tga")==0) {
+    std::string tmpFolder;
+    if(outputFolder.empty()) 
+      tmpFolder = "./convertedTextures";
+    else
+      tmpFolder = outputFolder+"/convertedTextures";
+
+    //Check for existence of ImageMagick convert binary in path
+    if(std::system("convert -version")!=0) { //GAM TODO - Pipe to /dev/null or NUL to avoid console spew (also should check the output to make sure its really ImageMagick)
+        fmt::printf("Warning: Failed to find installed version of ImageMagick 'convert'. TGA conversion requires ImageMagick (https://imagemagick.org/) installation in system path)\n");
+        //If we can't find convert set the file path to empty string, so next step will fail and set to error texture
+        rawTexture.fileLocation = "";
+        rawTexture.name = "";
+    } else  {
+      //Ensure output folder exists
+      std::string mkdirCmd = "mkdir -p "+tmpFolder;
+      std::system(mkdirCmd.c_str());
+
+      std::string baseName= FileUtils::GetFileBase(relativeFilename);
+      std::string tmpPath = tmpFolder+"/"+baseName+".png";
+      
+      std::string cmdStr = "convert \""+rawTexture.fileLocation+"\" \""+tmpPath+"\"";//GAM TODO - Pipe to /dev/null or NUL to avoid console spew
+      auto res = std::system(cmdStr.c_str());
+      if(res==0) {
+        rawTexture.fileLocation = tmpPath;
+        rawTexture.name = baseName+".png";
+        if (verboseOutput) {
+          fmt::printf("Converted TGA texture '%s' to output folder: %s\n", rawTexture.fileLocation, tmpPath);
+        }
+      } else {
+        //If we fail, set the file path to empty string, so next step will fail and set to error texture
+        fmt::printf("Warning: Failed to convert TGA:%s to %s\n", rawTexture.fileLocation, tmpPath);
+        rawTexture.fileLocation = "";
+        rawTexture.name = "";
+      }
+    }
+
+    //Update the texture details
+    textureName = FileUtils::GetFileBase(rawTexture.name);
+    relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
+    suffix = FileUtils::GetFileSuffix(rawTexture.fileLocation);
+  }
 
   ImageData* image = nullptr;
+
   if (options.outputBinary) {
     auto bufferView = gltf.AddBufferViewForFile(*gltf.defaultBuffer, rawTexture.fileLocation);
     if (bufferView) {
-      const auto& suffix = FileUtils::GetFileSuffix(rawTexture.fileLocation);
       std::string mimeType;
       if (suffix) {
         mimeType = ImageUtils::suffixToMimeType(suffix.value());
@@ -212,6 +258,8 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
       // reference, even if the copy failed.
     }
   }
+  
+
   if (!image) {
     // fallback is tiny transparent PNG
     image = new ImageData(
