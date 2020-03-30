@@ -32,6 +32,14 @@
 #include "materials/RoughnessMetallicMaterials.hpp"
 #include "materials/TraditionalMaterials.hpp"
 
+#ifdef _WIN32
+#define SLASH_CHAR '\\'
+#define ALTERNATIVE_SLASH_CHAR '/'
+#else
+#define SLASH_CHAR '/'
+#define ALTERNATIVE_SLASH_CHAR '\\'
+#endif
+
 float scaleFactor;
 
 static std::string NativeToUTF8(const std::string& str) {
@@ -1028,6 +1036,16 @@ static std::string FindFbxTexture(
   // else look in other designated folders
   for (int ii = 0; ii < folders.size(); ii++) {
     const auto& fileLocation = FindFileLoosely(textureFileName, folders[ii], folderContents[ii]);
+    if (!fileLocation.empty()) {
+      return FileUtils::GetAbsolutePath(fileLocation);
+    }
+  }
+  //Replace slashes with alternative platform version (e.g. '/' instead of '\\')
+  std::string textureFileNameAltSlash = textureFileName;
+  std::replace( textureFileNameAltSlash.begin(), textureFileNameAltSlash.end(), ALTERNATIVE_SLASH_CHAR, SLASH_CHAR);
+  // finally look with alternative slashes
+  for (int ii = 0; ii < folders.size(); ii++) {
+    const auto& fileLocation = FindFileLoosely(textureFileNameAltSlash, folders[ii], folderContents[ii]);
     if (!fileLocation.empty()) {
       return FileUtils::GetAbsolutePath(fileLocation);
     }
