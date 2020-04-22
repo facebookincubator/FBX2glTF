@@ -34,8 +34,9 @@ size_t VertexHasher::operator()(const RawVertex& v) const {
 bool RawVertex::operator==(const RawVertex& other) const {
   return (position == other.position) && (normal == other.normal) && (tangent == other.tangent) &&
       (binormal == other.binormal) && (color == other.color) && (uv0 == other.uv0) &&
-      (uv1 == other.uv1) && (jointIndices == other.jointIndices) &&
-      (jointWeights == other.jointWeights) && (polarityUv0 == other.polarityUv0) &&
+      (uv1 == other.uv1) &&
+      (jointWeights == other.jointWeights) && (jointIndices == other.jointIndices) &&
+      (polarityUv0 == other.polarityUv0) &&
       (blendSurfaceIx == other.blendSurfaceIx) && (blends == other.blends);
 }
 
@@ -63,16 +64,13 @@ size_t RawVertex::Difference(const RawVertex& other) const {
     attributes |= RAW_VERTEX_ATTRIBUTE_UV1;
   }
   // Always need both or neither.
-  if (jointIndices != other.jointIndices) {
-    attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
-  }
-  if (jointWeights != other.jointWeights) {
+  if (jointIndices != other.jointIndices || jointWeights != other.jointWeights) {
     attributes |= RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
   }
   return attributes;
 }
 
-RawModel::RawModel() : vertexAttributes(0) {}
+RawModel::RawModel() : vertexAttributes(0){}
 
 void RawModel::AddVertexAttribute(const RawVertexAttribute attrib) {
   vertexAttributes |= attrib;
@@ -335,7 +333,7 @@ int RawModel::AddNode(const long id, const char* name, const long parentId) {
   return (int)nodes.size() - 1;
 }
 
-void RawModel::Condense() {
+void RawModel::Condense(const int maxSkinningWeights, const bool normalizeWeights) {
   // Only keep surfaces that are referenced by one or more triangles.
   {
     std::vector<RawSurface> oldSurfaces = surfaces;
@@ -402,6 +400,53 @@ void RawModel::Condense() {
     for (auto& triangle : triangles) {
       for (int j = 0; j < 3; j++) {
         triangle.verts[j] = AddVertex(oldVertices[triangle.verts[j]]);
+      }
+    }
+  }
+
+  {
+    globalMaxWeights = 0;
+    for (auto& vertex: vertices) {
+
+      // Sort from largest to smallest weight.
+      std::sort(vertex.skinningInfo.begin(), vertex.skinningInfo.end(), std::greater<RawVertexSkinningInfo>());
+      
+      // Reduce to fit the requirements.
+      if (maxSkinningWeights < vertex.skinningInfo.size())
+        vertex.skinningInfo.resize(maxSkinningWeights);
+      globalMaxWeights = std::max(globalMaxWeights, (int) vertex.skinningInfo.size());
+
+      // Normalize weights if requested.
+      if (normalizeWeights) {
+        float weightSum = 0;
+        for (auto& jointWeight : vertex.skinningInfo)
+          weightSum += jointWeight.jointWeight;
+        const float weightSumRcp = 1.0 / weightSum;
+        for (auto& jointWeight : vertex.skinningInfo)
+          jointWeight.jointWeight *= weightSumRcp;
+      }
+    }
+
+    if (globalMaxWeights > 0) {
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_INDICES);
+      AddVertexAttribute(RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS);
+    }
+
+    
+    assert(globalMaxWeights >= 0);
+    // Copy to gltf friendly structure
+    for (auto& vertex : vertices) {
+      vertex.jointIndices.reserve(globalMaxWeights);
+      vertex.jointWeights.reserve(globalMaxWeights);
+      for (int i = 0; i < globalMaxWeights; i += 4) { // ensure every vertex has the same amount of weights
+        Vec4f weights{0.0};
+        Vec4i jointIds{0,0,0,0};
+        for (int j = i; j < i + 4 && j < vertex.skinningInfo.size(); j++) {
+          weights[j - i] = vertex.skinningInfo[j].jointWeight;
+          jointIds[j - i] = vertex.skinningInfo[j].jointIndex;
+        }
+        vertex.jointIndices.push_back(jointIds);
+        vertex.jointWeights.push_back(weights);
       }
     }
   }
@@ -554,6 +599,7 @@ void RawModel::CreateMaterialModels(
           surfaces[sortedTriangles[i - 1].surfaceIndex].discrete))) {
       materialModels.resize(materialModels.size() + 1);
       model = &materialModels[materialModels.size() - 1];
+      model->globalMaxWeights = globalMaxWeights;
     }
 
     // FIXME: will have to unlink from the nodes, transform both surfaces into a

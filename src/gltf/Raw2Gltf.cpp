@@ -530,24 +530,28 @@ ModelData* Raw2Gltf(
               buffer, surfaceModel, *primitive, ATTR_TEXCOORD_1);
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_INDICES) != 0) {
-          const AttributeDefinition<Vec4i> ATTR_JOINTS(
-              "JOINTS_0",
+          for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
+            const AttributeArrayDefinition<Vec4i> ATTR_JOINTS(
+              std::string("JOINTS_") + std::to_string(i/4),
               &RawVertex::jointIndices,
               GLT_VEC4I,
               draco::GeometryAttribute::GENERIC,
-              draco::DT_UINT16);
-          const auto _ =
-              gltf->AddAttributeToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+              draco::DT_UINT16,
+              i/4);
+            gltf->AddAttributeArrayToPrimitive<Vec4i>(buffer, surfaceModel, *primitive, ATTR_JOINTS);
+          }
         }
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS) != 0) {
-          const AttributeDefinition<Vec4f> ATTR_WEIGHTS(
-              "WEIGHTS_0",
+          for (int i = 0; i < surfaceModel.GetGlobalWeightCount(); i += 4) {
+            const AttributeArrayDefinition<Vec4f> ATTR_WEIGHTS(
+              std::string("WEIGHTS_") + std::to_string(i/4),
               &RawVertex::jointWeights,
               GLT_VEC4F,
               draco::GeometryAttribute::GENERIC,
-              draco::DT_FLOAT32);
-          const auto _ =
-              gltf->AddAttributeToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+              draco::DT_FLOAT32,
+              i/4);
+            gltf->AddAttributeArrayToPrimitive<Vec4f>(buffer, surfaceModel, *primitive, ATTR_WEIGHTS);
+          }
         }
 
         // each channel present in the mesh always ends up a target in the primitive

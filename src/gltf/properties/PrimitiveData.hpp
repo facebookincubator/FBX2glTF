@@ -61,6 +61,32 @@ struct PrimitiveData {
     dracoAttributes[attribute.gltfName] = dracoAttId;
   }
 
+  template <class T>
+  void AddDracoArrayAttrib(const AttributeArrayDefinition<T> attribute, const std::vector<T>& attribArr) {
+    draco::PointAttribute att;
+    int8_t componentCount = attribute.glType.count;
+    att.Init(
+      attribute.dracoAttribute,
+      nullptr,
+      componentCount,
+      attribute.dracoComponentType,
+      false,
+      componentCount * draco::DataTypeLength(attribute.dracoComponentType),
+      0);
+
+    const int dracoAttId = dracoMesh->AddAttribute(att, true, attribArr.size());
+    draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);
+
+    std::vector<uint8_t> buf(sizeof(T));
+    for (uint32_t ii = 0; ii < attribArr.size(); ii++) {
+      uint8_t* ptr = &buf[0];
+      attribute.glType.write(ptr, attribArr[ii]);
+      attPtr->SetAttributeValue(attPtr->mapped_index(draco::PointIndex(ii)), ptr);
+    }
+
+    dracoAttributes[attribute.gltfName] = dracoAttId;
+  }
+
   void NoteDracoBuffer(const BufferViewData& data);
 
   const int indices;

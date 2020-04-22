@@ -155,6 +155,30 @@ struct AttributeDefinition {
         dracoComponentType(draco::DataType::DT_INVALID) {}
 };
 
+template <class T>
+struct AttributeArrayDefinition {
+  const std::string gltfName;
+  const std::vector<T> RawVertex::*rawAttributeIx;
+  const GLType glType;
+  const int arrayOffset;
+  const draco::GeometryAttribute::Type dracoAttribute;
+  const draco::DataType dracoComponentType;
+
+  AttributeArrayDefinition(
+    const std::string gltfName,
+    const std::vector<T> RawVertex::*rawAttributeIx,
+    const GLType& _glType,
+    const draco::GeometryAttribute::Type dracoAttribute,
+    const draco::DataType dracoComponentType,
+    const int arrayOffset)
+    : gltfName(gltfName),
+    rawAttributeIx(rawAttributeIx),
+    glType(_glType),
+    dracoAttribute(dracoAttribute),
+    dracoComponentType(dracoComponentType),
+    arrayOffset(arrayOffset) {}
+};
+
 struct AccessorData;
 struct AnimationData;
 struct BufferData;
