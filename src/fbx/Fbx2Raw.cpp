@@ -1097,13 +1097,14 @@ bool LoadFBXFile(
   FbxManager* pManager = FbxManager::Create();
 
   if (!options.fbxTempDir.empty()) {
-    pManager->GetXRefManager().AddXRefProject("embeddedFileProject", options.fbxTempDir.c_str());
+    auto fbxTempDirU8 = NativeToUTF8(options.fbxTempDir);
+    pManager->GetXRefManager().AddXRefProject("embeddedFileProject", fbxTempDirU8.c_str());
     FbxXRefManager::sEmbeddedFileProject = "embeddedFileProject";
-    pManager->GetXRefManager().AddXRefProject("configurationProject", options.fbxTempDir.c_str());
+    pManager->GetXRefManager().AddXRefProject("configurationProject", fbxTempDirU8.c_str());
     FbxXRefManager::sConfigurationProject = "configurationProject";
-    pManager->GetXRefManager().AddXRefProject("localizationProject", options.fbxTempDir.c_str());
+    pManager->GetXRefManager().AddXRefProject("localizationProject", fbxTempDirU8.c_str());
     FbxXRefManager::sLocalizationProject = "localizationProject";
-    pManager->GetXRefManager().AddXRefProject("temporaryFileProject", options.fbxTempDir.c_str());
+    pManager->GetXRefManager().AddXRefProject("temporaryFileProject", fbxTempDirU8.c_str());
     FbxXRefManager::sTemporaryFileProject = "temporaryFileProject";
   }
 
