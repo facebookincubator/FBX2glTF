@@ -73,6 +73,7 @@ void to_json(json& j, const PBRMetallicRoughness& d) {
 MaterialData::MaterialData(
     std::string name,
     bool isTransparent,
+    bool isDoubleSided,
     const RawShadingModel shadingModel,
     const TextureData* normalTexture,
     const TextureData* occlusionTexture,
@@ -84,6 +85,7 @@ MaterialData::MaterialData(
       name(std::move(name)),
       shadingModel(shadingModel),
       isTransparent(isTransparent),
+      isDoubleSided(isDoubleSided),
       normalTexture(Tex::ref(normalTexture)),
       occlusionTexture(Tex::ref(occlusionTexture)),
       emissiveTexture(Tex::ref(emissiveTexture)),
@@ -94,6 +96,7 @@ MaterialData::MaterialData(
 json MaterialData::serialize() const {
   json result = {{"name", name},
                  {"alphaMode", isTransparent ? "BLEND" : "OPAQUE"},
+                 {"doubleSided", isDoubleSided},
                  {"extras",
                   {{"fromFBX",
                     {{"shadingModel", Describe(shadingModel)},
