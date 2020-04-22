@@ -326,7 +326,7 @@ int main(int argc, char* argv[]) {
   if (verboseOutput) {
     fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
+  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg", "tga"}, gltfOptions)) {
     fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }
