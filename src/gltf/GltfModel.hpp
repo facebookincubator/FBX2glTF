@@ -105,6 +105,22 @@ class GltfModel {
     return accessor;
   }
 
+//  template <class T>
+  std::shared_ptr<AccessorData> AddSparseAccessor(
+      AccessorData& baseAccessor,
+      BufferViewData& indexBufferView,
+      const GLType& indexBufferViewType,
+      BufferViewData& bufferView,
+      const GLType& type,
+//      const std::vector<T>& source,
+      std::string name) {
+    auto accessor = accessors.hold(new AccessorData(baseAccessor, indexBufferView, bufferView, type, name));
+    //bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = baseAccessor.count;
+    accessor->sparseIdxBufferViewType = indexBufferViewType.componentType.glType;
+    return accessor;
+  }
+
   template <class T>
   std::shared_ptr<AccessorData>
   AddAccessorAndView(BufferData& buffer, const GLType& type, const std::vector<T>& source) {

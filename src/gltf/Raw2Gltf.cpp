@@ -418,6 +418,9 @@ ModelData* Raw2Gltf(
           surfaceModel.GetMaterial(surfaceModel.GetTriangle(0).materialIndex);
       const MaterialData& mData = require(materialsById, rawMaterial.id);
 
+      if (verboseOutput) 
+        fmt::printf("\rMaterial Name: %s\n", mData.name);
+
       MeshData* mesh = nullptr;
       auto meshIter = meshBySurfaceId.find(surfaceId);
       if (meshIter != meshBySurfaceId.end()) {
@@ -474,6 +477,12 @@ ModelData* Raw2Gltf(
       std::shared_ptr<AccessorData> pAccBase;
       std::shared_ptr<AccessorData> nAccBase;
       std::shared_ptr<AccessorData> tAccBase;
+
+      // Sparse accessors cannot be zero length, but morph targets can easily have 
+      // no modified vertices in multiprim meshes. In order to utilise sparse accessors
+      // in this case, we need a couple of single element dummy buffer views to reference.
+      std::shared_ptr<BufferViewData> dummyIdxView;
+      std::shared_ptr<BufferViewData> dummyDataView;
       {
         if ((surfaceModel.GetVertexAttributes() & RAW_VERTEX_ATTRIBUTE_POSITION) != 0) {
           const AttributeDefinition<Vec3f> ATTR_POSITION(
@@ -597,51 +606,75 @@ ModelData* Raw2Gltf(
               }
             }
           }
-/*
-          std::shared_ptr<AccessorData> pAccIx = gltf->AddAccessorWithView(
-              *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ELEMENT_ARRAY_BUFFER),
-              useLongIndices ? GLT_UINT : GLT_USHORT,
-              sparseIndices,
-              channel.name);
- */
+
           std::shared_ptr<AccessorData> pAcc;
           std::shared_ptr<AccessorData> nAcc;
           std::shared_ptr<AccessorData> tAcc;
 
           if(options.enableSparseBlendShapes){
-            fmt::printf("\rSparse Index Count: %d \n", sparseIndices.size());
-            // Build Orphan Bufferview for Sparse Indices
-            std::shared_ptr<BufferViewData> indexBufferView =
-                                gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
-            gltf->CopyToBufferView(*indexBufferView, sparseIndices, useLongIndices ? GLT_UINT : GLT_USHORT);
+            if (verboseOutput) 
+              fmt::printf("\rChannel Name: %-50s Sparse Count: %d\n", channel.name,sparseIndices.size());
 
-            pAcc = gltf->AddSparseAccessorWithView(
-                *pAccBase,
-                *indexBufferView,
-                useLongIndices ? GLT_UINT : GLT_USHORT,
-                *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
-                GLT_VEC3F,
-                positions,
-                channel.name);
-            if (!normals.empty()) {
-              nAcc = gltf->AddSparseAccessorWithView(
-                  *nAccBase,
+            if(sparseIndices.size()==0){
+              // Initalize dummy bufferviews if needed
+              if(!dummyIdxView){
+                std::vector<TriangleIndex> dummyIndices;
+                dummyIndices.push_back(int(0));
+
+                dummyIdxView = gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
+                gltf->CopyToBufferView(*dummyIdxView, dummyIndices, useLongIndices ? GLT_UINT : GLT_USHORT);
+              }
+
+              if(!dummyDataView){
+                std::vector<Vec3f> dummyData;
+                dummyData.push_back(Vec3f(0.0));
+
+                dummyDataView = gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
+                dummyDataView->appendAsBinaryArray(dummyData, *gltf->binary, GLT_VEC3F);
+              }
+
+              // Set up sparse accessor with dummy buffer views
+              pAcc = gltf->AddSparseAccessor( 
+                  *pAccBase,
+                  *dummyIdxView,
+                  useLongIndices ? GLT_UINT : GLT_USHORT,
+                  *dummyDataView,
+                  GLT_VEC3F,
+                  channel.name);
+            }else{
+              // Build Orphan Bufferview for Sparse Indices
+              std::shared_ptr<BufferViewData> indexBufferView =
+                                  gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE);
+              gltf->CopyToBufferView(*indexBufferView, sparseIndices, useLongIndices ? GLT_UINT : GLT_USHORT);
+
+              pAcc = gltf->AddSparseAccessorWithView(
+                  *pAccBase,
                   *indexBufferView,
                   useLongIndices ? GLT_UINT : GLT_USHORT,
                   *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
                   GLT_VEC3F,
-                  normals,
+                  positions,
                   channel.name);
-            }
-            if (!tangents.empty()) {
-              tAcc = gltf->AddSparseAccessorWithView(
-                  *nAccBase,
-                  *indexBufferView,
-                  useLongIndices ? GLT_UINT : GLT_USHORT,
-                  *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
-                  GLT_VEC4F,
-                  tangents,
-                  channel.name);
+              if (!normals.empty()) {
+                nAcc = gltf->AddSparseAccessorWithView(
+                    *nAccBase,
+                    *indexBufferView,
+                    useLongIndices ? GLT_UINT : GLT_USHORT,
+                    *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
+                    GLT_VEC3F,
+                    normals,
+                    channel.name);
+              }
+              if (!tangents.empty()) {
+                tAcc = gltf->AddSparseAccessorWithView(
+                    *nAccBase,
+                    *indexBufferView,
+                    useLongIndices ? GLT_UINT : GLT_USHORT,
+                    *gltf->GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_NONE),
+                    GLT_VEC4F,
+                    tangents,
+                    channel.name);
+              }
             }
           }else{
             pAcc = gltf->AddAccessorWithView(
@@ -664,8 +697,7 @@ ModelData* Raw2Gltf(
                   channel.name);
             }
           }
-
-          pAcc->min = toStdVec(shapeBounds.min);
+          pAcc->min = toStdVec(shapeBounds.min);  
           pAcc->max = toStdVec(shapeBounds.max);
           primitive->AddTarget(pAcc.get(), nAcc.get(), tAcc.get());
         }
