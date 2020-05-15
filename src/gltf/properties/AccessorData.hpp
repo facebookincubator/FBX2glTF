@@ -11,24 +11,15 @@
 #include "gltf/Raw2Gltf.hpp"
 
 struct AccessorData : Holdable {
-  AccessorData(const BufferViewData& bufferView, GLType type, std::string name);
+  AccessorData(const BufferViewData& bufferView,
+               GLType type, std::string name);
   explicit AccessorData(GLType type);
+  AccessorData(const AccessorData& baseAccessor,
+               const BufferViewData& sparseIdxBufferView,
+               const BufferViewData& sparseDataBufferView,
+               GLType type, std::string name);
 
   json serialize() const override;
-
-  template <class T>
-  void appendAsBinaryArray(const std::vector<T>& in, std::vector<uint8_t>& out) {
-    const unsigned int stride = type.byteStride();
-    const size_t offset = out.size();
-    const size_t count = in.size();
-
-    this->count = (unsigned int)count;
-
-    out.resize(offset + count * stride);
-    for (int ii = 0; ii < count; ii++) {
-      type.write(&out[offset + ii * stride], in[ii]);
-    }
-  }
 
   unsigned int byteLength() const {
     return type.byteStride() * count;
@@ -42,4 +33,12 @@ struct AccessorData : Holdable {
   std::vector<float> min;
   std::vector<float> max;
   std::string name;
+
+  const bool sparse;
+  int sparseIdxCount;
+  int sparseIdxBufferView;
+  int sparseIdxBufferViewOffset;
+  int sparseIdxBufferViewType;
+  int sparseDataBufferView;
+  int sparseDataBufferViewOffset;
 };
