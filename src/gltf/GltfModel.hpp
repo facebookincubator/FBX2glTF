@@ -70,14 +70,54 @@ class GltfModel {
       const std::string& filename);
 
   template <class T>
+  void CopyToBufferView(
+      BufferViewData& bufferView,
+      const std::vector<T>& source,
+      const GLType& type) {
+        bufferView.appendAsBinaryArray(source, *binary, type);
+      }
+
+  template <class T>
   std::shared_ptr<AccessorData> AddAccessorWithView(
       BufferViewData& bufferView,
       const GLType& type,
       const std::vector<T>& source,
       std::string name) {
     auto accessor = accessors.hold(new AccessorData(bufferView, type, name));
-    accessor->appendAsBinaryArray(source, *binary);
-    bufferView.byteLength = accessor->byteLength();
+    bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = bufferView.count;
+    return accessor;
+  }
+
+  template <class T>
+  std::shared_ptr<AccessorData> AddSparseAccessorWithView(
+      AccessorData& baseAccessor,
+      BufferViewData& indexBufferView,
+      const GLType& indexBufferViewType,
+      BufferViewData& bufferView,
+      const GLType& type,
+      const std::vector<T>& source,
+      std::string name) {
+    auto accessor = accessors.hold(new AccessorData(baseAccessor, indexBufferView, bufferView, type, name));
+    bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = baseAccessor.count;
+    accessor->sparseIdxBufferViewType = indexBufferViewType.componentType.glType;
+    return accessor;
+  }
+
+//  template <class T>
+  std::shared_ptr<AccessorData> AddSparseAccessor(
+      AccessorData& baseAccessor,
+      BufferViewData& indexBufferView,
+      const GLType& indexBufferViewType,
+      BufferViewData& bufferView,
+      const GLType& type,
+//      const std::vector<T>& source,
+      std::string name) {
+    auto accessor = accessors.hold(new AccessorData(baseAccessor, indexBufferView, bufferView, type, name));
+    //bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = baseAccessor.count;
+    accessor->sparseIdxBufferViewType = indexBufferViewType.componentType.glType;
     return accessor;
   }
 
