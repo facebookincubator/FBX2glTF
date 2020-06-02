@@ -255,41 +255,99 @@ ModelData* Raw2Gltf(
            */
           RawMetRoughMatProps* props = (RawMetRoughMatProps*)material.info.get();
 
-          // determine if we need to generate a combined map
+          // determine if we need to generate a combined map, or if we only have 1 map to pass
+          // through
           bool hasMetallicMap = material.textures[RAW_TEXTURE_USAGE_METALLIC] >= 0;
           bool hasRoughnessMap = material.textures[RAW_TEXTURE_USAGE_ROUGHNESS] >= 0;
           bool hasOcclusionMap = material.textures[RAW_TEXTURE_USAGE_OCCLUSION] >= 0;
-          bool atLeastTwoMaps = hasMetallicMap ? (hasRoughnessMap || hasOcclusionMap)
-                                               : (hasRoughnessMap && hasMetallicMap);
-          if (!atLeastTwoMaps) {
-            // this handles the case of 0 or 1 maps supplied
+
+          auto texturesAreSame = [&](RawTextureUsage a, RawTextureUsage b) -> bool {
+            // note: at this point the usages will be different, so we can't just compare indexes
+            return StringUtils::CompareNoCase(
+                       raw.GetTexture(material.textures[a]).fileLocation,
+                       raw.GetTexture(material.textures[b]).fileLocation) == 0;
+          };
+
+          bool isPassThroughTexture = hasOcclusionMap && hasRoughnessMap && hasMetallicMap;
+          if (isPassThroughTexture) {
+            isPassThroughTexture =
+                texturesAreSame(RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_ROUGHNESS) &&
+                texturesAreSame(RAW_TEXTURE_USAGE_METALLIC, RAW_TEXTURE_USAGE_OCCLUSION);
+          }
+
+          auto textureName = [&](RawTextureUsage usage) {
+            int index = material.textures[usage];
+            if (index >= 0) {
+              return raw.GetTexture(index).name.c_str();
+            } else {
+              return "<empty>";
+            }
+          };
+
+          if (!(hasMetallicMap || hasRoughnessMap || hasOcclusionMap)) {
+            // no data, assume it's a material that just relies on the uniform properties
+            aoMetRoughTex = nullptr;
+            if (verboseOutput) {
+              fmt::printf("Material %s: no ORM textures detected\n", material.name.c_str());
+            }
+          } else if (isPassThroughTexture) {
+            // this handles the case where the same map is assigned to all the channels
             aoMetRoughTex = hasMetallicMap
                 ? simpleTex(RAW_TEXTURE_USAGE_METALLIC)
                 : (hasRoughnessMap
                        ? simpleTex(RAW_TEXTURE_USAGE_ROUGHNESS)
                        : (hasOcclusionMap ? simpleTex(RAW_TEXTURE_USAGE_OCCLUSION) : nullptr));
+            if (verboseOutput) {
+              if (aoMetRoughTex) {
+                fmt::printf(
+                    "Material %s: detected single ORM texture: %s\n",
+                    material.name.c_str(),
+                    aoMetRoughTex->name.c_str());
+              } else {
+                fmt::printf("Material %s: no ORM textures detected\n", material.name.c_str());
+              }
+            }
           } else {
-            // otherwise merge occlusion into the red channel, metallic into blue channel, and
-            // roughness into the green, of a new combinatory texture
+            /* otherwise we always have to create a new texture that merges
+             *   occlusion into the red channel
+             *   roughness into the green
+             *   metallic into blue channel
+             * with defaults for any unspecified channels
+             */
             aoMetRoughTex = textureBuilder.combine(
                 {
                     material.textures[RAW_TEXTURE_USAGE_OCCLUSION],
-                    material.textures[RAW_TEXTURE_USAGE_METALLIC],
                     material.textures[RAW_TEXTURE_USAGE_ROUGHNESS],
+                    material.textures[RAW_TEXTURE_USAGE_METALLIC],
                 },
                 "ao_met_rough",
                 [&](const std::vector<const TextureBuilder::pixel*> pixels)
                     -> TextureBuilder::pixel {
-                  const float occlusion = (*pixels[0])[0];
-                  const float metallic = (*pixels[1])[0] * (hasMetallicMap ? 1 : props->metallic);
+                  /**
+                   * note: we're picking the channels from the sources aligned with where they're
+                   * going just in case they were authored that way. This makes an existing ORM
+                   * texture "pass through", and has no effect on a grey single type texture.
+                   */
+                  const float occlusion = hasOcclusionMap ? (*pixels[0])[0] : 1;
                   const float roughness =
-                      (*pixels[2])[0] * (hasRoughnessMap ? 1 : props->roughness);
-                  return {{occlusion,
-                           props->invertRoughnessMap ? 1.0f - roughness : roughness,
-                           metallic,
-                           1}};
+                      (*pixels[1])[1] * (hasRoughnessMap ? 1 : props->roughness);
+                  const float metallic = (*pixels[2])[2] * (hasMetallicMap ? 1 : props->metallic);
+                  return {
+                      {occlusion,
+                       props->invertRoughnessMap ? 1.0f - roughness : roughness,
+                       metallic,
+                       1}};
                 },
                 false);
+            if (aoMetRoughTex && verboseOutput) {
+              fmt::printf(
+                  "Material %s: detected multiple ORM textures, combined: [%s, %s, %s] into [%s]\n",
+                  material.name.c_str(),
+                  textureName(RAW_TEXTURE_USAGE_OCCLUSION),
+                  textureName(RAW_TEXTURE_USAGE_ROUGHNESS),
+                  textureName(RAW_TEXTURE_USAGE_METALLIC),
+                  aoMetRoughTex->name.c_str());
+            }
           }
           baseColorTex = simpleTex(RAW_TEXTURE_USAGE_ALBEDO);
           diffuseFactor = props->diffuseFactor;
@@ -806,8 +864,9 @@ ModelData* Raw2Gltf(
       extensionsRequired.push_back(KHR_DRACO_MESH_COMPRESSION);
     }
 
-    json glTFJson{{"asset", {{"generator", "FBX2glTF v" + FBX2GLTF_VERSION}, {"version", "2.0"}}},
-                  {"scene", rootScene.ix}};
+    json glTFJson{
+        {"asset", {{"generator", "FBX2glTF v" + FBX2GLTF_VERSION}, {"version", "2.0"}}},
+        {"scene", rootScene.ix}};
     if (!extensionsUsed.empty()) {
       glTFJson["extensionsUsed"] = extensionsUsed;
     }
