@@ -308,6 +308,19 @@ that route should be digested propertly by FBX2glTF.
 (A happy note: Allegorithmic's Substance Painter also exports Stingray PBS,
 when hooked up to Maya.)
 
+When processing PBR materials, this converter will always pack Occlusion,
+Roughness, and Metallness into a single combined ORM texture, with each parameter
+being in the R, G and, B channels respectively. If you specify a texture in any
+of the Stingray material slots, a full ORM will be generated; if you leave all 3
+blank, then no ORM texture will be assigned.
+
+* Should you specify different textures for each, then they will
+  be merged into their respective channels. Any missing textures will be
+  defaulted to: Occlusion 1, Roughness 0, and Metallness 0. Note, all textures
+  must have the same dimensions.
+* Should you specify the same texture in all 3 slots, then the texture will
+  be assumed to already be a packed ORM, and will be used as-is.
+
 ## Draco Compression
 
 The tool will optionally apply [Draco](https://github.com/google/draco)
