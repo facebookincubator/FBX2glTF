@@ -5,3 +5,8 @@ npm/fbx2gltf/node_modules/
 npm/tests/node_modules/
 npm/tests/test/*.js
 npm/tests/test/*.js.map
+build
+sdk
+.vscode
+Pipfile
+Pipfile.lock
