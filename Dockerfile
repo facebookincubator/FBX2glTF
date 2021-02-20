@@ -2,12 +2,11 @@ FROM ubuntu:16.04
 
 RUN apt-get update && \
     apt-get install -y software-properties-common && \
-    add-apt-repository ppa:jonathonf/python-3.6 && \
+    add-apt-repository ppa:deadsnakes/ppa && \
     add-apt-repository ppa:git-core/ppa && \
     apt-get update && \
-    apt-get install -y python3.6 curl build-essential cmake libxml2-dev zlib1g-dev git && \
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && python3 get-pip.py && \
-    pip install conan && \
+    apt-get install -y python3.6 python3-pip curl build-essential cmake libxml2-dev zlib1g-dev git && \
+    python3.6 -m pip install install conan && \
     conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
 # Install FBX SDK
