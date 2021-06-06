@@ -41,12 +41,10 @@ struct PrimitiveData {
     int8_t componentCount = attribute.glType.count;
     att.Init(
         attribute.dracoAttribute,
-        nullptr,
         componentCount,
         attribute.dracoComponentType,
         false,
-        componentCount * draco::DataTypeLength(attribute.dracoComponentType),
-        0);
+        componentCount * draco::DataTypeLength(attribute.dracoComponentType));
 
     const int dracoAttId = dracoMesh->AddAttribute(att, true, to_uint32(attribArr.size()));
     draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);
@@ -67,12 +65,10 @@ struct PrimitiveData {
     int8_t componentCount = attribute.glType.count;
     att.Init(
       attribute.dracoAttribute,
-      nullptr,
       componentCount,
       attribute.dracoComponentType,
       false,
-      componentCount * draco::DataTypeLength(attribute.dracoComponentType),
-      0);
+      componentCount * draco::DataTypeLength(attribute.dracoComponentType));
 
     const int dracoAttId = dracoMesh->AddAttribute(att, true, attribArr.size());
     draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);

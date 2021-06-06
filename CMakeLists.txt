@@ -18,7 +18,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 include(ExternalProject)
 
 # FBX
-foreach (FBXSDK_VERSION "2019.2")
+foreach (FBXSDK_VERSION "2020.2")
   find_package(FBX)
   if (FBXSDK_FOUND)
     break()
@@ -57,7 +57,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # DRACO
 ExternalProject_Add(Draco
   GIT_REPOSITORY https://github.com/google/draco
-  GIT_TAG 1.3.4
+  GIT_TAG 75b82f7b68c797b4e0ff5e73ca8a81e2db3db797
   PREFIX draco
   INSTALL_DIR
   CMAKE_ARGS
@@ -66,9 +66,9 @@ ExternalProject_Add(Draco
 )
 set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
 if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/dracoenc.lib")
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/draco.lib")
 else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/libdracoenc.a")
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/libdraco.a")
 endif()
 
 # MATHFU
