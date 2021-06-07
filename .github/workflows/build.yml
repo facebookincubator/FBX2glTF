@@ -133,7 +133,7 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build build_type=Release --build fmt -s compiler.libcxx=libstdc++11 --build libiconv --build=libxml2 --build=zlib --build=bzip
+          conan install . -i build -s build_type=Release --build fmt -s compiler.libcxx=libstdc++11 --build libiconv --build=libxml2 --build=zlib --build=bzip
         shell: bash
 
       - name: Conan build
