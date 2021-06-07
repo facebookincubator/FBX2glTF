@@ -111,14 +111,11 @@ std::unique_ptr<FbxMaterialInfo> FbxMaterialsAccess::GetMaterialInfo(
     return nullptr;
   }
   std::unique_ptr<FbxMaterialInfo> res =
-  ArnoldStandardMaterialResolver(material, textureLocations).resolve();
-  if(res == nullptr ) {
-    res = FbxStingrayPBSMaterialResolver(material, textureLocations).resolve();
+      FbxStingrayPBSMaterialResolver(material, textureLocations).resolve();
+  if (res == nullptr) {
+    res = Fbx3dsMaxPhysicalMaterialResolver(material, textureLocations).resolve();
     if (res == nullptr) {
-      res = Fbx3dsMaxPhysicalMaterialResolver(material, textureLocations).resolve();
-      if (res == nullptr) {
-        res = FbxTraditionalMaterialResolver(material, textureLocations).resolve();
-      }
+      res = FbxTraditionalMaterialResolver(material, textureLocations).resolve();
     }
   }
   return res;
