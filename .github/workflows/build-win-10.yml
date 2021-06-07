@@ -44,9 +44,9 @@ jobs:
           repository: V-Sekai/FBXSDK-Windows
           path: sdk
 
-      - name: Secompress sdk
+      - name: Decompress sdk
         run: |
-          zstd -qq -d -r --rm sdk
+          zstd -d -r --rm -qq sdk
         shell: pwsh   
 
       - name: Add conan remote
