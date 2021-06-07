@@ -66,10 +66,13 @@ ExternalProject_Add(Draco
 set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
 
 
+find_file(FEDORA names fedora-release PATHS /etc/)
 if (WIN32)
    set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco${CMAKE_SHARED_LIBRARY_SUFFIX}")
+elif (FEDORA)
+  set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
 else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
+  set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
 endif()
 
 # MATHFU
