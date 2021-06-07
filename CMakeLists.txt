@@ -201,6 +201,8 @@ endif()
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
   ${DRACO_LIB}
+  Boost::system
+  Boost::filesystem
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
   fmt::fmt
