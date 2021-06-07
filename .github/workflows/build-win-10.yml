@@ -58,20 +58,23 @@ jobs:
 
       - name: Conan install
         run: |
+          cd FBX2glTF
           conan install . -i build -s build_type=Release -s compiler="Visual Studio" --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
         shell: cmd
 
       - name: Conan build
         run: |
+          cd FBX2glTF
           conan build -bf build .
         shell: cmd
 
       - name: Move build
         run: |
-          move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
+          cd FBX2glTF
+          move build/Release/FBX2glTF.exe build/Release/FBX2glTF-windows-x64.exe
         shell: cmd
 
       - uses: actions/upload-artifact@v2
         with:
           name: FBX2glTF.exe
-          path: build/Release/FBX2glTF-windows-x64.exe
+          path: FBX2glTF/build/Release/FBX2glTF-windows-x64.exe
