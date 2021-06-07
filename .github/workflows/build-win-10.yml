@@ -46,7 +46,7 @@ jobs:
 
       - name: Secompress sdk
         run: |
-          zstd -d -r --rm sdk
+          zstd -qq -d -r --rm sdk
         shell: pwsh   
 
       - name: Add conan remote
