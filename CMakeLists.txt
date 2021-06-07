@@ -212,7 +212,7 @@ target_link_libraries(libFBX2glTF
   debug ${FBXSDK_LIBRARY_DEBUG}
   fmt::fmt
   libxml2::libxml2
-  zlib::zlib
+  ZLIB::ZLIB
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
