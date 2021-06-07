@@ -107,7 +107,7 @@ struct GltfOptions {
   /** Whether to use KHR_materials_unlit to extend materials definitions. */
   bool useKHRMatUnlit{false};
   /** Whether to populate the pbrMetallicRoughness substruct in materials. */
-  bool usePBRMetRough{false};
+  bool usePBRMetRough{true};
 
   /** Whether to include lights through the KHR_punctual_lights extension. */
   bool useKHRLightsPunctual{true};
