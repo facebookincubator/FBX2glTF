@@ -38,11 +38,11 @@ jobs:
           cinst zstandard
         shell: bash    
         
-      - name: install FileDownload
-        run: |
-          curl -O 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
-        shell: cmd
-      
+      - name: curl
+        uses: wei/curl@master
+        with:
+          args: https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz
+        
       - name: install 7z expand
         run: |
           7z e 2020.2.tar.gz
