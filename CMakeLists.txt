@@ -45,9 +45,7 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-find_package(boost_system MODULE REQUIRED)
-find_package(boost_filesystem MODULE REQUIRED)
-find_package(boost_optional MODULE REQUIRED)
+FIND_PACKAGE( Boost 1.76 COMPONENTS system filesystem program_options REQUIRED )
 find_package(libxml2 MODULE REQUIRED)
 find_package(zlib MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
@@ -202,8 +200,6 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
-  boost_filesystem::boost_filesystem
-  boost_optional::boost_optional
   ${DRACO_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
