@@ -69,7 +69,7 @@ set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
 if (WIN32)
    set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco${CMAKE_SHARED_LIBRARY_SUFFIX}")
 else()
-   find_file(DRACO_LIB names libdraco.a PATHS ${CMAKE_BINARY_DIR}/draco/lib/ ${CMAKE_BINARY_DIR}/draco/lib64/)
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
 endif()
 
 # MATHFU
