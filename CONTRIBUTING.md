@@ -8,7 +8,6 @@ We actively welcome your pull requests.
 1. Fork the repo and create your branch from `master`.
 2. Ensure your code matches the style of existing source.
 3. In case of behavioural changes, update this documentation.
-4. If you haven't already, complete the Contributor License Agreement ("CLA").
 
 ## Issues
 We use GitHub issues to track public bugs. Please ensure your description is
