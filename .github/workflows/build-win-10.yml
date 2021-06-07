@@ -7,11 +7,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       
-      - name: Install conan
-        run: |
-          pip install --upgrade conan
-        shell: bash
-
       - name: Setup conan profile
         run: |
           conan profile new default --detect
