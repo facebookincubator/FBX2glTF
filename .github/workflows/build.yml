@@ -4,6 +4,9 @@ jobs:
   build-win-10:
     runs-on: windows-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
       - name: Install conan
         run: |
           pip install --upgrade conan
@@ -73,6 +76,9 @@ jobs:
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
       - name: Install conan
         run: |
           pip install --upgrade conan
