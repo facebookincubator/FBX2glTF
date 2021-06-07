@@ -1,4 +1,4 @@
-name: "Build FBX2GLTF for Ubuntu."
+name: "Build FBX2GLTF"
 on: [push, pull_request]
 jobs:
   build-win-10:
