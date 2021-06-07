@@ -136,6 +136,6 @@ jobs:
         shell: cmd
 
       - uses: actions/upload-artifact@v2
-      with:
-        name: FBX2glTF-linux
-        path: FBX2glTF/build/Release/FBX2glTF
+        with:
+          name: FBX2glTF-linux
+          path: FBX2glTF/build/Release/FBX2glTF
