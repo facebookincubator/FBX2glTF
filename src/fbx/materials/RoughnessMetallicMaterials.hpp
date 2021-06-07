@@ -31,9 +31,9 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
         metallic(metallic),
         roughness(roughness) {}
 
-  const FbxVector4 baseColor;
-  const FbxDouble metallic;
-  const FbxDouble roughness;
+  FbxVector4 baseColor;
+  FbxDouble metallic;
+  FbxDouble roughness;
 
   FbxBool invertRoughnessMap = false;
   FbxDouble baseWeight = 1;
@@ -53,6 +53,16 @@ struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
 class FbxStingrayPBSMaterialResolver : FbxMaterialResolver<FbxRoughMetMaterialInfo> {
  public:
   FbxStingrayPBSMaterialResolver(
+      FbxSurfaceMaterial* fbxMaterial,
+      const std::map<const FbxTexture*, FbxString>& textureLocations)
+      : FbxMaterialResolver(fbxMaterial, textureLocations) {}
+
+  virtual std::unique_ptr<FbxRoughMetMaterialInfo> resolve() const;
+};
+
+class ArnoldStandardMaterialResolver : FbxMaterialResolver<FbxRoughMetMaterialInfo> {
+ public:
+  ArnoldStandardMaterialResolver(
       FbxSurfaceMaterial* fbxMaterial,
       const std::map<const FbxTexture*, FbxString>& textureLocations)
       : FbxMaterialResolver(fbxMaterial, textureLocations) {}

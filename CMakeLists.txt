@@ -119,6 +119,7 @@ endif()
 
 set(LIB_SOURCE_FILES
         src/FBX2glTF.h
+        src/fbx/materials/ArnoldStandardMaterial.cpp
         src/fbx/materials/3dsMaxPhysicalMaterial.cpp
         src/fbx/materials/FbxMaterials.cpp
         src/fbx/materials/FbxMaterials.hpp
