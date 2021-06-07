@@ -10,7 +10,7 @@ There are artifacts in the Github Actions for Windows, MacOS and Linux.
 
 ## For Linux
 
-Use `./FBX2glTF-linux --pbr-metallic-roughness example.fbx`.
+Use `./FBX2glTF-linux example.fbx`.
 
 ## For Windows
 
