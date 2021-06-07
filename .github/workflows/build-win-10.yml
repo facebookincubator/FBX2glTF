@@ -39,7 +39,7 @@ jobs:
       - name: install FileDownload
         run: |
           Start-FileDownload 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
-        shell: powershell
+        shell: pwsh
       
       - name: install 7z expand
         run: |
@@ -54,12 +54,12 @@ jobs:
       - name: move
         run: |
           move -v .\FBXSDK-Windows-2020.2\sdk\ .
-        shell: powershell
+        shell: pwsh
 
       - name: move
         run: |
           zstd -d -r --rm sdk
-        shell: powershell   
+        shell: pwsh   
 
       - name: Downloading conan
         run: |
