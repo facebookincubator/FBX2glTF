@@ -46,7 +46,7 @@ jobs:
           move -v .\FBXSDK-Windows-2020.2\sdk\ .
         shell: pwsh
 
-      - name: move
+      - name: decompress sdk
         run: |
           zstd -d -r --rm sdk
         shell: pwsh   
@@ -61,7 +61,7 @@ jobs:
           conan --version
         shell: cmd
 
-      - name: Downloading conan
+      - name: Conan install
         run: |
           conan install . -i build -s build_type=Release -s compiler="Visual Studio" -s compiler.version=15 --build fmt --build boost_system --build boost_filesystem --build libiconv --build=libxml2 --build=zlib
         shell: cmd
@@ -71,7 +71,7 @@ jobs:
           conan build -bf build .
         shell: cmd
 
-      - name: Conan build
+      - name: Move build
         run: |
           move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
         shell: cmd
