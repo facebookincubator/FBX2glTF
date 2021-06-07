@@ -34,21 +34,12 @@ jobs:
         run: |
           cinst zstandard
         shell: bash    
-        
-      - name: install FileDownload
-        run: |
-          Start-FileDownload 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
-        shell: pwsh
-      
-      - name: install 7z expand
-        run: |
-          7z e 2020.2.tar.gz
-        shell: cmd    
-      
-      - name: install 7z extract
-        run: |
-          7z x 2020.2.tar
-        shell: cmd
+
+      - name: Download FBXSDK Windows
+        uses: actions/checkout@v2
+        with:
+          repository: V-Sekai/FBXSDK-Windows
+          path: .
 
       - name: move
         run: |
