@@ -10,17 +10,17 @@ There are artifacts in the Github Actions for Windows, MacOS and Linux.
 
 ## For Linux
 
-Use `./FBX2glTF-linux --pbr-metallic-roughness --skinning-weights 8 --anim-framerate bake30 --user-properties example.fbx`.
+Use `./FBX2glTF-linux --pbr-metallic-roughness example.fbx`.
 
 ## For Windows
 
-Use `FBX2glTF-windows.exe --pbr-metallic-roughness --skinning-weights 8 --anim-framerate bake30 --user-properties example.fbx`.
+Use `FBX2glTF-windows.exe example.fbx`.
 
 You need to install the MVSC redistributable. https://support.microsoft.com/en-ca/help/2977003/the-latest-supported-visual-c-downloads.
 
 ## For Mac
 
-Use `./FBX2glTF-macos --pbr-metallic-roughness --skinning-weights 8 --anim-framerate bake30 --user-properties example.fbx`.
+Use `./FBX2glTF-macos example.fbx`.
 
 ## Build Instructions
 
