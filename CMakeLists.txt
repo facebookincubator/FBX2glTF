@@ -65,9 +65,9 @@ ExternalProject_Add(Draco
 )
 set(DRACO_INCLUDE_DIR "${CMAKE_BINARY_DIR}/draco/include")
 if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/draco.lib")
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco${CMAKE_SHARED_LIBRARY_SUFFIX}")
 else()
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/libdraco.a")
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
 endif()
 
 # MATHFU
