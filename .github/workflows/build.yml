@@ -151,6 +151,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       
+      - name: Update python
+        uses: actions/setup-python@v1
+
       - name: Install conan
         run: |
           pip install --upgrade conan
