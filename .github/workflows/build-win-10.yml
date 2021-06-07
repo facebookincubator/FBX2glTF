@@ -42,12 +42,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: V-Sekai/FBXSDK-Windows
-          path: FBXSDK-Windows-2020.2
-
-      - name: move
-        run: |
-          move -v .\FBXSDK-Windows-2020.2\sdk\ .
-        shell: pwsh
+          path: sdk
 
       - name: decompress sdk
         run: |
