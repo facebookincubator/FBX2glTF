@@ -50,7 +50,7 @@ jobs:
 
       - name: move
         run: |
-          move -v .\FBXSDK-Windows-2020.2\sdk\ .\FBX2glTF\
+          move -v .\FBXSDK-Windows-2020.2\sdk\ .\FBX2glTF\sdk\
         shell: pwsh
 
       - name: Decompress sdk
