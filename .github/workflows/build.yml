@@ -102,12 +102,12 @@ jobs:
       - name: Curl sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Linux/archive/refs/tags/2020.2.zip"
-        shell: cmd
+        shell: bash
             
       - name: install 7z extract
         run: |
           7z x 2020.2.zip
-        shell: cmd
+        shell: bash
 
       - name: move
         run: |
@@ -118,22 +118,22 @@ jobs:
       - name: Decompress sdk
         run: |
           zstd -d -r --rm ./FBX2glTF/sdk
-        shell: cmd
+        shell: bash
 
       - name: Add conan remote
         run: |
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        shell: cmd
+        shell: bash
 
       - name: Conan install
         run: |
           conan install . -i build -s build_type=Release -s --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
-        shell: cmd
+        shell: bash
 
       - name: Conan build
         run: |
           conan build -bf build .
-        shell: cmd
+        shell: bash
 
       - uses: actions/upload-artifact@v2
         with:
