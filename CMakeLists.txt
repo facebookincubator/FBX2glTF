@@ -68,7 +68,7 @@ find_file(FEDORA_FOUND fedora-release
   PATHS /etc
 )
 if (WIN32)
-   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco${CMAKE_SHARED_LIBRARY_SUFFIX}")
+   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib/${CMAKE_SHARED_MODULE_PREFIX}draco.lib")
 elseif(FEDORA_FOUND)
   set(DRACO_LIB "${CMAKE_BINARY_DIR}/draco/lib64/${CMAKE_SHARED_MODULE_PREFIX}draco.a")
 else()
