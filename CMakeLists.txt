@@ -45,7 +45,9 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-find_package(boost MODULE REQUIRED)
+find_package(boost_system MODULE REQUIRED)
+find_package(boost_filesystem MODULE REQUIRED)
+find_package(boost_optional MODULE REQUIRED)
 find_package(libxml2 MODULE REQUIRED)
 find_package(zlib MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
