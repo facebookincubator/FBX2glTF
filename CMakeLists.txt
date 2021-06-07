@@ -45,9 +45,9 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-FIND_PACKAGE( Boost 1.76 COMPONENTS system filesystem program_options REQUIRED )
+find_package(Boost 1.76 COMPONENTS system filesystem program_options REQUIRED )
 find_package(libxml2 MODULE REQUIRED)
-find_package(zlib MODULE REQUIRED)
+find_package(ZLIB MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
@@ -212,7 +212,7 @@ target_link_libraries(libFBX2glTF
   debug ${FBXSDK_LIBRARY_DEBUG}
   fmt::fmt
   libxml2::libxml2
-  zlib::zlib
+  ZLIB_LIBRARIES
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
