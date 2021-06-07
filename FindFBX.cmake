@@ -27,7 +27,7 @@ if (NOT DEFINED FBXSDK_VERSION)
   set(FBXSDK_VERSION "2020.2")
 endif()
 
-set(_fbxsdk_vstudio_version "vs2020")
+set(_fbxsdk_vstudio_version "vs2019")
 
 message("Looking for FBX SDK version: ${FBXSDK_VERSION}")
 
