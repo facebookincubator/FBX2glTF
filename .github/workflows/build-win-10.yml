@@ -61,36 +61,6 @@ jobs:
           zstd -d -r --rm sdk
         shell: pwsh   
 
-      - name: Downloading conan
-        run: |
-          echo "Downloading conan..."
-        shell: cmd
-
-      - name: Downloading conan
-        run: |
-          set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-        shell: cmd
-
-      - name: Downloading conan
-        run: |
-          python --version
-        shell: cmd
-
-      - name: Downloading conan
-        run: |
-          python --version
-        shell: cmd
-
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-        shell: cmd
-
-      - name: Install conan
-        run: |
-          pip install conan
-        shell: cmd
-
       - name: Add conan remote
         run: |
           conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
