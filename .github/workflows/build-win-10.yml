@@ -50,8 +50,9 @@ jobs:
 
       - name: move
         run: |
-          robocopy .\FBXSDK-Windows-2020.2\sdk\ .\FBX2glTF\sdk /MIR /R:0 /W:0
-        shell: cmd
+          mkdir -p FBX2glTF/sdk
+          mv ./FBXSDK-Windows-2020.2/sdk FBX2glTF/sdk
+        shell: bash
 
       - name: Decompress sdk
         run: |
