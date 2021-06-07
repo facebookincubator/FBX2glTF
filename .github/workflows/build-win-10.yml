@@ -71,10 +71,10 @@ jobs:
       - name: Move build
         run: |
           cd FBX2glTF
-          move build/Release/FBX2glTF.exe build/Release/FBX2glTF-windows-x64.exe
+          move 
         shell: cmd
 
       - uses: actions/upload-artifact@v2
         with:
-          name: FBX2glTF.exe
-          path: FBX2glTF/build/Release/FBX2glTF-windows-x64.exe
+          name: FBX2glTF-windows-x64.exe
+          path: FBX2glTF/build/Release/FBX2glTF.exe
