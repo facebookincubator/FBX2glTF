@@ -35,7 +35,7 @@ jobs:
         
       - name: Curl sdk
         run: |
-          curl -O -L "https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz"
+          curl -O -L "https://github.com/V-Sekai/FBXSDK-Windows/archive/refs/tags/2020.2.zip"
         shell: cmd
       
       - name: install 7z expand
