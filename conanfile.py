@@ -11,7 +11,7 @@ class FBX2glTFConan(ConanFile):
     requires = (
         ("boost/1.76.0"),
         ("libiconv/1.15@bincrafters/stable"),
-        ("zlib/1.2.11@conan/stable"),
+        ("zlib/1.2.11"),
         ("libxml2/2.9.9@bincrafters/stable"),
         ("fmt/5.3.0@bincrafters/stable"),
     )
