@@ -48,7 +48,7 @@ jobs:
 
       - name: Decompress sdk
         run: |
-          zstd -d -r --rm ./sdk || true
+          zstd -d -r --rm ./sdk || false
         shell: cmd
 
       - name: Add conan remote
@@ -117,7 +117,7 @@ jobs:
 
       - name: Decompress sdk
         run: |
-          zstd -d -r --rm ./sdk || true
+          zstd -d -r --rm ./sdk || false
         shell: bash
 
       - name: Add conan remote
