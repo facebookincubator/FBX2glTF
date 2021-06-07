@@ -37,17 +37,26 @@ jobs:
         run: |
           cinst zstandard
         shell: bash    
-
-      - name: Download FBXSDK Windows
-        uses: actions/checkout@v2
-        with:
-          repository: V-Sekai/FBXSDK-Windows
-          path: sdk
-
-      - name: Decompress sdk
+        
+      - name: install FileDownload
         run: |
-          zstd -d -r --rm sdk > nul 
+          curl -O 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
         shell: cmd
+      
+      - name: install 7z expand
+        run: |
+          7z e 2020.2.tar.gz
+        shell: cmd    
+      
+      - name: install 7z extract
+        run: |
+          7z x 2020.2.tar
+        shell: cmd
+
+      - name: move
+        run: |
+          move -v .\FBXSDK-Windows-2020.2\sdk\ .
+        shell: pwsh
 
       - name: Add conan remote
         run: |
