@@ -48,6 +48,6 @@ else
 > conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
 
 # Initialize & run build
-> conan install . -i build -s build_type=Release ${CONAN_CONFIG} --build fmt --build boost_system --build boost_filesystem --build libiconv --build=libxml2 --build=zlib
+> conan install . -i build -s build_type=Release ${CONAN_CONFIG} --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip2 --build=libbacktrace --build=boost
 > conan build . -bf build
 ```
