@@ -72,7 +72,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: FBX2glTF-windows-x64.exe
-          path: FBX2glTF/build/Release/FBX2glTF.exe
+          path: build/FBX2glTF.exe
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -144,4 +144,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: FBX2glTF-linux
-          path: FBX2glTF/build/Release/FBX2glTF
+          path: build/FBX2glTF
