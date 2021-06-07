@@ -1,7 +1,7 @@
 name: "Build FBX2GLTF for Windows 10."
 on: [push, pull_request]
 jobs:
-  build:
+  build-win-10:
     runs-on: windows-latest
     steps:
       - name: Install conan

@@ -1,7 +1,7 @@
 name: "Build FBX2GLTF for Ubuntu."
 on: [push, pull_request]
 jobs:
-  build:
+  build-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - name: Install conan
