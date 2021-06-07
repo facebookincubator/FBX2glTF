@@ -4,36 +4,36 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
       
-      - name: install conan
+      - name: Install conan
         run: |
           pip install --upgrade conan
         shell: bash
 
-      - name: setup conan profile
+      - name: Setup conan profile
         run: |
           conan profile new default --detect
           conan profile show default
         shell: bash
 
-      - name: setup filter.lfs.required
+      - name: Setup filter.lfs.required
         run: |
           git config --global filter.lfs.required false
         shell: bash
 
-      - name: setup filter.lfs.smudge
+      - name: Setup filter.lfs.smudge
         run: |
           git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
         shell: bash
 
-      - name: setup filter.lfs.process
+      - name: Setup filter.lfs.process
         run: |
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
 
-      - name: install zstandard
+      - name: Install zstandard
         run: |
           cinst zstandard
         shell: bash    
@@ -44,7 +44,7 @@ jobs:
           repository: V-Sekai/FBXSDK-Windows
           path: sdk
 
-      - name: decompress sdk
+      - name: Secompress sdk
         run: |
           zstd -d -r --rm sdk
         shell: pwsh   
