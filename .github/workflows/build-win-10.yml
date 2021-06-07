@@ -61,7 +61,7 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release -s compiler="Visual Studio" --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip2 --build=libbacktrace --build=boost
+          conan install . -i build -s build_type=Release -s compiler="Visual Studio" --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
         shell: cmd
 
       - name: Conan build
