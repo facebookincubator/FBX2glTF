@@ -1,123 +1,122 @@
 name: "Build FBX2GLTF for Windows 10."
-on: [push]
+on: [push, pull_request]
 jobs:
   build:
     runs-on: windows-latest
-    strategy:
-      steps:
-        - name: install conan
-          run: |
-            python -m pip install --upgrade pip
-            pip install --upgrade conan
-          shell: bash
+    steps:
+      - name: install conan
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade conan
+        shell: bash
 
-        - name: setup conan profile
-          run: |
-            conan profile new default --detect
-            conan profile show default
-          shell: bash
+      - name: setup conan profile
+        run: |
+          conan profile new default --detect
+          conan profile show default
+        shell: bash
 
-        - name: setup filter.lfs.required
-          run: |
-            git config --global filter.lfs.required false
-          shell: bash
+      - name: setup filter.lfs.required
+        run: |
+          git config --global filter.lfs.required false
+        shell: bash
 
-        - name: setup filter.lfs.smudge
-          run: |
-            git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
-          shell: bash
+      - name: setup filter.lfs.smudge
+        run: |
+          git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
+        shell: bash
 
-        - name: setup filter.lfs.process
-          run: |
-            git config --global filter.lfs.process "git-lfs filter-process --skip"
-          shell: bash
+      - name: setup filter.lfs.process
+        run: |
+          git config --global filter.lfs.process "git-lfs filter-process --skip"
+        shell: bash
 
-        - name: install zstandard
-          run: |
-            cinst zstandard
-          shell: bash    
-          
-        - name: install FileDownload
-          run: |
-            Start-FileDownload 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
-          shell: powershell
+      - name: install zstandard
+        run: |
+          cinst zstandard
+        shell: bash    
         
-        - name: install 7z expand
-          run: |
-            7z e 2020.2.tar.gz
-          shell: cmd    
-        
-        - name: install 7z extract
-          run: |
-            7z x 2020.2.tar
-          shell: cmd
+      - name: install FileDownload
+        run: |
+          Start-FileDownload 'https://github.com/V-Sekai/FBXSDK-Windows/archive/2020.2.tar.gz'
+        shell: powershell
+      
+      - name: install 7z expand
+        run: |
+          7z e 2020.2.tar.gz
+        shell: cmd    
+      
+      - name: install 7z extract
+        run: |
+          7z x 2020.2.tar
+        shell: cmd
 
-        - name: move
-          run: |
-            move -v .\FBXSDK-Windows-2020.2\sdk\ .
-          shell: powershell
+      - name: move
+        run: |
+          move -v .\FBXSDK-Windows-2020.2\sdk\ .
+        shell: powershell
 
-        - name: move
-          run: |
-            zstd -d -r --rm sdk
-          shell: powershell   
+      - name: move
+        run: |
+          zstd -d -r --rm sdk
+        shell: powershell   
 
-        - name: Downloading conan
-          run: |
-            echo "Downloading conan..."
-          shell: cmd
+      - name: Downloading conan
+        run: |
+          echo "Downloading conan..."
+        shell: cmd
 
-        - name: Downloading conan
-          run: |
-            set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-          shell: cmd
+      - name: Downloading conan
+        run: |
+          set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+        shell: cmd
 
-        - name: Downloading conan
-          run: |
-            python --version
-          shell: cmd
+      - name: Downloading conan
+        run: |
+          python --version
+        shell: cmd
 
-        - name: Downloading conan
-          run: |
-            python --version
-          shell: cmd
+      - name: Downloading conan
+        run: |
+          python --version
+        shell: cmd
 
-        - name: Upgrade pip
-          run: |
-            python -m pip install --upgrade pip
-          shell: cmd
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+        shell: cmd
 
-        - name: Install conan
-          run: |
-            pip install conan
-          shell: cmd
+      - name: Install conan
+        run: |
+          pip install conan
+        shell: cmd
 
-        - name: Add conan remote
-          run: |
-            conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-          shell: cmd
+      - name: Add conan remote
+        run: |
+          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+        shell: cmd
 
-        - name: Conan version
-          run: |
-            conan --version
-          shell: cmd
+      - name: Conan version
+        run: |
+          conan --version
+        shell: cmd
 
-        - name: Downloading conan
-          run: |
-            conan install . -i build -s build_type=Release -s compiler="Visual Studio" -s compiler.version=15 --build fmt --build boost_system --build boost_filesystem --build libiconv --build=libxml2 --build=zlib
-          shell: cmd
+      - name: Downloading conan
+        run: |
+          conan install . -i build -s build_type=Release -s compiler="Visual Studio" -s compiler.version=15 --build fmt --build boost_system --build boost_filesystem --build libiconv --build=libxml2 --build=zlib
+        shell: cmd
 
-        - name: Conan build
-          run: |
-            conan build -bf build .
-          shell: cmd
+      - name: Conan build
+        run: |
+          conan build -bf build .
+        shell: cmd
 
-        - name: Conan build
-          run: |
-            move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
-          shell: cmd
+      - name: Conan build
+        run: |
+          move build\Release\FBX2glTF.exe build\Release\FBX2glTF-windows-x64.exe
+        shell: cmd
 
-        - uses: actions/upload-artifact@v2
-          with:
-            name: FBX2glTF.exe
-            path: build/Release/FBX2glTF-windows-x64.exe
+      - uses: actions/upload-artifact@v2
+        with:
+          name: FBX2glTF.exe
+          path: build/Release/FBX2glTF-windows-x64.exe
