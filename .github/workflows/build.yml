@@ -71,7 +71,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: FBX2glTF-windows-x64.exe
+          name: FBX2glTF-windows.exe
           path: build/Release/FBX2glTF.exe
   build-ubuntu:
     runs-on: ubuntu-latest
@@ -218,5 +218,5 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: FBX2glTF-Darwin
+          name: FBX2glTF-macos
           path: build/FBX2glTF
