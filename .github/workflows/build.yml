@@ -112,7 +112,7 @@ jobs:
       - name: move
         run: |
           mkdir -p sdk
-          mv ./FBXSDK-Windows-2020.2/sdk ./sdk
+          mv ./FBXSDK-Linux-2020.2/sdk ./sdk
         shell: bash
 
       - name: Decompress sdk
