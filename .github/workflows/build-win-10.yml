@@ -42,8 +42,8 @@ jobs:
 
       - name: move
         run: |
-          mkdir -p FBX2glTF/sdk
-          mv ./FBXSDK-Windows-2020.2/sdk ./FBX2glTF/sdk
+          mkdir -p sdk
+          mv ./FBXSDK-Windows-2020.2/sdk ./sdk
         shell: bash
 
       - name: Decompress sdk
@@ -58,23 +58,15 @@ jobs:
 
       - name: Conan install
         run: |
-          cd FBX2glTF
           conan install . -i build -s build_type=Release -s compiler="Visual Studio" --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
         shell: cmd
 
       - name: Conan build
         run: |
-          cd FBX2glTF
           conan build -bf build .
         shell: cmd
 
-      - name: Move build
-        run: |
-          cd FBX2glTF
-          move 
-        shell: cmd
-
-      - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v2
         with:
           name: FBX2glTF-windows-x64.exe
           path: FBX2glTF/build/Release/FBX2glTF.exe
