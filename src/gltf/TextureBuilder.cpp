@@ -214,9 +214,8 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   }
   if (!image) {
     // fallback is tiny transparent PNG
-    image = new ImageData(
-        textureName,
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+//    image = new ImageData(textureName, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==");
+    return nullptr;
   }
 
   std::shared_ptr<TextureData> texDat = gltf.textures.hold(
