@@ -21,9 +21,25 @@ struct BufferViewData : Holdable {
 
   json serialize() const override;
 
+  template <class T>
+  void appendAsBinaryArray(const std::vector<T>& in, std::vector<uint8_t>& out, GLType type) {
+    const unsigned int stride = type.byteStride();
+    const size_t offset = out.size();
+    const size_t count = in.size();
+
+    this->byteLength = stride * count;
+    this->count = count;
+
+    out.resize(offset + count * stride);
+    for (int ii = 0; ii < count; ii++) {
+      type.write(&out[offset + ii * stride], in[ii]);
+    }
+  }
+
   const unsigned int buffer;
   const unsigned int byteOffset;
   const GL_ArrayType target;
 
+  unsigned int count = 0;
   unsigned int byteLength = 0;
 };

@@ -143,6 +143,11 @@ int main(int argc, char* argv[]) {
       "Transcribe FBX User Properties into glTF node and material 'extras'.");
 
   app.add_flag(
+      "--blend-shape-no-sparse",
+      gltfOptions.disableSparseBlendShapes,
+      "Don't use sparse accessors to store blend shapes");
+
+  app.add_flag(
       "--blend-shape-normals",
       gltfOptions.useBlendShapeNormals,
       "Include blend shape normals, if reported present by the FBX SDK.");
@@ -159,17 +164,17 @@ int main(int argc, char* argv[]) {
       true);
 
   app.add_option(
-      "--skinning-weights",
-      gltfOptions.maxSkinningWeights,
-      "The number of joint influences per vertex.",
-      true)
+         "--skinning-weights",
+         gltfOptions.maxSkinningWeights,
+         "The number of joint influences per vertex.",
+         true)
       ->check(CLI::Range(0, 512));
 
   app.add_option(
          "-k,--keep-attribute",
          [&](std::vector<std::string> attributes) -> bool {
            gltfOptions.keepAttribs =
-             RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
+               RAW_VERTEX_ATTRIBUTE_JOINT_INDICES | RAW_VERTEX_ATTRIBUTE_JOINT_WEIGHTS;
            for (std::string attribute : attributes) {
              if (attribute == "position") {
                gltfOptions.keepAttribs |= RAW_VERTEX_ATTRIBUTE_POSITION;
@@ -250,7 +255,9 @@ int main(int argc, char* argv[]) {
       ->check(CLI::Range(1, 32))
       ->group("Draco");
 
-  app.add_option("--fbx-temp-dir", gltfOptions.fbxTempDir, "Temporary directory to be used by FBX SDK.")->check(CLI::ExistingDirectory);
+  app.add_option(
+         "--fbx-temp-dir", gltfOptions.fbxTempDir, "Temporary directory to be used by FBX SDK.")
+      ->check(CLI::ExistingDirectory);
 
   CLI11_PARSE(app, argc, argv);
 

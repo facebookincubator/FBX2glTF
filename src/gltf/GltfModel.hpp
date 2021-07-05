@@ -70,14 +70,54 @@ class GltfModel {
       const std::string& filename);
 
   template <class T>
+  void
+  CopyToBufferView(BufferViewData& bufferView, const std::vector<T>& source, const GLType& type) {
+    bufferView.appendAsBinaryArray(source, *binary, type);
+  }
+
+  template <class T>
   std::shared_ptr<AccessorData> AddAccessorWithView(
       BufferViewData& bufferView,
       const GLType& type,
       const std::vector<T>& source,
       std::string name) {
     auto accessor = accessors.hold(new AccessorData(bufferView, type, name));
-    accessor->appendAsBinaryArray(source, *binary);
-    bufferView.byteLength = accessor->byteLength();
+    bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = bufferView.count;
+    return accessor;
+  }
+
+  template <class T>
+  std::shared_ptr<AccessorData> AddSparseAccessorWithView(
+      AccessorData& baseAccessor,
+      BufferViewData& indexBufferView,
+      const GLType& indexBufferViewType,
+      BufferViewData& bufferView,
+      const GLType& type,
+      const std::vector<T>& source,
+      std::string name) {
+    auto accessor =
+        accessors.hold(new AccessorData(baseAccessor, indexBufferView, bufferView, type, name));
+    bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = baseAccessor.count;
+    accessor->sparseIdxBufferViewType = indexBufferViewType.componentType.glType;
+    return accessor;
+  }
+
+  //  template <class T>
+  std::shared_ptr<AccessorData> AddSparseAccessor(
+      AccessorData& baseAccessor,
+      BufferViewData& indexBufferView,
+      const GLType& indexBufferViewType,
+      BufferViewData& bufferView,
+      const GLType& type,
+      //      const std::vector<T>& source,
+      std::string name) {
+    auto accessor =
+        accessors.hold(new AccessorData(baseAccessor, indexBufferView, bufferView, type, name));
+    // bufferView.appendAsBinaryArray(source, *binary, type);
+    accessor->count = baseAccessor.count;
+    accessor->sparseIdxBufferViewType = indexBufferViewType.componentType.glType;
     return accessor;
   }
 
@@ -124,10 +164,10 @@ class GltfModel {
 
   template <class T>
   std::shared_ptr<AccessorData> AddAttributeArrayToPrimitive(
-    BufferData& buffer,
-    const RawModel& surfaceModel,
-    PrimitiveData& primitive,
-    const AttributeArrayDefinition<T>& attrDef) {
+      BufferData& buffer,
+      const RawModel& surfaceModel,
+      PrimitiveData& primitive,
+      const AttributeArrayDefinition<T>& attrDef) {
     // copy attribute data into vector
     std::vector<T> attribArr;
     surfaceModel.GetArrayAttributeArray<T>(attribArr, attrDef.rawAttributeIx, attrDef.arrayOffset);
@@ -138,8 +178,7 @@ class GltfModel {
 
       accessor = accessors.hold(new AccessorData(attrDef.glType));
       accessor->count = attribArr.size();
-    }
-    else {
+    } else {
       auto bufferView = GetAlignedBufferView(buffer, BufferViewData::GL_ARRAY_BUFFER);
       accessor = AddAccessorWithView(*bufferView, attrDef.glType, attribArr, std::string(""));
     }
