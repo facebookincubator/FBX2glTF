@@ -50,7 +50,8 @@ inline bool FolderExists(const std::string& folderPath) {
 }
 
 inline std::string getFolder(const std::string& path) {
-  return boost::filesystem::path(path).parent_path().string();
+    auto parent = boost::filesystem::path(path).parent_path().string();
+    return parent == "" ? "." : parent;
 }
 
 inline std::string GetFileName(const std::string& path) {
