@@ -201,6 +201,9 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   } else if (!relativeFilename.empty()) {
     image = new ImageData(relativeFilename, relativeFilename);
     std::string outputPath = outputFolder + "/" + relativeFilename;
+    auto srcAbs = FileUtils::GetAbsolutePath(rawTexture.fileLocation);
+    auto dstAbs = FileUtils::GetAbsolutePath(outputPath);
+    if (srcAbs != dstAbs)
     if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
       if (verboseOutput) {
         fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);

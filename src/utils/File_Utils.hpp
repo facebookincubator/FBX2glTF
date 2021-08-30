@@ -34,7 +34,7 @@ bool CopyFile(
     bool createPath = false);
 
 inline std::string GetAbsolutePath(const std::string& filePath) {
-  return boost::filesystem::absolute(filePath).string();
+  return boost::filesystem::canonical(boost::filesystem::absolute(filePath)).string();
 }
 
 inline std::string GetCurrentFolder() {
