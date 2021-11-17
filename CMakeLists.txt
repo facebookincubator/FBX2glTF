@@ -183,8 +183,8 @@ set(LIB_SOURCE_FILES
 
 add_library(libFBX2glTF STATIC ${LIB_SOURCE_FILES})
 set_target_properties(libFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
-add_executable(appFBX2glTF src/FBX2glTF.cpp)
-set_target_properties(appFBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
+add_executable(FBX2glTF src/FBX2glTF.cpp)
+set_target_properties(FBX2glTF PROPERTIES OUTPUT_NAME "FBX2glTF")
 
 add_dependencies(libFBX2glTF
   Draco
@@ -199,7 +199,7 @@ if (NOT MSVC)
     "-Wno-null-dereference"
     "-Wunused"
     )
-  target_compile_options(appFBX2glTF PRIVATE
+  target_compile_options(FBX2glTF PRIVATE
     "-Wno-null-dereference"
     "-Wunused"
     )
@@ -234,12 +234,12 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
   ${CPPCODEC_INCLUDE_DIR}
 )
 
-target_include_directories(appFBX2glTF PUBLIC
+target_include_directories(FBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(appFBX2glTF libFBX2glTF)
+target_link_libraries(FBX2glTF libFBX2glTF)
 
-install (TARGETS libFBX2glTF appFBX2glTF
+install (TARGETS libFBX2glTF FBX2glTF
         RUNTIME DESTINATION bin
         ARCHIVE DESTINATION lib
 )
