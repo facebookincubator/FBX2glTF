@@ -10,10 +10,10 @@ class FBX2glTFConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = (
         ("boost/1.76.0"),
-        ("libiconv/1.15@bincrafters/stable"),
+        ("libiconv/1.15"),
         ("zlib/1.2.11"),
-        ("libxml2/2.9.9@bincrafters/stable"),
-        ("fmt/5.3.0@bincrafters/stable"),
+        ("libxml2/2.9.12"),
+        ("fmt/5.3.0"),
     )
     generators = "cmake_find_package", "cmake_paths"
 
