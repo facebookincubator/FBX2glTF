@@ -205,6 +205,10 @@ if (NOT MSVC)
     )
 endif()
 
+if (APPLE)
+set(ICONV_MAC_LIB libiconv)
+endif()
+
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
   ${DRACO_LIB}
@@ -216,6 +220,7 @@ target_link_libraries(libFBX2glTF
   ZLIB::ZLIB
   Iconv::Iconv
   LibXml2::LibXml2
+  ${ICONV_MAC_LIB}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
