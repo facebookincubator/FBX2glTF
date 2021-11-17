@@ -237,7 +237,12 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
 target_include_directories(FBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(FBX2glTF libFBX2glTF iconv)
+
+if (APPLE)
+set(ICONV_MAC_LIB iconv)
+endif()
+
+target_link_libraries(FBX2glTF libFBX2glTF ICONV_MAC_LIB)
 
 install (TARGETS libFBX2glTF FBX2glTF
         RUNTIME DESTINATION bin
