@@ -86,6 +86,7 @@ jobs:
         shell: bash
 
       - uses: papeloto/action-zip@v1
+        working-directory: build
         with:
           files: build/Release/FBX2glTF.exe build/thirdparty-license.rtf build/LICENSE
           recursive: false
@@ -98,7 +99,7 @@ jobs:
           prerelease: true
           title: FBX2glTF Windows packages
           files: |
-            fbx2gltf-windows.zip
+            build/fbx2gltf-windows.zip
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -178,11 +179,12 @@ jobs:
           cp LICENSE build/LICENSE
         shell: bash
 
-      - uses: papeloto/action-zip@v1
+      - uses: papeloto/action-zip@v1      
+        working-directory: build
         with:
           files: build/FBX2glTF build/thirdparty-license.txt build/LICENSE
           recursive: false
-          dest: fbx2gltf-linux.zip
+          dest: build/fbx2gltf-linux.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -281,10 +283,11 @@ jobs:
         shell: bash
 
       - uses: papeloto/action-zip@v1
+        working-directory: build
         with:
           files: build/FBX2glTF build/thirdparty-license.rtf build/LICENSE
           recursive: false
-          dest: fbx2gltf-macos.zip
+          dest: build/fbx2gltf-macos.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
