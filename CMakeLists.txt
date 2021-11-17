@@ -205,10 +205,6 @@ if (NOT MSVC)
     )
 endif()
 
-if (APPLE)
-set(ICONV_MAC_LIB iconv)
-endif()
-
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
   ${DRACO_LIB}
@@ -218,7 +214,6 @@ target_link_libraries(libFBX2glTF
   debug ${FBXSDK_LIBRARY_DEBUG}
   fmt::fmt
   ZLIB::ZLIB
-  Iconv::Iconv
   LibXml2::LibXml2
   ${ICONV_MAC_LIB}
   ${CMAKE_DL_LIBS}
@@ -242,7 +237,7 @@ target_include_directories(libFBX2glTF SYSTEM PUBLIC
 target_include_directories(FBX2glTF PUBLIC
   "third_party/CLI11"
 )
-target_link_libraries(FBX2glTF libFBX2glTF)
+target_link_libraries(FBX2glTF libFBX2glTF iconv)
 
 install (TARGETS libFBX2glTF FBX2glTF
         RUNTIME DESTINATION bin

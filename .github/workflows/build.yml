@@ -189,11 +189,6 @@ jobs:
           pip install --upgrade conan
         shell: bash
 
-      - name: Brew install libiconv
-        run: |
-          brew install libiconv
-        shell: bash
-
       - name: Setup conan profile
         run: |
           conan profile new default --detect
@@ -259,7 +254,7 @@ jobs:
           directory: build
           path: FBX2glTF
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - uses: "marvinpinto/action-automatsic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: latest-macos
