@@ -233,9 +233,9 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build bzip2
+          conan install . -i build -s build_type=Release --build bzip2 --build boost --build fmt --build libbacktrace --build libiconv --build libxml2 --build zlib
         shell: bash
-
+        
       - name: Conan build
         run: |
           conan build -bf build .
