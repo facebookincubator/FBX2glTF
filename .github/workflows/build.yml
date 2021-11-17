@@ -183,11 +183,6 @@ jobs:
       
       - name: Update python
         uses: actions/setup-python@v1
-
-      - name: Setup pkgconfig
-        run: |
-          brew install pkgconf --force
-        shell: bash
         
       - name: Install conan
         run: |
