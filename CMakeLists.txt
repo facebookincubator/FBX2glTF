@@ -242,7 +242,7 @@ if (APPLE)
 set(ICONV_MAC_LIB iconv)
 endif()
 
-target_link_libraries(FBX2glTF libFBX2glTF ICONV_MAC_LIB)
+target_link_libraries(FBX2glTF libFBX2glTF ${ICONV_MAC_LIB})
 
 install (TARGETS libFBX2glTF FBX2glTF
         RUNTIME DESTINATION bin
