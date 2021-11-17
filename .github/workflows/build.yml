@@ -78,6 +78,12 @@ jobs:
         with:
           name: FBX2glTF-windows.exe
           path: build/Release/FBX2glTF.exe
+          
+      - name: Copy licenses
+        run: |
+          cp sdk/Windows/2020.2/License.rtf build/LICENSE.thirdparty.rtf
+          cp LICENSE build/LICENSE
+        shell: bash
 
       - name: Archive Release
         uses: thedoctor0/zip-release@master
@@ -167,6 +173,12 @@ jobs:
         with:
           name: FBX2glTF-linux
           path: build/FBX2glTF
+
+      - name: Copy licenses
+        run: |
+          cp sdk/Linux/2020.2/License.rtf build/LICENSE.thirdparty.rtf
+          cp LICENSE build/LICENSE
+        shell: bash
 
       - name: Archive Release
         uses: thedoctor0/zip-release@master
@@ -273,6 +285,12 @@ jobs:
           filename: fbx2gltf-macos
           directory: build
           path: FBX2glTF
+
+      - name: Copy licenses
+        run: |
+          cp sdk/Darwin/2020.2/License.rtf build/LICENSE.thirdparty.rtf
+          cp LICENSE build/LICENSE
+        shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
