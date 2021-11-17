@@ -233,7 +233,7 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release
+          conan install . -i build -s build_type=Release --build bzip2
         shell: bash
 
       - name: Conan build
