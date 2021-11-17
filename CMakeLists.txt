@@ -49,6 +49,7 @@ find_package(Boost 1.76 COMPONENTS system filesystem program_options REQUIRED )
 find_package(ZLIB MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
 find_package(Iconv MODULE REQUIRED)
+find_package(LibXml2  MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -214,6 +215,7 @@ target_link_libraries(libFBX2glTF
   fmt::fmt
   ZLIB::ZLIB
   Iconv::Iconv
+  LibXml2::LibXml2
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
