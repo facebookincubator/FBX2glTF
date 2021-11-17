@@ -176,7 +176,7 @@ jobs:
             build/fbx2gltf-linux.zip
 
   build-macos:
-    runs-on: 	macos-10.15
+    runs-on: macos-11
     steps:
       - name: Checkout
         uses: actions/checkout@v2
