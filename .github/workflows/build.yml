@@ -75,7 +75,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-windows
           directory: build
-          path: .
+          path: FBX2glTF.exe
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -159,7 +159,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-linux
           directory: build
-          path: .
+          path: FBX2glTF
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -247,7 +247,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-macos
           directory: build
-          path: .
+          path: FBX2glTF
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
