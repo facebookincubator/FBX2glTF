@@ -233,12 +233,17 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build missing arch=x86_64
+          conan install . -i build -s build_type=Release --build missing --settings arch=x86_64
         shell: bash
 
       - name: Conan build
         run: |
           conan build -bf build .
+        shell: bash
+
+      - name: Adhoc signature
+        run: |
+           codesign -s - --options=runtime build/FBX2glTF
         shell: bash
 
       - uses: actions/upload-artifact@v2
@@ -322,12 +327,17 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build missing arch=armv8
+          conan install . -i build -s build_type=Release --build missing --settings arch=armv8
         shell: bash
 
       - name: Conan build
         run: |
           conan build -bf build .
+        shell: bash
+        
+      - name: Adhoc signature
+        run: |
+           codesign -s - --options=runtime build/FBX2glTF
         shell: bash
 
       - uses: actions/upload-artifact@v2
