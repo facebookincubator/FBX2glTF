@@ -85,13 +85,11 @@ jobs:
           cp LICENSE build/LICENSE
         shell: bash
 
-      - name: Archive Release
-        uses: thedoctor0/zip-release@master
+      - uses: papeloto/action-zip@v1
         with:
-          type: 'zip'
-          filename: fbx2gltf-windows
-          directory: build
-          path: ["Release/FBX2glTF.exe", "thirdparty-license.rtf", "LICENSE"]
+          files: ["build/Release/FBX2glTF.exe", "build/thirdparty-license.rtf", "build/LICENSE"]
+          recursive: false
+          dest: fbx2gltf-windows.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -100,7 +98,7 @@ jobs:
           prerelease: true
           title: FBX2glTF Windows packages
           files: |
-            build/fbx2gltf-windows.zip
+            fbx2gltf-windows.zip
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -180,13 +178,11 @@ jobs:
           cp LICENSE build/LICENSE
         shell: bash
 
-      - name: Archive Release
-        uses: thedoctor0/zip-release@master
+      - uses: papeloto/action-zip@v1
         with:
-          type: 'zip'
-          filename: fbx2gltf-linux
-          directory: build
-          path: ["FBX2glTF", "thirdparty-license.rtf", "LICENSE"]
+          files: ["build/FBX2glTF", "build/thirdparty-license.rtf", "build/LICENSE"]
+          recursive: false
+          dest: fbx2gltf-linux.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -195,7 +191,7 @@ jobs:
           prerelease: true
           title: FBX2glTF Linux packages
           files: |
-            build/fbx2gltf-linux.zip
+            fbx2gltf-linux.zip
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -284,13 +280,11 @@ jobs:
           cp LICENSE build/LICENSE
         shell: bash
 
-      - name: Archive Release
-        uses: thedoctor0/zip-release@master
+      - uses: papeloto/action-zip@v1
         with:
-          type: 'zip'
-          filename: fbx2gltf-macos
-          directory: build
-          path: ["FBX2glTF", "thirdparty-license.rtf", "LICENSE"]
+          files: ["build/FBX2glTF", "build/thirdparty-license.rtf", "build/LICENSE"]
+          recursive: false
+          dest: fbx2gltf-macos.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -299,4 +293,4 @@ jobs:
           prerelease: true
           title: FBX2glTF Macos x86_64 packages
           files: |
-            build/fbx2gltf-macos.zip
+            fbx2gltf-macos.zip
