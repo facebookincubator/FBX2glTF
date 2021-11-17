@@ -33,7 +33,7 @@ jobs:
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
         
-      - name: Curl sdk
+      - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Windows/archive/refs/tags/2020.2.zip"
         shell: cmd
@@ -82,7 +82,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: latest-windows
           prerelease: true
-          title: FBX2glTF packages
+          title: FBX2glTF Windows packages
           files: |
             build/fbx2gltf-windows.zip
   build-ubuntu:
@@ -117,7 +117,7 @@ jobs:
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
         
-      - name: Curl sdk
+      - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Linux/archive/refs/tags/2020.2.zip"
         shell: bash
@@ -166,7 +166,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: latest-linux
           prerelease: true
-          title: FBX2glTF packages
+          title: FBX2glTF Linux packages
           files: |
             build/fbx2gltf-linux.zip
 
@@ -205,7 +205,7 @@ jobs:
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
         
-      - name: Curl sdk
+      - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Darwin/archive/refs/tags/2020.2.zip"
         shell: bash
@@ -254,6 +254,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: latest-macos
           prerelease: true
-          title: FBX2glTF packages
+          title: FBX2glTF Macos packages
           files: |
             build/fbx2gltf-macos.zip
