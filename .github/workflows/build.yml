@@ -87,7 +87,7 @@ jobs:
 
       - uses: papeloto/action-zip@v1
         with:
-          files: ["build/Release/FBX2glTF.exe", "build/thirdparty-license.rtf", "build/LICENSE"]
+          files: build/Release/FBX2glTF.exe build/thirdparty-license.rtf build/LICENSE
           recursive: false
           dest: fbx2gltf-windows.zip
 
@@ -180,7 +180,7 @@ jobs:
 
       - uses: papeloto/action-zip@v1
         with:
-          files: ["build/FBX2glTF", "build/thirdparty-license.rtf", "build/LICENSE"]
+          files: build/FBX2glTF build/thirdparty-license.rtf build/LICENSE
           recursive: false
           dest: fbx2gltf-linux.zip
 
@@ -282,7 +282,7 @@ jobs:
 
       - uses: papeloto/action-zip@v1
         with:
-          files: ["build/FBX2glTF", "build/thirdparty-license.rtf", "build/LICENSE"]
+          files: build/FBX2glTF build/thirdparty-license.rtf build/LICENSE
           recursive: false
           dest: fbx2gltf-macos.zip
 
