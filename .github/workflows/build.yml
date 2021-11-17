@@ -54,14 +54,9 @@ jobs:
           zstd -d -r --rm ./sdk || true
         shell: bash
 
-      - name: Add conan remote
-        run: |
-          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        shell: cmd
-
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release -s compiler="Visual Studio" --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
+          conan install . -i build -s build_type=Release -s compiler="Visual Studio"
         shell: cmd
 
       - name: Conan build
@@ -143,14 +138,9 @@ jobs:
           zstd -d -r --rm ./sdk || true
         shell: bash
 
-      - name: Add conan remote
-        run: |
-          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        shell: bash
-
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build fmt -s compiler.libcxx=libstdc++11 --build libiconv --build=libxml2 --build=zlib --build=bzip
+          conan install . -i build -s build_type=Release --build fmt -s compiler.libcxx=libstdc++11
         shell: bash
 
       - name: Conan build
@@ -236,14 +226,9 @@ jobs:
           zstd -d -r --rm ./sdk || true
         shell: bash
 
-      - name: Add conan remote
-        run: |
-          conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-        shell: bash
-
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build fmt --build libiconv --build=libxml2 --build=zlib --build=bzip
+          conan install . -i build -s build_type=Release
         shell: bash
 
       - name: Conan build
