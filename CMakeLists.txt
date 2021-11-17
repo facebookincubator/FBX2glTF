@@ -48,9 +48,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 find_package(Boost 1.76 COMPONENTS system filesystem program_options REQUIRED )
 find_package(ZLIB MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
-if(NOT APPLE)
 find_package(Iconv MODULE REQUIRED)
-endif()
 find_package(LibXml2  MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
