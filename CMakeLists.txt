@@ -206,7 +206,7 @@ if (NOT MSVC)
 endif()
 
 if (APPLE)
-set(ICONV_MAC_LIB libiconv)
+set(ICONV_MAC_LIB iconv)
 endif()
 
 target_link_libraries(libFBX2glTF
