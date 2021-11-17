@@ -69,6 +69,11 @@ jobs:
           conan build -bf build .
         shell: cmd
 
+      - name: Run FBX2glTF help
+        run: |
+           ./build/FBX2glTF --help
+        shell: bash
+
       - uses: actions/upload-artifact@v2
         with:
           name: FBX2glTF-windows.exe
@@ -151,6 +156,11 @@ jobs:
       - name: Conan build
         run: |
           conan build -bf build .
+        shell: bash
+
+      - name: Run FBX2glTF help
+        run: |
+           ./build/FBX2glTF --help
         shell: bash
 
       - uses: actions/upload-artifact@v2
@@ -239,6 +249,11 @@ jobs:
       - name: Conan build
         run: |
           env CMAKE_OSX_ARCHITECTURES=x86_64 conan build -bf build .
+        shell: bash
+
+      - name: Run FBX2glTF help
+        run: |
+           ./build/FBX2glTF --help
         shell: bash
 
       - name: Adhoc signature
