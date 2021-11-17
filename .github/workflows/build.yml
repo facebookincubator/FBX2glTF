@@ -184,6 +184,11 @@ jobs:
       - name: Update python
         uses: actions/setup-python@v1
 
+      - name: Setup pkgconfig
+        run: |
+          brew install pkg-config
+        shell: bash
+        
       - name: Install conan
         run: |
           pip install --upgrade conan
@@ -198,11 +203,6 @@ jobs:
       - name: Setup filter.lfs.required
         run: |
           git config --global filter.lfs.required false
-        shell: bash
-
-      - name: Setup pkgconfig
-        run: |
-          brew install pkg-config
         shell: bash
 
       - name: Setup filter.lfs.smudge
