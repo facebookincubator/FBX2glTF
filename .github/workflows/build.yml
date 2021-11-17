@@ -266,4 +266,4 @@ jobs:
           prerelease: true
           title: FBX2glTF Macos x86_64 packages
           files: |
-            build/fbx2gltf-macos-x86_64.zip
+            build/fbx2gltf-macos.zip
