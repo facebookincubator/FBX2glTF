@@ -71,7 +71,7 @@ jobs:
 
       - name: Run FBX2glTF help
         run: |
-           ./build/FBX2glTF --help
+          build/Release/FBX2glTF.exe --help
         shell: bash
 
       - uses: actions/upload-artifact@v2
