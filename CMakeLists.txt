@@ -218,13 +218,8 @@ target_link_libraries(libFBX2glTF
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (APPLE)
- find_package(Iconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF Iconv)
-else()
- find_package(libiconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF libiconv::libiconv)
-endif()
+find_package(Iconv REQUIRED)
+target_link_libraries(${PROJECT_NAME} PRIVATE Iconv::Iconv)
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
