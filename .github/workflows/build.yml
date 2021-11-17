@@ -91,6 +91,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-windows
           directory: build
+          path: ["Release/FBX2glTF.exe", "thirdparty-license.rtf", "LICENSE"]
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -185,6 +186,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-linux
           directory: build
+          path: ["FBX2glTF", "thirdparty-license.rtf", "LICENSE"]
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -288,6 +290,7 @@ jobs:
           type: 'zip'
           filename: fbx2gltf-macos
           directory: build
+          path: ["FBX2glTF", "thirdparty-license.rtf", "LICENSE"]
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
