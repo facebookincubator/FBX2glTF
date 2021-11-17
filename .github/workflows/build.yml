@@ -189,6 +189,11 @@ jobs:
           pip install --upgrade conan
         shell: bash
 
+      - name: Brew unlink libiconv
+        run: |
+          brew unlink libiconv
+        shell: bash
+
       - name: Setup conan profile
         run: |
           conan profile new default --detect
