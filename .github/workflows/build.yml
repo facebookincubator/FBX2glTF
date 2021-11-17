@@ -180,7 +180,7 @@ jobs:
 
       - uses: papeloto/action-zip@v1
         with:
-          files: build/FBX2glTF build/thirdparty-license.rtf build/LICENSE
+          files: build/FBX2glTF build/thirdparty-license.txt build/LICENSE
           recursive: false
           dest: fbx2gltf-linux.zip
 
