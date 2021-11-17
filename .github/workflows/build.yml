@@ -73,6 +73,23 @@ jobs:
         with:
           name: FBX2glTF-windows.exe
           path: build/Release/FBX2glTF.exe
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: fbx2gltf-windows
+          directory: build
+          path: .
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: latest-windows
+          prerelease: true
+          title: FBX2glTF packages
+          files: |
+            build/fbx2gltf-windows.zip
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
@@ -145,6 +162,24 @@ jobs:
         with:
           name: FBX2glTF-linux
           path: build/FBX2glTF
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: fbx2gltf-linux
+          directory: build
+          path: .
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: latest-linux
+          prerelease: true
+          title: FBX2glTF packages
+          files: |
+            build/fbx2gltf-linux.zip
+
   build-macos:
     runs-on: 	macos-latest
     steps:
@@ -220,3 +255,20 @@ jobs:
         with:
           name: FBX2glTF-macos
           path: build/FBX2glTF
+
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: fbx2gltf-macos
+          directory: build
+          path: .
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: latest-macos
+          prerelease: true
+          title: FBX2glTF packages
+          files: |
+            build/fbx2gltf-macos.zip
