@@ -200,6 +200,11 @@ jobs:
           git config --global filter.lfs.required false
         shell: bash
 
+      - name: Setup pkgconfig
+        run: |
+          brew install pkg-config
+        shell: bash
+
       - name: Setup filter.lfs.smudge
         run: |
           git config --global filter.lfs.smudge "git-lfs smudge --skip %f"
