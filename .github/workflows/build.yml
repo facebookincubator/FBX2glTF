@@ -278,6 +278,12 @@ jobs:
           name: FBX2glTF-macos
           path: build/FBX2glTF
 
+      - name: Copy licenses
+        run: |
+          cp sdk/Darwin/2020.2/License.rtf build/thirdparty-license.rtf
+          cp LICENSE build/LICENSE
+        shell: bash
+
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
@@ -285,12 +291,6 @@ jobs:
           filename: fbx2gltf-macos
           directory: build
           path: FBX2glTF
-
-      - name: Copy licenses
-        run: |
-          cp sdk/Darwin/2020.2/License.rtf build/thirdparty-license.rtf
-          cp LICENSE build/LICENSE
-        shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
