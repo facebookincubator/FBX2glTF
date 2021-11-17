@@ -186,7 +186,7 @@ jobs:
 
       - name: Setup pkgconfig
         run: |
-          brew install pkgconf
+          brew install pkgconf --force
         shell: bash
         
       - name: Install conan
