@@ -233,12 +233,12 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build missing --settings arch=x86_64
+          env CMAKE_OSX_ARCHITECTURES=x86_64 conan install . -i build -s build_type=Release --build missing --settings arch=x86_64
         shell: bash
 
       - name: Conan build
         run: |
-          conan build -bf build .
+          env CMAKE_OSX_ARCHITECTURES=x86_64 conan build -bf build .
         shell: bash
 
       - name: Adhoc signature
@@ -327,12 +327,12 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release --build missing --settings arch=armv8
+          env CMAKE_OSX_ARCHITECTURES=armv8 conan install . -i build -s build_type=Release --build missing --settings arch=armv8
         shell: bash
 
       - name: Conan build
         run: |
-          conan build -bf build .
+          env CMAKE_OSX_ARCHITECTURES=armv8 conan build -bf build .
         shell: bash
         
       - name: Adhoc signature
