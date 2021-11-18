@@ -78,17 +78,18 @@ jobs:
         with:
           name: FBX2glTF-windows.exe
           path: build/Release/FBX2glTF.exe
-          
+
       - name: Copy licenses
         run: |
-          cp sdk/Windows/2020.2/License.rtf build/thirdparty-license.rtf
-          cp LICENSE build/LICENSE
+          mkdir -p result
+          cp sdk/Windows/2020.2/License.rtf result/thirdparty-license.rtf
+          cp LICENSE result/LICENSE
+          cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
       - uses: papeloto/action-zip@v1
-        working-directory: build
         with:
-          files: build/Release/FBX2glTF.exe build/thirdparty-license.rtf build/LICENSE
+          files: result
           recursive: false
           dest: fbx2gltf-windows.zip
 
@@ -175,16 +176,18 @@ jobs:
 
       - name: Copy licenses
         run: |
-          cp sdk/Linux/2020.2/License.txt build/thirdparty-license.txt
-          cp LICENSE build/LICENSE
+          mkdir -p result
+          cp sdk/Linux/2020.2/License.txt result/thirdparty-license.txt
+          cp LICENSE result/LICENSE
+          cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
       - uses: papeloto/action-zip@v1      
         working-directory: build
         with:
-          files: build/FBX2glTF build/thirdparty-license.txt build/LICENSE
+          files: result
           recursive: false
-          dest: build/fbx2gltf-linux.zip
+          dest: fbx2gltf-linux.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -278,16 +281,17 @@ jobs:
 
       - name: Copy licenses
         run: |
-          cp sdk/Darwin/2020.2/License.rtf build/thirdparty-license.rtf
-          cp LICENSE build/LICENSE
+          mkdir -p result
+          cp sdk/Darwin/2020.2/License.rtf result/thirdparty-license.rtf
+          cp LICENSE result/LICENSE
+          cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
       - uses: papeloto/action-zip@v1
-        working-directory: build
         with:
-          files: build/FBX2glTF build/thirdparty-license.rtf build/LICENSE
+          files: result
           recursive: false
-          dest: build/fbx2gltf-macos.zip
+          dest: fbx2gltf-macos.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
