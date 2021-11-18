@@ -84,7 +84,7 @@ jobs:
           mkdir -p result
           cp sdk/Windows/2020.2/License.rtf result/thirdparty-license.rtf
           cp LICENSE result/LICENSE
-          cp build/FBX2glTF result/FBX2glTF
+          cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
         shell: bash
 
       - uses: papeloto/action-zip@v1
