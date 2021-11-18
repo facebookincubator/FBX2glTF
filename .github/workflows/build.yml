@@ -100,7 +100,7 @@ jobs:
           prerelease: true
           title: FBX2glTF Windows packages
           files: |
-            build/fbx2gltf-windows.zip
+            fbx2gltf-windows.zip
   build-ubuntu:
     runs-on: ubuntu-latest
     steps:
