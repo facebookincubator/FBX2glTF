@@ -182,8 +182,7 @@ jobs:
           cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
-      - uses: papeloto/action-zip@v1      
-        working-directory: build
+      - uses: papeloto/action-zip@v1
         with:
           files: result
           recursive: false
