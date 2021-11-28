@@ -78,6 +78,7 @@ enum class AnimationFramerateOptions {
  * User-supplied options that dictate the nature of the glTF being generated.
  */
 struct GltfOptions {
+  std::string inputPath;
   /**
    * If negative, disabled. Otherwise, a bitfield of RawVertexAttributes that
    * specify the largest set of attributes that'll ever be kept for a vertex.

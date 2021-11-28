@@ -40,9 +40,8 @@ int main(int argc, char* argv[]) {
     exit(0);
   });
 
-  std::string inputPath;
-  app.add_option("FBX Model", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
-  app.add_option("-i,--input", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
+  app.add_option("FBX Model", gltfOptions.inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
+  app.add_option("-i,--input", gltfOptions.inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
 
   std::string outputPath;
   app.add_option("-o,--output", outputPath, "Where to generate the output, without suffix.");
@@ -297,7 +296,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (inputPath.empty()) {
+  if (gltfOptions.inputPath.empty()) {
     fmt::printf("You must supply a FBX file to convert.\n");
     exit(1);
   }
@@ -315,7 +314,7 @@ int main(int argc, char* argv[]) {
   
   if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
-    outputPath = "./" + FileUtils::GetFileBase(inputPath);
+    outputPath = "./" + FileUtils::GetFileBase(gltfOptions.inputPath);
   }
   // the output folder in .gltf mode, not used for .glb
   std::string outputFolder;
@@ -355,10 +354,10 @@ int main(int argc, char* argv[]) {
   RawModel raw;
 
   if (verboseOutput) {
-    fmt::printf("Loading FBX File: %s\n", inputPath);
+    fmt::printf("Loading FBX File: %s\n", gltfOptions.inputPath);
   }
-  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
-    fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
+  if (!LoadFBXFile(raw, gltfOptions.inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
+    fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", gltfOptions.inputPath);
     return 1;
   }
 
