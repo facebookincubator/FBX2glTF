@@ -313,9 +313,7 @@ int main(int argc, char* argv[]) {
     fmt::printf("Note: Ignoring --embed; it's meaningless with --binary.\n");
   }
   
-  if (gltfOptions.keepOriginals) {
-    outputPath = "./" + FileUtils::GetFileBase(inputPath);
-  } else if (outputPath.empty() && !gltfOptions.keepOriginals) {
+  if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
     outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }
