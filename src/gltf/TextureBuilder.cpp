@@ -188,7 +188,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   if (options.keepOriginals && !relativeFilename.empty()) {
     image = new ImageData(textureName, relativeFilename);
   } else if (options.keepOriginals && relativeFilename.empty()) {
-    std::string inputPathBase = FileUtils::GetFileBase(gltfOptions.inputPath);
+    std::string inputPathBase = FileUtils::GetFileBase(options.inputPath);
     std::string outputPath = inputPathBase + "/textures/" + textureName;
     image = new ImageData(textureName, outputPath);
     if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
