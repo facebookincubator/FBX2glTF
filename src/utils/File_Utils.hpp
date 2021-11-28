@@ -15,6 +15,10 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 namespace FileUtils {
 
 std::string GetCurrentFolder();
@@ -34,7 +38,7 @@ bool CopyFile(
     bool createPath = false);
 
 inline std::string GetAbsolutePath(const std::string& filePath) {
-  return boost::filesystem::canonical(boost::filesystem::absolute(filePath)).string();
+  return boost::filesystem::absolute(filePath).string();
 }
 
 inline std::string GetCurrentFolder() {

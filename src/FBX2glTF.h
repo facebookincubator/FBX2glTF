@@ -90,6 +90,8 @@ struct GltfOptions {
   /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
   bool embedResources{false};
 
+  bool separateTextures{true};
+
   /** Whether and how to use KHR_draco_mesh_compression to minimize static geometry size. */
   struct {
     bool enabled = false;

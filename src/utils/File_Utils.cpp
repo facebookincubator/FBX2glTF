@@ -19,6 +19,10 @@
 #include "FBX2glTF.h"
 #include "String_Utils.hpp"
 
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 namespace FileUtils {
 
 std::vector<std::string> ListFolderFiles(

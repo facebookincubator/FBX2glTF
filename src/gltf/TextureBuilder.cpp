@@ -18,6 +18,10 @@
 #include <gltf/properties/ImageData.hpp>
 #include <gltf/properties/TextureData.hpp>
 
+#ifdef CopyFile
+#undef CopyFile
+#endif
+
 // keep track of some texture data as we load them
 struct TexInfo {
   explicit TexInfo(int rawTexIx) : rawTexIx(rawTexIx) {}
@@ -138,7 +142,7 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
   }
 
   ImageData* image;
-  if (options.outputBinary) {
+  if (options.outputBinary && !options.separateTextures) {
     const auto bufferView =
         gltf.AddRawBufferView(*gltf.defaultBuffer, imgBuffer.data(), to_uint32(imgBuffer.size()));
     image = new ImageData(mergedName, *bufferView, png ? "image/png" : "image/jpeg");
@@ -200,18 +204,17 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
 
   } else if (!relativeFilename.empty()) {
     image = new ImageData(relativeFilename, relativeFilename);
-    std::string outputPath = outputFolder + "/" + relativeFilename;
     auto srcAbs = FileUtils::GetAbsolutePath(rawTexture.fileLocation);
-    auto dstAbs = FileUtils::GetAbsolutePath(outputPath);
-    if (srcAbs != dstAbs)
-    if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
-      if (verboseOutput) {
-        fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
+    if (!FileUtils::FileExists(outputPath) && srcAbs != dstAbs) {
+      if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
+        if (verboseOutput) {
+          fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
+        }
+      } else {
+        // no point commenting further on read/write error; CopyFile() does enough of that, and we
+        // certainly want to to add an image struct to the glTF JSON, with the correct relative
+        // path reference, even if the copy failed.
       }
-    } else {
-      // no point commenting further on read/write error; CopyFile() does enough of that, and we
-      // certainly want to to add an image struct to the glTF JSON, with the correct relative path
-      // reference, even if the copy failed.
     }
   }
   if (!image) {
