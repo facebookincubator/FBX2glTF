@@ -59,14 +59,13 @@ FbxSkinningAccess::FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, Fbx
             continue;
           }
 
-          vertexSkinning[clusterIndices[i]].push_back(FbxVertexSkinningInfo{(int) clusterIndex, (float)clusterWeights[i]});
-
+          vertexSkinning[clusterIndices[i]].push_back(
+              FbxVertexSkinningInfo{(int)clusterIndex, (float)clusterWeights[i]});
         }
       }
-      
-      for (int i = 0; i < vertexSkinning.size(); i++)
-        maxBoneInfluences = std::max((int) vertexSkinning[i].size(), maxBoneInfluences);
 
+      for (int i = 0; i < vertexSkinning.size(); i++)
+        maxBoneInfluences = std::max((int)vertexSkinning[i].size(), maxBoneInfluences);
     }
   }
 

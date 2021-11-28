@@ -23,16 +23,13 @@ struct FbxVertexSkinningInfo {
   float weight;
 };
 
-
 class FbxSkinningAccess {
  public:
-
   FbxSkinningAccess(const FbxMesh* pMesh, FbxScene* pScene, FbxNode* pNode);
 
   bool IsSkinned() const {
     return (vertexSkinning.size() > 0);
   }
-
 
   int GetNodeCount() const {
     return (int)jointNodes.size();
@@ -63,7 +60,8 @@ class FbxSkinningAccess {
     return inverseBindMatrices[jointIndex];
   }
 
-  const std::vector<FbxVertexSkinningInfo> GetVertexSkinningInfo(const int controlPointIndex) const {
+  const std::vector<FbxVertexSkinningInfo> GetVertexSkinningInfo(
+      const int controlPointIndex) const {
     return vertexSkinning[controlPointIndex];
   }
 

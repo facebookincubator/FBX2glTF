@@ -92,12 +92,13 @@ MaterialData::MaterialData(
       pbrMetallicRoughness(pbrMetallicRoughness) {}
 
 json MaterialData::serialize() const {
-  json result = {{"name", name},
-                 {"alphaMode", isTransparent ? "BLEND" : "OPAQUE"},
-                 {"extras",
-                  {{"fromFBX",
-                    {{"shadingModel", Describe(shadingModel)},
-                     {"isTruePBR", shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH}}}}}};
+  json result = {
+      {"name", name},
+      {"alphaMode", isTransparent ? "BLEND" : "OPAQUE"},
+      {"extras",
+       {{"fromFBX",
+         {{"shadingModel", Describe(shadingModel)},
+          {"isTruePBR", shadingModel == RAW_SHADING_MODEL_PBR_MET_ROUGH}}}}}};
 
   if (normalTexture != nullptr) {
     result["normalTexture"] = *normalTexture;

@@ -640,20 +640,21 @@ ModelData* Raw2Gltf(
           for (int jj = 0; jj < surfaceModel.GetVertexCount(); jj++) {
             auto blendVertex = surfaceModel.GetVertex(jj).blends[channelIx];
             shapeBounds.AddPoint(blendVertex.position);
-            bool isSparseVertex = options.disableSparseBlendShapes; // If sparse is off, add all vertices
+            bool isSparseVertex =
+                options.disableSparseBlendShapes; // If sparse is off, add all vertices
             // Check to see whether position, normal or tangent deviates from base mesh and flag as
             // sparse.
             if (blendVertex.position.Length() > 0.00) {
               isSparseVertex = true;
             }
-//            if (options.useBlendShapeNormals && channel.hasNormals &&
-//                blendVertex.normal.Length() > 0.00) {
-//              isSparseVertex = true;
-//            }
-//            if (options.useBlendShapeTangents && channel.hasTangents &&
-//                blendVertex.tangent.Length() > 0.00) {
-//              isSparseVertex = true;
-//            }
+            //            if (options.useBlendShapeNormals && channel.hasNormals &&
+            //                blendVertex.normal.Length() > 0.00) {
+            //              isSparseVertex = true;
+            //            }
+            //            if (options.useBlendShapeTangents && channel.hasTangents &&
+            //                blendVertex.tangent.Length() > 0.00) {
+            //              isSparseVertex = true;
+            //            }
             if (isSparseVertex == true) {
               sparseIndices.push_back(jj);
               positions.push_back(blendVertex.position);

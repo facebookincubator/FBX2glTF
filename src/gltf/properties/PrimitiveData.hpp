@@ -60,15 +60,17 @@ struct PrimitiveData {
   }
 
   template <class T>
-  void AddDracoArrayAttrib(const AttributeArrayDefinition<T> attribute, const std::vector<T>& attribArr) {
+  void AddDracoArrayAttrib(
+      const AttributeArrayDefinition<T> attribute,
+      const std::vector<T>& attribArr) {
     draco::PointAttribute att;
     int8_t componentCount = attribute.glType.count;
     att.Init(
-      attribute.dracoAttribute,
-      componentCount,
-      attribute.dracoComponentType,
-      false,
-      componentCount * draco::DataTypeLength(attribute.dracoComponentType));
+        attribute.dracoAttribute,
+        componentCount,
+        attribute.dracoComponentType,
+        false,
+        componentCount * draco::DataTypeLength(attribute.dracoComponentType));
 
     const int dracoAttId = dracoMesh->AddAttribute(att, true, attribArr.size());
     draco::PointAttribute* attPtr = dracoMesh->attribute(dracoAttId);

@@ -18,7 +18,12 @@ AccessorData::AccessorData(const BufferViewData& bufferView, GLType type, std::s
       name(name),
       sparse(false) {}
 
-AccessorData::AccessorData(const AccessorData& baseAccessor, const BufferViewData& sparseIdxBufferView, const BufferViewData& sparseDataBufferView, GLType type, std::string name)
+AccessorData::AccessorData(
+    const AccessorData& baseAccessor,
+    const BufferViewData& sparseIdxBufferView,
+    const BufferViewData& sparseDataBufferView,
+    GLType type,
+    std::string name)
     : Holdable(),
       bufferView(baseAccessor.bufferView),
       type(std::move(type)),
@@ -51,12 +56,13 @@ json AccessorData::serialize() const {
   }
   if (sparse) {
     json sparseData = {{"count", sparseIdxCount}};
-    sparseData["indices"] = { {"bufferView", sparseIdxBufferView},
-                              {"byteOffset", sparseIdxBufferViewOffset},
-                              {"componentType", sparseIdxBufferViewType}};
+    sparseData["indices"] = {
+        {"bufferView", sparseIdxBufferView},
+        {"byteOffset", sparseIdxBufferViewOffset},
+        {"componentType", sparseIdxBufferViewType}};
 
-    sparseData["values"]  = { {"bufferView", sparseDataBufferView},
-                              {"byteOffset", sparseDataBufferViewOffset}};
+    sparseData["values"] = {
+        {"bufferView", sparseDataBufferView}, {"byteOffset", sparseDataBufferViewOffset}};
 
     result["sparse"] = sparseData;
   }

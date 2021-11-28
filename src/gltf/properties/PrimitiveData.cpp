@@ -73,7 +73,8 @@ void to_json(json& j, const PrimitiveData& d) {
     j["targets"] = targets;
   }
   if (!d.dracoAttributes.empty()) {
-    j["extensions"] = {{KHR_DRACO_MESH_COMPRESSION,
-                        {{"bufferView", d.dracoBufferView}, {"attributes", d.dracoAttributes}}}};
+    j["extensions"] = {
+        {KHR_DRACO_MESH_COMPRESSION,
+         {{"bufferView", d.dracoBufferView}, {"attributes", d.dracoAttributes}}}};
   }
 }

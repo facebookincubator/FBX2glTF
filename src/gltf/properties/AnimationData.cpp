@@ -38,11 +38,12 @@ AnimationData::channel_t::channel_t(uint32_t ix, const NodeData& node, std::stri
 AnimationData::sampler_t::sampler_t(uint32_t time, uint32_t output) : time(time), output(output) {}
 
 void to_json(json& j, const AnimationData::channel_t& data) {
-  j = json{{"sampler", data.ix},
-           {
-               "target",
-               {{"node", data.node}, {"path", data.path}},
-           }};
+  j = json{
+      {"sampler", data.ix},
+      {
+          "target",
+          {{"node", data.node}, {"path", data.path}},
+      }};
 }
 
 void to_json(json& j, const AnimationData::sampler_t& data) {

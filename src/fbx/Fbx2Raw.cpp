@@ -229,11 +229,11 @@ static void ReadMesh(
       targetShapes.push_back(&shape);
       auto& blendChannel = blendShapes.GetBlendChannel(channelIx);
 
-      rawSurface.blendChannels.push_back(
-          RawBlendChannel{static_cast<float>(blendChannel.deformPercent),
-                          shape.normals.LayerPresent(),
-                          shape.tangents.LayerPresent(),
-                          blendChannel.name});
+      rawSurface.blendChannels.push_back(RawBlendChannel{
+          static_cast<float>(blendChannel.deformPercent),
+          shape.normals.LayerPresent(),
+          shape.tangents.LayerPresent(),
+          blendChannel.name});
     }
   }
 

@@ -27,11 +27,11 @@ class TextureBuilder {
       const std::string& outputFolder,
       GltfModel& gltf)
       : raw(raw), options(options), outputFolder(outputFolder), gltf(gltf) {
-      if (!outputFolder.empty()) {
-            if (outputFolder[outputFolder.size() - 1] == '/') {
-                this->outputFolder = outputFolder.substr(0, outputFolder.size() - 1) ;
-            }
+    if (!outputFolder.empty()) {
+      if (outputFolder[outputFolder.size() - 1] == '/') {
+        this->outputFolder = outputFolder.substr(0, outputFolder.size() - 1);
       }
+    }
   }
   ~TextureBuilder() {}
 

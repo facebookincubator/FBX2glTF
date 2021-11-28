@@ -21,7 +21,8 @@ SkinData::SkinData(
       skeletonRootNode(skeletonRootNode.ix) {}
 
 json SkinData::serialize() const {
-  return {{"joints", joints},
-          {"inverseBindMatrices", inverseBindMatrices},
-          {"skeleton", skeletonRootNode}};
+  return {
+      {"joints", joints},
+      {"inverseBindMatrices", inverseBindMatrices},
+      {"skeleton", skeletonRootNode}};
 }

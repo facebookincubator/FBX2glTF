@@ -45,8 +45,7 @@ FbxMaterialsAccess::FbxMaterialsAccess(
       continue;
     }
 
-    auto* surfaceMaterial =
-        mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum);
+    auto* surfaceMaterial = mesh->GetNode()->GetSrcObject<FbxSurfaceMaterial>(materialNum);
 
     if (!surfaceMaterial) {
       if (++warnMtrCount == 1) {
@@ -67,7 +66,6 @@ FbxMaterialsAccess::FbxMaterialsAccess(
       userProperties.resize(materialNum + 1);
     }
     if (surfaceMaterial && userProperties[materialNum].empty()) {
-
       FbxProperty objectProperty = surfaceMaterial->GetFirstProperty();
       while (objectProperty.IsValid()) {
         if (objectProperty.GetFlag(FbxPropertyFlags::eUserDefined)) {
