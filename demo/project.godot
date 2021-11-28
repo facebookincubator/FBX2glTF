@@ -1,0 +1,32 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="FBX Game Project"
+config/icon="res://icon.png"
+config/features=PackedStringArray("4.0")
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/fbx/plugin.cfg")
+
+[filesystem]
+
+import/fbx/use_fbx=false
+import/fbx/fbx2gltf_path="fbx2gltf"
+
+[physics]
+
+common/enable_pause_aware_picking=true
+
+[rendering]
+
+environment/default_environment="res://default_env.tres"
