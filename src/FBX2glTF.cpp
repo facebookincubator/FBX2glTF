@@ -399,7 +399,7 @@ int main(int argc, char* argv[]) {
 
   assert(!outputFolder.empty());
 
-  const std::string binaryPath = outputFolder + extBufferFilename;
+  const std::string binaryPath = outputFolder + FileUtils::GetFileBase(gltfOptions.inputPath) + extBufferFilename;
   FILE* fp = fopen(binaryPath.c_str(), "wb");
   if (fp == nullptr) {
     fmt::fprintf(stderr, "ERROR:: Couldn't open file '%s' for writing.\n", binaryPath);
