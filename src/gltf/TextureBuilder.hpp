@@ -26,7 +26,13 @@ class TextureBuilder {
       const GltfOptions& options,
       const std::string& outputFolder,
       GltfModel& gltf)
-      : raw(raw), options(options), outputFolder(outputFolder), gltf(gltf) {}
+      : raw(raw), options(options), outputFolder(outputFolder), gltf(gltf) {
+      if (!outputFolder.empty()) {
+            if (outputFolder[outputFolder.size() - 1] == '/') {
+                this->outputFolder = outputFolder.substr(0, outputFolder.size() - 1) ;
+            }
+      }
+  }
   ~TextureBuilder() {}
 
   std::shared_ptr<TextureData> combine(
@@ -70,7 +76,7 @@ class TextureBuilder {
  private:
   const RawModel& raw;
   const GltfOptions& options;
-  const std::string outputFolder;
+  std::string outputFolder;
   GltfModel& gltf;
 
   std::map<std::string, std::shared_ptr<TextureData>> textureByIndicesKey;

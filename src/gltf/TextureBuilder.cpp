@@ -180,7 +180,6 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   const RawTexture& rawTexture = raw.GetTexture(rawTexIndex);
   const std::string textureName = FileUtils::GetFileBase(rawTexture.name);
   const std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
-
   ImageData* image = nullptr;
   if (options.outputBinary) {
     auto bufferView = gltf.AddBufferViewForFile(*gltf.defaultBuffer, rawTexture.fileLocation);
