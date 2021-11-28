@@ -383,7 +383,7 @@ class RawModel {
       const int textures[RAW_TEXTURE_USAGE_MAX],
       std::shared_ptr<RawMatProps> materialInfo,
       const std::vector<std::string>& userProperties,
-      const bool isDoubleSided );
+      const bool isDoubleSided);
   int AddLight(
       const char* name,
       RawLightType lightType,

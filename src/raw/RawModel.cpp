@@ -150,7 +150,7 @@ int RawModel::AddMaterial(
     const int textures[RAW_TEXTURE_USAGE_MAX],
     std::shared_ptr<RawMatProps> materialInfo,
     const std::vector<std::string>& userProperties,
-    const bool isDoubleSided ) {
+    const bool isDoubleSided) {
   for (size_t i = 0; i < materials.size(); i++) {
     if (materials[i].name != name) {
       continue;
