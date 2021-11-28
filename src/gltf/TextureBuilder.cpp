@@ -202,7 +202,9 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
       image = new ImageData(relativeFilename, *bufferView, mimeType);
     }
 
-  } else if (!relativeFilename.empty()) {
+  } else if (!relativeFilename.empty()) {    
+    std::string outputPath = outputFolder + "/" + relativeFilename;
+    auto dstAbs = FileUtils::GetAbsolutePath(outputPath);
     image = new ImageData(relativeFilename, relativeFilename);
     auto srcAbs = FileUtils::GetAbsolutePath(rawTexture.fileLocation);
     if (!FileUtils::FileExists(outputPath) && srcAbs != dstAbs) {
