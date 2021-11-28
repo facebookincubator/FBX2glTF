@@ -52,6 +52,12 @@ int main(int argc, char* argv[]) {
       gltfOptions.embedResources,
       "Inline buffers as data:// URIs within generated non-binary glTF.");
 
+      
+  app.add_flag(
+      "--keep-originals",
+      gltfOptions.keepOriginals,
+      "Keep the originals paths in a non-binary glTF.");
+
   app.add_flag(
       "-t,--separate-textures", gltfOptions.separateTextures, "Write texture files out separately");
 
@@ -306,8 +312,10 @@ int main(int argc, char* argv[]) {
   if (gltfOptions.embedResources && gltfOptions.outputBinary) {
     fmt::printf("Note: Ignoring --embed; it's meaningless with --binary.\n");
   }
-
-  if (outputPath.empty()) {
+  
+  if (gltfOptions.keepOriginals) {
+    outputPath = "./" + FileUtils::GetFileBase(inputPath);
+  } else if (outputPath.empty() && !gltfOptions.keepOriginals) {
     // if -o is not given, default to the basename of the .fbx
     outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }

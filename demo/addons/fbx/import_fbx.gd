@@ -37,6 +37,7 @@ func _import_scene(path: String, flags: int, bake_fps: int):
 	var stdout = [].duplicate()
 	var temp_dir_global =  ProjectSettings.globalize_path("res://.godot/imported/")
 	var ret = OS.execute(fbx2gltf_path, [
+		"--keep-originals",
 		"--fbx-temp-dir", temp_dir_global,
 		"-i", path_global,
 		"-o", output_path_global], stdout, true)
