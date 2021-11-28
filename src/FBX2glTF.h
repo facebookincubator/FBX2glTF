@@ -88,7 +88,7 @@ struct GltfOptions {
   /** Whether to output a .glb file, the binary format of glTF. */
   bool outputBinary{false};
   /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
-  bool embedResources{false};
+  bool embedResources{true};
 
   bool separateTextures{true};
 
