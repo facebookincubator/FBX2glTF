@@ -185,18 +185,7 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
   const std::string textureName = FileUtils::GetFileBase(rawTexture.name);
   const std::string relativeFilename = FileUtils::GetFileName(rawTexture.fileLocation);
   ImageData* image = nullptr;
-  if (options.keepOriginals && !relativeFilename.empty()) {
-    image = new ImageData(textureName, relativeFilename);
-  } else if (options.keepOriginals && relativeFilename.empty()) {
-    std::string inputPathBase = FileUtils::GetFileBase(options.inputPath);
-    std::string outputPath = inputPathBase + "/textures/" + textureName;
-    image = new ImageData(textureName, outputPath);
-    if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
-      if (verboseOutput) {
-        fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
-      }
-    }
-  } else if (options.outputBinary) {
+  if (options.outputBinary) {
     auto bufferView = gltf.AddBufferViewForFile(*gltf.defaultBuffer, rawTexture.fileLocation);
     if (bufferView) {
       const auto& suffix = FileUtils::GetFileSuffix(rawTexture.fileLocation);
@@ -212,17 +201,22 @@ std::shared_ptr<TextureData> TextureBuilder::simple(int rawTexIndex, const std::
       }
       image = new ImageData(relativeFilename, *bufferView, mimeType);
     }
-  } else if (!relativeFilename.empty()) {
-    image = new ImageData(relativeFilename, relativeFilename);
+
+  } else if (!relativeFilename.empty()) {    
     std::string outputPath = outputFolder + "/" + relativeFilename;
-    if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
-      if (verboseOutput) {
-        fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
+    auto dstAbs = FileUtils::GetAbsolutePath(outputPath);
+    image = new ImageData(relativeFilename, relativeFilename);
+    auto srcAbs = FileUtils::GetAbsolutePath(rawTexture.fileLocation);
+    if (!FileUtils::FileExists(outputPath) && srcAbs != dstAbs) {
+      if (FileUtils::CopyFile(rawTexture.fileLocation, outputPath, true)) {
+        if (verboseOutput) {
+          fmt::printf("Copied texture '%s' to output folder: %s\n", textureName, outputPath);
+        }
+      } else {
+        // no point commenting further on read/write error; CopyFile() does enough of that, and we
+        // certainly want to to add an image struct to the glTF JSON, with the correct relative
+        // path reference, even if the copy failed.
       }
-    } else {
-      // no point commenting further on read/write error; CopyFile() does enough of that, and we
-      // certainly want to to add an image struct to the glTF JSON, with the correct relative path
-      // reference, even if the copy failed.
     }
   }
   if (!image) {

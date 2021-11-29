@@ -40,8 +40,9 @@ int main(int argc, char* argv[]) {
     exit(0);
   });
 
-  app.add_option("FBX Model", gltfOptions.inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
-  app.add_option("-i,--input", gltfOptions.inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
+  std::string inputPath;
+  app.add_option("FBX Model", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
+  app.add_option("-i,--input", inputPath, "The FBX model to convert.")->check(CLI::ExistingFile);
 
   std::string outputPath;
   app.add_option("-o,--output", outputPath, "Where to generate the output, without suffix.");
@@ -50,12 +51,6 @@ int main(int argc, char* argv[]) {
       "-e,--embed",
       gltfOptions.embedResources,
       "Inline buffers as data:// URIs within generated non-binary glTF.");
-
-      
-  app.add_flag(
-      "--keep-originals",
-      gltfOptions.keepOriginals,
-      "Keep the originals paths in a non-binary glTF.");
 
   app.add_flag(
       "-t,--separate-textures", gltfOptions.separateTextures, "Write texture files out separately");
@@ -296,7 +291,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (gltfOptions.inputPath.empty()) {
+  if (inputPath.empty()) {
     fmt::printf("You must supply a FBX file to convert.\n");
     exit(1);
   }
@@ -311,10 +306,10 @@ int main(int argc, char* argv[]) {
   if (gltfOptions.embedResources && gltfOptions.outputBinary) {
     fmt::printf("Note: Ignoring --embed; it's meaningless with --binary.\n");
   }
-  
+
   if (outputPath.empty()) {
     // if -o is not given, default to the basename of the .fbx
-    outputPath = "./" + FileUtils::GetFileBase(gltfOptions.inputPath);
+    outputPath = "./" + FileUtils::GetFileBase(inputPath);
   }
   // the output folder in .gltf mode, not used for .glb
   std::string outputFolder;
@@ -354,10 +349,10 @@ int main(int argc, char* argv[]) {
   RawModel raw;
 
   if (verboseOutput) {
-    fmt::printf("Loading FBX File: %s\n", gltfOptions.inputPath);
+    fmt::printf("Loading FBX File: %s\n", inputPath);
   }
-  if (!LoadFBXFile(raw, gltfOptions.inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
-    fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", gltfOptions.inputPath);
+  if (!LoadFBXFile(raw, inputPath, {"png", "jpg", "jpeg"}, gltfOptions)) {
+    fmt::fprintf(stderr, "ERROR:: Failed to parse FBX: %s\n", inputPath);
     return 1;
   }
 
@@ -399,7 +394,7 @@ int main(int argc, char* argv[]) {
 
   assert(!outputFolder.empty());
 
-  const std::string binaryPath = outputFolder + FileUtils::GetFileBase(gltfOptions.inputPath) + extBufferFilename;
+  const std::string binaryPath = outputFolder + extBufferFilename;
   FILE* fp = fopen(binaryPath.c_str(), "wb");
   if (fp == nullptr) {
     fmt::fprintf(stderr, "ERROR:: Couldn't open file '%s' for writing.\n", binaryPath);

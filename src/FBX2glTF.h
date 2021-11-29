@@ -78,7 +78,6 @@ enum class AnimationFramerateOptions {
  * User-supplied options that dictate the nature of the glTF being generated.
  */
 struct GltfOptions {
-  std::string inputPath;
   /**
    * If negative, disabled. Otherwise, a bitfield of RawVertexAttributes that
    * specify the largest set of attributes that'll ever be kept for a vertex.
@@ -90,8 +89,6 @@ struct GltfOptions {
   bool outputBinary{false};
   /** If non-binary, whether to inline all resources, for a single (large) .glTF file. */
   bool embedResources{false};
-
-  bool keepOriginals{false};
 
   bool separateTextures{true};
 

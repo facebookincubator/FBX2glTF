@@ -32,12 +32,11 @@ func _import_scene(path: String, flags: int, bake_fps: int):
 	ProjectSettings.add_property_info(property_info)
 	var user_path_base = OS.get_user_data_dir()
 	var path_global : String = ProjectSettings.globalize_path(path)
-	var output_path : String = "res://.godot/imported/" + path.get_file().get_basename() + "-" + path.md5_text() + ".gltf" 
+	var output_path : String = "res://.godot/imported/" + path.get_file().get_basename() + "-" + path.md5_text() + ".glb" 
 	var output_path_global = ProjectSettings.globalize_path(output_path)
 	var stdout = [].duplicate()
 	var temp_dir_global =  ProjectSettings.globalize_path("res://.godot/imported/")
 	var ret = OS.execute(fbx2gltf_path, [
-		"--keep-originals",
 		"--fbx-temp-dir", temp_dir_global,
 		"-i", path_global,
 		"-o", output_path_global], stdout, true)
