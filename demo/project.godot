@@ -21,7 +21,7 @@ enabled=PackedStringArray("res://addons/fbx/plugin.cfg")
 [filesystem]
 
 import/fbx/use_fbx=false
-import/fbx/fbx2gltf_path="fbx2gltf"
+import/fbx/fbx2gltf_path="res://addons/fbx/FBX2glTF"
 
 [physics]
 

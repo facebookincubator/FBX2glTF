@@ -17,8 +17,8 @@ func _get_import_flags():
 
 func _import_scene(path: String, flags: int, bake_fps: int):
 	if not ProjectSettings.has_setting(settings_fbx2gltf_path):
-		ProjectSettings.set_initial_value(settings_fbx2gltf_path, "fbx2gltf")
-		ProjectSettings.set_setting(settings_fbx2gltf_path, "fbx2gltf")
+		ProjectSettings.set_initial_value(settings_fbx2gltf_path, "FBX2glTF")
+		ProjectSettings.set_setting(settings_fbx2gltf_path, "FBX2glTF")
 	else:
 		fbx2gltf_path = ProjectSettings.get_setting(settings_fbx2gltf_path)
 	if fbx2gltf_path.is_empty():
@@ -36,7 +36,8 @@ func _import_scene(path: String, flags: int, bake_fps: int):
 	var output_path_global = ProjectSettings.globalize_path(output_path)
 	var stdout = [].duplicate()
 	var temp_dir_global =  ProjectSettings.globalize_path("res://.godot/imported/")
-	var ret = OS.execute(fbx2gltf_path, [
+	var fbx2gltf_path_global = ProjectSettings.globalize_path(fbx2gltf_path)
+	var ret = OS.execute(fbx2gltf_path_global, [
 		"--fbx-temp-dir", temp_dir_global,
 		"-i", path_global,
 		"-o", output_path_global], stdout, true)
