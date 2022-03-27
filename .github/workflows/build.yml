@@ -7,7 +7,7 @@ concurrency:
 
 jobs:
   build-win-10:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -61,7 +61,7 @@ jobs:
 
       - name: Conan install
         run: |
-          conan install . -i build -s build_type=Release -s compiler="Visual Studio"
+          conan install . --build=missing -i build -s build_type=Release -s compiler="Visual Studio"
         shell: cmd
 
       - name: Conan build
