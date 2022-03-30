@@ -100,7 +100,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-windows
+          automatic_release_tag: windows-${GITHUB_SHA::6}
           prerelease: true
           title: FBX2glTF Windows packages
           files: |
@@ -195,7 +195,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-linux
+          automatic_release_tag: linux-${GITHUB_SHA::6}
           prerelease: true
           title: FBX2glTF Linux packages
           files: |
@@ -299,7 +299,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-macos
+          automatic_release_tag: macos-${GITHUB_SHA::6}
           prerelease: true
           title: FBX2glTF Macos x86_64 packages
           files: |
