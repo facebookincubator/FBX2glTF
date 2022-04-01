@@ -106,7 +106,7 @@ jobs:
           files: |
             fbx2gltf-windows.zip
   build-ubuntu:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout
         uses: actions/checkout@v2
