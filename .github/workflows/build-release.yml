@@ -94,6 +94,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
+          automatic_releases_tag: windows-${{github.ref_name}}
           title: FBX2glTF Windows packages
           files: |
             result/thirdparty-license.rtf
@@ -184,6 +185,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
+          automatic_releases_tag: linux-${{github.ref_name}}
           title: FBX2glTF Linux packages
           files: |
             result/thirdparty-license.rtf
@@ -282,6 +284,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_releases_tag: macos-${{github.ref_name}}
           prerelease: false
           title: FBX2glTF Macos x86_64 packages
           files: |
