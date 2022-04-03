@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
+
       - name: Install conan
         run: |
           pip install --upgrade conan
@@ -40,12 +40,12 @@ jobs:
         run: |
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
-        
+
       - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Windows/archive/refs/tags/2020.2.zip"
         shell: cmd
-            
+
       - name: install 7z extract
         run: |
           7z x 2020.2.zip
@@ -90,7 +90,6 @@ jobs:
           cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
         shell: bash
 
-
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:
@@ -102,7 +101,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
+
       - name: Install conan
         run: |
           pip install --upgrade conan
@@ -128,12 +127,12 @@ jobs:
         run: |
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
-        
+
       - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Linux/archive/refs/tags/2020.2.zip"
         shell: bash
-            
+
       - name: install 7z extract
         run: |
           7z x 2020.2.zip
@@ -162,7 +161,7 @@ jobs:
 
       - name: Run FBX2glTF help
         run: |
-           ./build/FBX2glTF --help
+          ./build/FBX2glTF --help
         shell: bash
 
       - uses: actions/upload-artifact@v2
@@ -184,16 +183,15 @@ jobs:
           name: linux-packages
           path: result
 
-
   build-macos-x86_64:
     runs-on: macos-11
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
+
       - name: Update python
         uses: actions/setup-python@v1
-        
+
       - name: Install conan
         run: |
           pip install --upgrade conan
@@ -219,12 +217,12 @@ jobs:
         run: |
           git config --global filter.lfs.process "git-lfs filter-process --skip"
         shell: bash
-        
+
       - name: Fetch sdk
         run: |
           curl -O -L "https://github.com/V-Sekai/FBXSDK-Darwin/archive/refs/tags/2020.2.zip"
         shell: bash
-            
+
       - name: install 7z extract
         run: |
           7z x 2020.2.zip
@@ -253,12 +251,12 @@ jobs:
 
       - name: Run FBX2glTF help
         run: |
-           ./build/FBX2glTF --help
+          ./build/FBX2glTF --help
         shell: bash
 
       - name: Adhoc signature
         run: |
-           codesign -s - --options=runtime build/FBX2glTF
+          codesign -s - --options=runtime build/FBX2glTF
         shell: bash
 
       - uses: actions/upload-artifact@v2
