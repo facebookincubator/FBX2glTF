@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   app.add_flag(
       "-v,--verbose",
       verboseOutput,
-      "Include blend shape tangents, if reported present by the FBX SDK.");
+      "Print verbose processing output.");
 
   app.add_flag_function("-V,--version", [&](size_t count) {
     fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2018 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
