@@ -90,19 +90,15 @@ jobs:
           cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
         shell: bash
 
-      - uses: papeloto/action-zip@v1
-        with:
-          files: result
-          recursive: false
-          dest: fbx2gltf-windows.zip
-
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           title: FBX2glTF Windows packages
           files: |
-            fbx2gltf-windows.zip
+            result/thirdparty-license.rtf
+            result/LICENSE
+            result/FBX2glTF.exe
   build-ubuntu:
     runs-on: ubuntu-20.04
     steps:
@@ -184,19 +180,15 @@ jobs:
           cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
-      - uses: papeloto/action-zip@v1
-        with:
-          files: result
-          recursive: false
-          dest: fbx2gltf-linux.zip
-
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
           title: FBX2glTF Linux packages
           files: |
-            fbx2gltf-linux.zip
+            result/thirdparty-license.rtf
+            result/LICENSE
+            result/FBX2glTF
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -287,11 +279,6 @@ jobs:
           cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
-      - uses: papeloto/action-zip@v1
-        with:
-          files: result
-          recursive: false
-          dest: fbx2gltf-macos.zip
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -299,4 +286,6 @@ jobs:
           prerelease: false
           title: FBX2glTF Macos x86_64 packages
           files: |
-            fbx2gltf-macos.zip
+            result/thirdparty-license.rtf
+            result/LICENSE
+            result/FBX2glTF
