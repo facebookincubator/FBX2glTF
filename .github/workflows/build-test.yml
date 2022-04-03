@@ -90,16 +90,13 @@ jobs:
           cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
         shell: bash
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-windows
-          prerelease: true
-          title: FBX2glTF Windows packages
-          files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF.exe
+          name: windows-packages
+          path: result
+
   build-ubuntu:
     runs-on: ubuntu-20.04
     steps:
@@ -181,16 +178,12 @@ jobs:
           cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-linux
-          prerelease: true
-          title: FBX2glTF Linux packages
-          files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF
+          name: linux-packages
+          path: result
+
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -281,14 +274,8 @@ jobs:
           cp build/FBX2glTF result/FBX2glTF
         shell: bash
 
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: latest-macos
-          prerelease: true
-          title: FBX2glTF Macos x86_64 packages
-          files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF
+          name: macos-x64-64-packages
+          path: result
