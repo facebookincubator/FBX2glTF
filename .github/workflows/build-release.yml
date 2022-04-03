@@ -1,8 +1,8 @@
 name: "Build FBX2GLTF"
 on:
   push:
-    branches:
-      - 'releases/**'
+    tags:
+      - "v*"
 
 concurrency:
   group: ci-${{github.actor}}-${{github.head_ref || github.run_number}}-${{github.ref}}-build
@@ -99,7 +99,6 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: release-windows
           prerelease: false
           title: FBX2glTF Windows packages
           files: |
@@ -194,7 +193,6 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: release-linux
           prerelease: false
           title: FBX2glTF Linux packages
           files: |
@@ -298,7 +296,6 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: release-macos
           prerelease: false
           title: FBX2glTF Macos x86_64 packages
           files: |
