@@ -85,9 +85,8 @@ jobs:
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Windows/2020.2/License.rtf result/thirdparty-license.rtf
-          cp LICENSE result/LICENSE
-          cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
+          cp sdk/Windows/2020.2/License.rtf thirdparty-license.rtf
+          cp build/Release/FBX2glTF.exe FBX2glTF.exe
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
@@ -97,9 +96,9 @@ jobs:
           automatic_releases_tag: windows-${{github.ref_name}}
           title: FBX2glTF Windows packages
           files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF.exe
+            thirdparty-license.rtf
+            LICENSE
+            FBX2glTF.exe
   build-ubuntu:
     runs-on: ubuntu-20.04
     steps:
@@ -176,9 +175,8 @@ jobs:
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Linux/2020.2/License.txt result/thirdparty-license.txt
-          cp LICENSE result/LICENSE
-          cp build/FBX2glTF result/FBX2glTF
+          cp sdk/Linux/2020.2/License.txt thirdparty-license.txt
+          cp build/FBX2glTF FBX2glTF
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
@@ -188,9 +186,9 @@ jobs:
           automatic_releases_tag: linux-${{github.ref_name}}
           title: FBX2glTF Linux packages
           files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF
+            thirdparty-license.rtf
+            LICENSE
+            FBX2glTF
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -276,9 +274,8 @@ jobs:
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Darwin/2020.2/License.rtf result/thirdparty-license.rtf
-          cp LICENSE result/LICENSE
-          cp build/FBX2glTF result/FBX2glTF
+          cp sdk/Darwin/2020.2/License.rtf thirdparty-license.rtf
+          cp build/FBX2glTF FBX2glTF
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
@@ -288,6 +285,6 @@ jobs:
           prerelease: false
           title: FBX2glTF Macos x86_64 packages
           files: |
-            result/thirdparty-license.rtf
-            result/LICENSE
-            result/FBX2glTF
+            thirdparty-license.rtf
+            LICENSE
+            FBX2glTF
