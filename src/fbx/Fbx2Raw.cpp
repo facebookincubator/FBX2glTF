@@ -733,8 +733,31 @@ static void ReadNodeHierarchy(
   node.rotation = toQuatf(localRotation);
   node.scale = toVec3f(localScaling);
 
+  const FbxVector4 nodeGeometricTranslationPivot =
+      pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+  const FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+  FbxVector4 nodeGeometricScalePivot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
+  if (abs(nodeGeometricScalePivot[0]) < FBXSDK_FLOAT_EPSILON) {
+    nodeGeometricScalePivot[0] = 1.0;
+  }
+  if (abs(nodeGeometricScalePivot[1]) < FBXSDK_FLOAT_EPSILON) {
+    nodeGeometricScalePivot[1] = 1.0;
+  }
+  if (abs(nodeGeometricScalePivot[2]) < FBXSDK_FLOAT_EPSILON) {
+    nodeGeometricScalePivot[2] = 1.0;
+  }
+  FbxAMatrix matrixGeo;
+  matrixGeo.SetIdentity();
+  matrixGeo.SetT(nodeGeometricTranslationPivot);
+  matrixGeo.SetR(nodeGeometricRotationPivot);
+  matrixGeo.SetS(nodeGeometricScalePivot);
+
   if (parentId) {
     RawNode& parentNode = raw.GetNode(raw.GetNodeById(parentId));
+    parentNode.translation += toVec3f(matrixGeo.GetT());
+    const FbxQuaternion nodeRotation = matrixGeo.GetQ();
+    parentNode.rotation = parentNode.rotation * toQuatf(nodeRotation);
+    parentNode.scale *= toVec3f(matrixGeo.GetS());
     // Add unique child name to the parent node.
     if (std::find(parentNode.childIds.begin(), parentNode.childIds.end(), nodeId) ==
         parentNode.childIds.end()) {
@@ -744,9 +767,14 @@ static void ReadNodeHierarchy(
     // If there is no parent then this is the root node.
     raw.SetRootNode(nodeId);
   }
-
+  matrixGeo = matrixGeo.Inverse();
   for (int child = 0; child < pNode->GetChildCount(); child++) {
     ReadNodeHierarchy(raw, pScene, pNode->GetChild(child), nodeId, newPath);
+    RawNode& childNode = raw.GetNode(child);
+    childNode.translation += toVec3f(matrixGeo.GetT());
+    const FbxQuaternion nodeRotation = matrixGeo.GetQ();
+    childNode.rotation = childNode.rotation * toQuatf(nodeRotation);
+    childNode.scale *= toVec3f(matrixGeo.GetS());
   }
 }
 

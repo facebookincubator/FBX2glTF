@@ -9,7 +9,7 @@ from conans import ConanFile, CMake
 class FBX2glTFConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = (
-        ("boost/1.76.0"),
+        ("boost/1.78.0"),
         ("libiconv/1.15"),
         ("zlib/1.2.11"),
         ("libxml2/2.9.12"),
