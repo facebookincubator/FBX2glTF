@@ -728,24 +728,17 @@ static void ReadNodeHierarchy(
   FbxVector4 localTranslation = localTransform.GetT();
   localTranslation.FixIncorrectValue();
   for (int32_t i = 0; i < 3; i++) {
-    if (localTranslation[i] < FBXSDK_FLOAT_MIN ||
-        localTranslation[i] > FBXSDK_FLOAT_MAX) {
-      localTranslation[i] = 0.0;
-    }
+    localTranslation[i] = FbxClamp(float(localTranslation[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
   }
-  FbxQuaternion localRotation = localTransform.GetQ();  
+  FbxQuaternion localRotation = localTransform.GetQ();
   for (int32_t i = 0; i < 4; i++) {
-    if (localRotation[i] < FBXSDK_FLOAT_MIN ||
-        localRotation[i] > FBXSDK_FLOAT_MAX) {
-      localRotation[i] = 0.0;
-    }
+    localRotation[i] = FbxClamp(float(localRotation[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
   }
   FbxVector4 localScaling = computeLocalScale(pNode);
   localScaling.FixIncorrectValue();
   for (int32_t i = 0; i < 3; i++) {
-    if (localScaling[i] < FBXSDK_FLOAT_MIN ||
-        localScaling[i] > FBXSDK_FLOAT_MAX ||
-        abs(localScaling[i]) < FBXSDK_FLOAT_EPSILON) {
+    localScaling[i] = FbxClamp(float(localScaling[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
+    if (abs(localScaling[i]) < FBXSDK_FLOAT_EPSILON) {
       localScaling[i] = 1.0;
     }
   }
@@ -757,25 +750,21 @@ static void ReadNodeHierarchy(
   FbxVector4 nodeGeometricTranslationPivot = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
   nodeGeometricTranslationPivot.FixIncorrectValue();
   for (int32_t i = 0; i < 3; i++) {
-    if (nodeGeometricTranslationPivot[i] < FBXSDK_FLOAT_MIN ||
-        nodeGeometricTranslationPivot[i] > FBXSDK_FLOAT_MAX) {
-      nodeGeometricTranslationPivot[i] = 0.0;
-    }
+    nodeGeometricTranslationPivot[i] =
+        FbxClamp(float(nodeGeometricTranslationPivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
   }
   FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
   nodeGeometricRotationPivot.FixIncorrectValue();
   for (int32_t i = 0; i < 3; i++) {
-    if (nodeGeometricRotationPivot[i] < FBXSDK_FLOAT_MIN ||
-        nodeGeometricRotationPivot[i] > FBXSDK_FLOAT_MAX) {
-      nodeGeometricRotationPivot[i] = 0.0;
-    }
+    nodeGeometricRotationPivot[i] =
+        FbxClamp(float(nodeGeometricRotationPivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
   }
   FbxVector4 nodeGeometricScalePivot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
   nodeGeometricScalePivot.FixIncorrectValue();
   for (int32_t i = 0; i < 3; i++) {
-    if (nodeGeometricScalePivot[i] < FBXSDK_FLOAT_MIN ||
-        nodeGeometricScalePivot[i] > FBXSDK_FLOAT_MAX ||
-        abs(nodeGeometricScalePivot[i]) < FBXSDK_FLOAT_EPSILON) {
+    nodeGeometricScalePivot[i] =
+        FbxClamp(float(nodeGeometricScalePivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
+    if (abs(nodeGeometricScalePivot[i]) < FBXSDK_FLOAT_EPSILON) {
       nodeGeometricScalePivot[i] = 1.0;
     }
   }
@@ -935,9 +924,10 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
 
             int targetCount = static_cast<int>(blendShapes.GetTargetShapeCount(channelIx));
 
-            // the target shape 'fullWeight' values are a strictly ascending list of floats (between
-            // 0 and 100), forming a sequence of intervals -- this convenience function figures out
-            // if 'p' lays between some certain target fullWeights, and if so where (from 0 to 1).
+            // the target shape 'fullWeight' values are a strictly ascending list of floats
+            // (between 0 and 100), forming a sequence of intervals -- this convenience function
+            // figures out if 'p' lays between some certain target fullWeights, and if so where
+            // (from 0 to 1).
             auto findInInterval = [&](const double p, const int n) {
               if (n >= targetCount) {
                 // p is certainly completely left of this interval
