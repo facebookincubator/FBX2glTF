@@ -88,7 +88,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Windows/2020.2/License.rtf thirdparty-license.rtf
-          cp build/Release/FBX2glTF.exe windows-FBX2glTF.exe
+          cp build/Release/FBX2glTF.exe FBX2glTF-windows-x86_64.exe
         shell: bash
 
       - name: Release
@@ -98,13 +98,13 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            windows-FBX2glTF.exe
+            FBX2glTF-windows-x86_64.exe
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: windows-packages
-          path: windows-FBX2glTF.exe
+          path: FBX2glTF-windows-x86_64.exe
 
       - name: Archive results
         uses: actions/upload-artifact@v3
@@ -190,7 +190,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Linux/2020.2/License.txt thirdparty-license.txt
-          cp build/FBX2glTF linux-FBX2glTF
+          cp build/FBX2glTF FBX2glTF-linux-x86_64
         shell: bash
 
       - name: Release
@@ -200,13 +200,13 @@ jobs:
           files: |
             thirdparty-license.txt
             LICENSE
-            linux-FBX2glTF
+            FBX2glTF-linux-x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: linux-packages
-          path: linux-FBX2glTF
+          path: FBX2glTF-linux-x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
@@ -300,7 +300,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Darwin/2020.2/License.rtf thirdparty-license.rtf
-          cp build/FBX2glTF macos-FBX2glTF
+          cp build/FBX2glTF FBX2glTF.macos.x86_64
         shell: bash
 
       - name: Release
@@ -310,13 +310,13 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            macos-FBX2glTF
+            FBX2glTF.macos.x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: macos-packages
-          path: macos-FBX2glTF
+          path: FBX2glTF.macos.x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
