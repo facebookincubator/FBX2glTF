@@ -79,11 +79,6 @@ jobs:
           ./build/Release/FBX2glTF.exe --help
         shell: bash
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: FBX2glTF-windows.exe
-          path: build/Release/FBX2glTF.exe
-
       - name: Copy licenses
         run: |
           mkdir -p result
