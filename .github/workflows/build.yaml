@@ -316,7 +316,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: macos-packages
-          path: macos-FBX2glTF.exe
+          path: macos-FBX2glTF
 
       - name: Archive results
         uses: actions/upload-artifact@v3
