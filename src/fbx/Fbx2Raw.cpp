@@ -745,7 +745,7 @@ static void ReadNodeHierarchy(
 
   // Set the initial node transform.
   const FbxAMatrix localTransform = pNode->EvaluateLocalTransform();
-  FbxVector4 localTranslation = localTransform.GetT();
+  FbxVector4 localTranslation = computeLocalTranslation(pNode);
   FbxQuaternion localRotation = localTransform.GetQ();
   FbxVector4 localScaling = computeLocalScale(pNode);
 
