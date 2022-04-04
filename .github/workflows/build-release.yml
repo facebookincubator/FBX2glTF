@@ -186,7 +186,7 @@ jobs:
           automatic_release_tag: ${{github.ref_name}}
           title: FBX2glTF Linux packages
           files: |
-            thirdparty-license.rtf
+            thirdparty-license.txt
             LICENSE
             linux-FBX2glTF
 
