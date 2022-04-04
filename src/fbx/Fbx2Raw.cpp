@@ -753,10 +753,6 @@ static void ReadNodeHierarchy(
   node.rotation = toQuatf(localRotation);
   node.scale = toVec3f(localScaling);
 
-  FbxVector4 nodeGeometricTranslationPivot = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-  FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
-  FbxVector4 nodeGeometricScalePivot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-
   if (parentId) {
     RawNode& parentNode = raw.GetNode(raw.GetNodeById(parentId));
     // Add unique child name to the parent node.
