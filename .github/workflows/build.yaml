@@ -1,8 +1,10 @@
 name: "Build FBX2GLTF"
 on:
+  branch:
+    master
   push:
-    branches:
-      - master
+    tags:
+      - "v*"
 
 concurrency:
   group: ci-${{github.actor}}-${{github.head_ref || github.run_number}}-${{github.ref}}-build
@@ -85,16 +87,36 @@ jobs:
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Windows/2020.2/License.rtf result/thirdparty-license.rtf
-          cp LICENSE result/LICENSE
-          cp build/Release/FBX2glTF.exe result/FBX2glTF.exe
+          cp sdk/Windows/2020.2/License.rtf thirdparty-license.rtf
+          cp build/Release/FBX2glTF.exe windows-FBX2glTF.exe
         shell: bash
 
-      - name: Archive code coverage results
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            thirdparty-license.rtf
+            LICENSE
+            windows-FBX2glTF.exe
+
+      - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: windows-packages
-          path: result
+          path: windows-FBX2glTF.exe
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-thirdparty-license
+          path: thirdparty-license.rtf
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-license
+          path: LICENSE
 
   build-ubuntu:
     runs-on: ubuntu-20.04
@@ -164,24 +186,39 @@ jobs:
           ./build/FBX2glTF --help
         shell: bash
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: FBX2glTF-linux
-          path: build/FBX2glTF
-
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Linux/2020.2/License.txt result/thirdparty-license.txt
-          cp LICENSE result/LICENSE
-          cp build/FBX2glTF result/FBX2glTF
+          cp sdk/Linux/2020.2/License.txt thirdparty-license.txt
+          cp build/FBX2glTF linux-FBX2glTF
         shell: bash
 
-      - name: Archive code coverage results
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            thirdparty-license.txt
+            LICENSE
+            linux-FBX2glTF
+
+      - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: linux-packages
-          path: result
+          path: linux-FBX2glTF
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-thirdparty-license
+          path: thirdparty-license.txt
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-license
+          path: LICENSE
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -259,21 +296,36 @@ jobs:
           codesign -s - --options=runtime build/FBX2glTF
         shell: bash
 
-      - uses: actions/upload-artifact@v2
-        with:
-          name: FBX2glTF-macos
-          path: build/FBX2glTF
-
       - name: Copy licenses
         run: |
           mkdir -p result
-          cp sdk/Darwin/2020.2/License.rtf result/thirdparty-license.rtf
-          cp LICENSE result/LICENSE
-          cp build/FBX2glTF result/FBX2glTF
+          cp sdk/Darwin/2020.2/License.rtf thirdparty-license.rtf
+          cp build/FBX2glTF macos-FBX2glTF
         shell: bash
 
-      - name: Archive code coverage results
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            thirdparty-license.rtf
+            LICENSE
+            macos-FBX2glTF
+
+      - name: Archive results
         uses: actions/upload-artifact@v3
         with:
-          name: macos-x64-64-packages
-          path: result
+          name: macos-packages
+          path: macos-FBX2glTF.exe
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-thirdparty-license
+          path: thirdparty-license.rtf
+
+      - name: Archive results
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-license
+          path: LICENSE
