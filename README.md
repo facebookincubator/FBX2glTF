@@ -1,9 +1,10 @@
 # FBX2GLTF
 
+ A command-line tool for the conversion of 3D model assets on the FBX file format to the glTF file format. 
+
 **REQUIRES MVSC redistributable on Windows**
 
 https://support.microsoft.com/en-ca/help/2977003/the-latest-supported-visual-c-downloads
-
 
 Change skinning-weights to 4 if your engine does not support that feature.
 
