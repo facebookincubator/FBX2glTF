@@ -725,26 +725,59 @@ static void ReadNodeHierarchy(
 
   // Set the initial node transform.
   const FbxAMatrix localTransform = pNode->EvaluateLocalTransform();
-  const FbxVector4 localTranslation = localTransform.GetT();
-  const FbxQuaternion localRotation = localTransform.GetQ();
-  const FbxVector4 localScaling = computeLocalScale(pNode);
+  FbxVector4 localTranslation = localTransform.GetT();
+  localTranslation.FixIncorrectValue();
+  for (int32_t i = 0; i < 3; i++) {
+    if (localTranslation[i] < FBXSDK_FLOAT_MIN ||
+        localTranslation[i] > FBXSDK_FLOAT_MAX) {
+      localTranslation[i] = 0.0;
+    }
+  }
+  FbxQuaternion localRotation = localTransform.GetQ();  
+  for (int32_t i = 0; i < 4; i++) {
+    if (localRotation[i] < FBXSDK_FLOAT_MIN ||
+        localRotation[i] > FBXSDK_FLOAT_MAX) {
+      localRotation[i] = 0.0;
+    }
+  }
+  FbxVector4 localScaling = computeLocalScale(pNode);
+  localScaling.FixIncorrectValue();
+  for (int32_t i = 0; i < 3; i++) {
+    if (localScaling[i] < FBXSDK_FLOAT_MIN ||
+        localScaling[i] > FBXSDK_FLOAT_MAX ||
+        abs(localScaling[i]) < FBXSDK_FLOAT_EPSILON) {
+      localScaling[i] = 1.0;
+    }
+  }
 
   node.translation = toVec3f(localTranslation) * scaleFactor;
   node.rotation = toQuatf(localRotation);
   node.scale = toVec3f(localScaling);
 
-  const FbxVector4 nodeGeometricTranslationPivot =
-      pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-  const FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+  FbxVector4 nodeGeometricTranslationPivot = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+  nodeGeometricTranslationPivot.FixIncorrectValue();
+  for (int32_t i = 0; i < 3; i++) {
+    if (nodeGeometricTranslationPivot[i] < FBXSDK_FLOAT_MIN ||
+        nodeGeometricTranslationPivot[i] > FBXSDK_FLOAT_MAX) {
+      nodeGeometricTranslationPivot[i] = 0.0;
+    }
+  }
+  FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+  nodeGeometricRotationPivot.FixIncorrectValue();
+  for (int32_t i = 0; i < 3; i++) {
+    if (nodeGeometricRotationPivot[i] < FBXSDK_FLOAT_MIN ||
+        nodeGeometricRotationPivot[i] > FBXSDK_FLOAT_MAX) {
+      nodeGeometricRotationPivot[i] = 0.0;
+    }
+  }
   FbxVector4 nodeGeometricScalePivot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-  if (abs(nodeGeometricScalePivot[0]) < FBXSDK_FLOAT_EPSILON) {
-    nodeGeometricScalePivot[0] = 1.0;
-  }
-  if (abs(nodeGeometricScalePivot[1]) < FBXSDK_FLOAT_EPSILON) {
-    nodeGeometricScalePivot[1] = 1.0;
-  }
-  if (abs(nodeGeometricScalePivot[2]) < FBXSDK_FLOAT_EPSILON) {
-    nodeGeometricScalePivot[2] = 1.0;
+  nodeGeometricScalePivot.FixIncorrectValue();
+  for (int32_t i = 0; i < 3; i++) {
+    if (nodeGeometricScalePivot[i] < FBXSDK_FLOAT_MIN ||
+        nodeGeometricScalePivot[i] > FBXSDK_FLOAT_MAX ||
+        abs(nodeGeometricScalePivot[i]) < FBXSDK_FLOAT_EPSILON) {
+      nodeGeometricScalePivot[i] = 1.0;
+    }
   }
   FbxAMatrix matrixGeo;
   matrixGeo.SetIdentity();
