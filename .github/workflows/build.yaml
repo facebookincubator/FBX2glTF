@@ -300,7 +300,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Darwin/2020.2/License.rtf thirdparty-license.rtf
-          cp build/FBX2glTF FBX2glTF.macos.x86_64
+          cp build/FBX2glTF FBX2glTF-macos-x86_64
         shell: bash
 
       - name: Release
@@ -310,13 +310,13 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            FBX2glTF.macos.x86_64
+            FBX2glTF-macos-x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
           name: macos-packages
-          path: FBX2glTF.macos.x86_64
+          path: FBX2glTF-macos-x86_64
 
       - name: Archive results
         uses: actions/upload-artifact@v3
