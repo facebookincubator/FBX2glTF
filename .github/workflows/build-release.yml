@@ -93,7 +93,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          automatic_release_tag: windows-${{github.ref_name}}
+          automatic_release_tag: ${{github.ref_name}}
           title: FBX2glTF Windows packages
           files: |
             thirdparty-license.rtf
@@ -183,7 +183,7 @@ jobs:
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
-          automatic_release_tag: linux-${{github.ref_name}}
+          automatic_release_tag: ${{github.ref_name}}
           title: FBX2glTF Linux packages
           files: |
             thirdparty-license.rtf
