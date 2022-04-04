@@ -1,8 +1,8 @@
 name: "Build FBX2GLTF"
 on:
-  branch:
-    master
   push:
+    branches:
+      - master
     tags:
       - "v*"
 
