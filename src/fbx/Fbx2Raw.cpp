@@ -182,7 +182,10 @@ static void ReadMesh(
   const FbxVector4 meshTranslation = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
   const FbxVector4 meshRotation = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
   const FbxVector4 meshScaling = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-  const FbxAMatrix meshTransform(meshTranslation, meshRotation, meshScaling);
+  FbxAMatrix meshTransform(meshTranslation, meshRotation, meshScaling);
+  const FbxVector4 meshRotationPivot = pNode->GetRotationPivot(FbxNode::eSourcePivot);
+  const FbxAMatrix meshPivotTransform(-meshRotationPivot, FbxVector4(0, 0, 0, 0), FbxVector4(1, 1, 1, 1));
+  meshTransform *= meshPivotTransform;
   const FbxMatrix transform = meshTransform;
 
   // Remove translation & scaling from transforms that will bi applied to normals, tangents &
@@ -683,6 +686,23 @@ static FbxVector4 computeLocalScale(FbxNode* pNode, FbxTime pTime = FBXSDK_TIME_
   return FbxVector4(1, 1, 1, 1);
 }
 
+/**
+ * Compute the local position incorporating the rotation pivot offset, and subtracting out the pivot
+ * of the parent node.
+ */
+static FbxVector4 computeLocalTranslation(FbxNode* pNode, FbxTime pTime = FBXSDK_TIME_INFINITE) {
+  const FbxVector4 meshRotationPivot = pNode->GetRotationPivot(FbxNode::eSourcePivot);
+  const FbxAMatrix meshPivotTransform(meshRotationPivot, FbxVector4(0, 0, 0, 0), FbxVector4(1, 1, 1, 1));
+  FbxAMatrix localTransform = pNode->EvaluateLocalTransform(pTime);
+  localTransform *= meshPivotTransform;
+  FbxVector4 lTranslation = localTransform.GetT();
+  FbxNode* parent = pNode->GetParent();
+  if (pNode->GetParent() != nullptr) {
+    lTranslation -= parent->GetRotationPivot(FbxNode::eSourcePivot);
+  }
+  return lTranslation;
+}
+
 static void ReadNodeHierarchy(
     RawModel& raw,
     FbxScene* pScene,
@@ -726,60 +746,19 @@ static void ReadNodeHierarchy(
   // Set the initial node transform.
   const FbxAMatrix localTransform = pNode->EvaluateLocalTransform();
   FbxVector4 localTranslation = localTransform.GetT();
-  localTranslation.FixIncorrectValue();
-  for (int32_t i = 0; i < 3; i++) {
-    localTranslation[i] = FbxClamp(float(localTranslation[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-  }
   FbxQuaternion localRotation = localTransform.GetQ();
-  for (int32_t i = 0; i < 4; i++) {
-    localRotation[i] = FbxClamp(float(localRotation[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-  }
   FbxVector4 localScaling = computeLocalScale(pNode);
-  localScaling.FixIncorrectValue();
-  for (int32_t i = 0; i < 3; i++) {
-    localScaling[i] = FbxClamp(float(localScaling[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-    if (abs(localScaling[i]) < FBXSDK_FLOAT_EPSILON) {
-      localScaling[i] = 1.0;
-    }
-  }
 
   node.translation = toVec3f(localTranslation) * scaleFactor;
   node.rotation = toQuatf(localRotation);
   node.scale = toVec3f(localScaling);
 
   FbxVector4 nodeGeometricTranslationPivot = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
-  nodeGeometricTranslationPivot.FixIncorrectValue();
-  for (int32_t i = 0; i < 3; i++) {
-    nodeGeometricTranslationPivot[i] =
-        FbxClamp(float(nodeGeometricTranslationPivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-  }
   FbxVector4 nodeGeometricRotationPivot = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
-  nodeGeometricRotationPivot.FixIncorrectValue();
-  for (int32_t i = 0; i < 3; i++) {
-    nodeGeometricRotationPivot[i] =
-        FbxClamp(float(nodeGeometricRotationPivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-  }
   FbxVector4 nodeGeometricScalePivot = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
-  nodeGeometricScalePivot.FixIncorrectValue();
-  for (int32_t i = 0; i < 3; i++) {
-    nodeGeometricScalePivot[i] =
-        FbxClamp(float(nodeGeometricScalePivot[i]), FBXSDK_FLOAT_MIN, FBXSDK_FLOAT_MAX);
-    if (abs(nodeGeometricScalePivot[i]) < FBXSDK_FLOAT_EPSILON) {
-      nodeGeometricScalePivot[i] = 1.0;
-    }
-  }
-  FbxAMatrix matrixGeo;
-  matrixGeo.SetIdentity();
-  matrixGeo.SetT(nodeGeometricTranslationPivot);
-  matrixGeo.SetR(nodeGeometricRotationPivot);
-  matrixGeo.SetS(nodeGeometricScalePivot);
 
   if (parentId) {
     RawNode& parentNode = raw.GetNode(raw.GetNodeById(parentId));
-    parentNode.translation += toVec3f(matrixGeo.GetT());
-    const FbxQuaternion nodeRotation = matrixGeo.GetQ();
-    parentNode.rotation = parentNode.rotation * toQuatf(nodeRotation);
-    parentNode.scale *= toVec3f(matrixGeo.GetS());
     // Add unique child name to the parent node.
     if (std::find(parentNode.childIds.begin(), parentNode.childIds.end(), nodeId) ==
         parentNode.childIds.end()) {
@@ -789,14 +768,8 @@ static void ReadNodeHierarchy(
     // If there is no parent then this is the root node.
     raw.SetRootNode(nodeId);
   }
-  matrixGeo = matrixGeo.Inverse();
   for (int child = 0; child < pNode->GetChildCount(); child++) {
     ReadNodeHierarchy(raw, pScene, pNode->GetChild(child), nodeId, newPath);
-    RawNode& childNode = raw.GetNode(child);
-    childNode.translation += toVec3f(matrixGeo.GetT());
-    const FbxQuaternion nodeRotation = matrixGeo.GetQ();
-    childNode.rotation = childNode.rotation * toQuatf(nodeRotation);
-    childNode.scale *= toVec3f(matrixGeo.GetS());
   }
 }
 
@@ -886,7 +859,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
     for (int nodeIndex = 0; nodeIndex < nodeCount; nodeIndex++) {
       FbxNode* pNode = pScene->GetNode(nodeIndex);
       const FbxAMatrix baseTransform = pNode->EvaluateLocalTransform();
-      const FbxVector4 baseTranslation = baseTransform.GetT();
+      const FbxVector4 baseTranslation = computeLocalTranslation(pNode);
       const FbxQuaternion baseRotation = baseTransform.GetQ();
       const FbxVector4 baseScaling = computeLocalScale(pNode);
 
@@ -898,7 +871,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
         pTime.SetFrame(frameIndex, eMode);
 
         const FbxAMatrix localTransform = pNode->EvaluateLocalTransform(pTime);
-        const FbxVector4 localTranslation = localTransform.GetT();
+        const FbxVector4 localTranslation = computeLocalTranslation(pNode, pTime);
         const FbxQuaternion localRotation = localTransform.GetQ();
         const FbxVector4 localScale = computeLocalScale(pNode, pTime);
 
