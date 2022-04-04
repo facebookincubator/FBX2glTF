@@ -86,7 +86,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Windows/2020.2/License.rtf thirdparty-license.rtf
-          cp build/Release/FBX2glTF.exe FBX2glTF.exe
+          cp build/Release/FBX2glTF.exe windows-FBX2glTF.exe
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
@@ -98,7 +98,7 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            FBX2glTF.exe
+            windows-FBX2glTF.exe
   build-ubuntu:
     runs-on: ubuntu-20.04
     steps:
@@ -176,7 +176,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Linux/2020.2/License.txt thirdparty-license.txt
-          cp build/FBX2glTF FBX2glTF
+          cp build/FBX2glTF linux-FBX2glTF
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
@@ -188,7 +188,7 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            FBX2glTF
+            linux-FBX2glTF
 
   build-macos-x86_64:
     runs-on: macos-11
@@ -275,16 +275,16 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Darwin/2020.2/License.rtf thirdparty-license.rtf
-          cp build/FBX2glTF FBX2glTF
+          cp build/FBX2glTF mac-FBX2glTF
         shell: bash
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: macos-${{github.ref_name}}
+          automatic_release_tag: ${{github.ref_name}}
           prerelease: false
           title: FBX2glTF Macos x86_64 packages
           files: |
             thirdparty-license.rtf
             LICENSE
-            FBX2glTF
+            mac-FBX2glTF
