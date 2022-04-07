@@ -185,7 +185,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Linux/2020.2/License.txt thirdparty-license.txt
-          cp build/FBX2glTF FBX2glTF-linux-x86_64
+          cp build/FBX2glTF FBX2glTF
         shell: bash
 
       - name: Release
@@ -195,18 +195,18 @@ jobs:
           files: |
             thirdparty-license.txt
             LICENSE
-            FBX2glTF-linux-x86_64
+            FBX2glTF
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
-          name: linux-packages
-          path: FBX2glTF-linux-x86_64
+          name: FBX2glTF
+          path: FBX2glTF
 
       - name: thirdparty-license.txt
         uses: actions/upload-artifact@v3
         with:
-          name: linux-thirdparty-license
+          name: thirdparty-license.txt
           path: thirdparty-license.txt
 
       - name: LICENSE
@@ -316,7 +316,7 @@ jobs:
       - name: thirdparty-license.rtf
         uses: actions/upload-artifact@v3
         with:
-          name: macos-thirdparty-license
+          name: thirdparty-license.rtf
           path: thirdparty-license.rtf
 
       - name: LICENSE
