@@ -93,7 +93,7 @@ jobs:
           files: |
             thirdparty-license.rtf
             LICENSE
-            FBX2glTF-windows-x86_64.exe
+            FBX2glTF.exe
 
       - name: FBX2glTF.exe
         uses: actions/upload-artifact@v3
