@@ -83,7 +83,7 @@ jobs:
         run: |
           mkdir -p result
           cp sdk/Windows/2020.2/License.rtf thirdparty-license.rtf
-          cp build/Release/FBX2glTF.exe FBX2glTF-windows-x86_64.exe
+          cp build/Release/FBX2glTF.exe FBX2glTF.exe
         shell: bash
 
       - name: Release
@@ -95,22 +95,22 @@ jobs:
             LICENSE
             FBX2glTF-windows-x86_64.exe
 
-      - name: Archive results
+      - name: FBX2glTF.exe
         uses: actions/upload-artifact@v3
         with:
           name: windows-packages
-          path: FBX2glTF-windows-x86_64.exe
+          path: FBX2glTF.exe
 
-      - name: Archive results
+      - name: thirdparty-license.rtf
         uses: actions/upload-artifact@v3
         with:
-          name: windows-thirdparty-license
+          name: thirdparty-license.rtf
           path: thirdparty-license.rtf
 
       - name: Archive results
         uses: actions/upload-artifact@v3
         with:
-          name: windows-license
+          name: LICENSE
           path: LICENSE
 
   build-ubuntu:
@@ -203,16 +203,16 @@ jobs:
           name: linux-packages
           path: FBX2glTF-linux-x86_64
 
-      - name: Archive results
+      - name: thirdparty-license.txt
         uses: actions/upload-artifact@v3
         with:
           name: linux-thirdparty-license
           path: thirdparty-license.txt
 
-      - name: Archive results
+      - name: LICENSE
         uses: actions/upload-artifact@v3
         with:
-          name: linux-license
+          name: LICENSE
           path: LICENSE
 
   build-macos-x86_64:
@@ -307,20 +307,20 @@ jobs:
             LICENSE
             FBX2glTF-macos-x86_64
 
-      - name: Archive results
+      - name: FBX2glTF-macos-x86_64
         uses: actions/upload-artifact@v3
         with:
           name: macos-packages
           path: FBX2glTF-macos-x86_64
 
-      - name: Archive results
+      - name: thirdparty-license.rtf
         uses: actions/upload-artifact@v3
         with:
           name: macos-thirdparty-license
           path: thirdparty-license.rtf
 
-      - name: Archive results
+      - name: LICENSE
         uses: actions/upload-artifact@v3
         with:
-          name: macos-license
+          name: LICENSE
           path: LICENSE
