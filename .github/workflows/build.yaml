@@ -98,7 +98,7 @@ jobs:
       - name: FBX2glTF.exe
         uses: actions/upload-artifact@v3
         with:
-          name: windows-packages
+          name: FBX2glTF.exe
           path: FBX2glTF.exe
 
       - name: thirdparty-license.rtf
