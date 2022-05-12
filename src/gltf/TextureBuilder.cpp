@@ -118,24 +118,16 @@ std::shared_ptr<TextureData> TextureBuilder::combine(
     }
   }
 
-  // write a .png iff we need transparency in the destination texture
-  bool png = includeAlphaChannel;
-
   std::vector<char> imgBuffer;
   int res;
-  if (png) {
-    res = stbi_write_png_to_func(
-        WriteToVectorContext,
-        &imgBuffer,
-        width,
-        height,
-        channels,
-        mergedPixels.data(),
-        width * channels);
-  } else {
-    res = stbi_write_jpg_to_func(
-        WriteToVectorContext, &imgBuffer, width, height, channels, mergedPixels.data(), 80);
-  }
+  res = stbi_write_png_to_func(
+      WriteToVectorContext,
+      &imgBuffer,
+      width,
+      height,
+      channels,
+      mergedPixels.data(),
+      width * channels);
   if (!res) {
     fmt::printf("Warning: failed to generate merge texture '%s'.\n", mergedFilename);
     return nullptr;
