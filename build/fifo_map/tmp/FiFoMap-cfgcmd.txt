@@ -1,1 +1,0 @@
-cmd='/usr/bin/cmake;-E;echo;Skipping FiFoMap configure step.'

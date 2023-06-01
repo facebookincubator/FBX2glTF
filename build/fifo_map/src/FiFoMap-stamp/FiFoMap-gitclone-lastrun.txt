@@ -1,3 +1,0 @@
-repository='https://github.com/nlohmann/fifo_map'
-module=''
-tag='origin'

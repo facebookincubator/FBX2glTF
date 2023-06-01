@@ -1,3 +1,0 @@
-repository='https://github.com/tplgy/cppcodec'
-module=''
-tag='origin'
