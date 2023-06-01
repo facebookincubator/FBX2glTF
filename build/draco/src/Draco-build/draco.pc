@@ -1,0 +1,13 @@
+# draco pkg-config.
+prefix=/document/FBX2glTF/build/draco
+exec_prefix=/document/FBX2glTF/build/draco/bin
+libdir=/document/FBX2glTF/build/draco/lib
+includedir=/document/FBX2glTF/build/draco/include
+
+Name: Draco
+Description: 3D Compression.
+Version: 1.3.4
+Requires:
+Conflicts:
+Libs: -L/document/FBX2glTF/build/draco/lib -ldraco
+Cflags: -I/document/FBX2glTF/build/draco/include -std=c++11

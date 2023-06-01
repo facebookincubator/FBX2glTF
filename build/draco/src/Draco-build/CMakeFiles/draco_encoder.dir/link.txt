@@ -1,0 +1,1 @@
+/usr/bin/c++ -std=c++11  -O3 -DNDEBUG CMakeFiles/draco_encoder.dir/src/draco/tools/draco_encoder.cc.o -o draco_encoder  libdraco.a 

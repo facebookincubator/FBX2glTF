@@ -1,0 +1,12 @@
+/document/FBX2glTF/build/CMakeFiles/Draco.dir
+/document/FBX2glTF/build/CMakeFiles/MathFu.dir
+/document/FBX2glTF/build/CMakeFiles/FiFoMap.dir
+/document/FBX2glTF/build/CMakeFiles/CPPCodec.dir
+/document/FBX2glTF/build/CMakeFiles/libFBX2glTF.dir
+/document/FBX2glTF/build/CMakeFiles/appFBX2glTF.dir
+/document/FBX2glTF/build/CMakeFiles/edit_cache.dir
+/document/FBX2glTF/build/CMakeFiles/rebuild_cache.dir
+/document/FBX2glTF/build/CMakeFiles/list_install_components.dir
+/document/FBX2glTF/build/CMakeFiles/install.dir
+/document/FBX2glTF/build/CMakeFiles/install/local.dir
+/document/FBX2glTF/build/CMakeFiles/install/strip.dir

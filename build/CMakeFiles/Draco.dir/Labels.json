@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/Draco"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/Draco.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/Draco-complete.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-build.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-configure.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-download.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-install.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-mkdir.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-patch.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/draco/src/Draco-stamp/Draco-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"Draco"
+		],
+		"name" : "Draco"
+	}
+}

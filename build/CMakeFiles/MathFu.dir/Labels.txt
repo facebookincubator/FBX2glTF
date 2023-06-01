@@ -1,0 +1,13 @@
+# Target labels
+ MathFu
+# Source files and their labels
+/document/FBX2glTF/build/CMakeFiles/MathFu
+/document/FBX2glTF/build/CMakeFiles/MathFu.rule
+/document/FBX2glTF/build/CMakeFiles/MathFu-complete.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-build.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-configure.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-download.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-install.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-mkdir.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-patch.rule
+/document/FBX2glTF/build/mathfu/src/MathFu-stamp/MathFu-update.rule

@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/FiFoMap"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/FiFoMap.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/CMakeFiles/FiFoMap-complete.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-build.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-configure.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-download.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-install.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-mkdir.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-patch.rule"
+		},
+		{
+			"file" : "/document/FBX2glTF/build/fifo_map/src/FiFoMap-stamp/FiFoMap-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"FiFoMap"
+		],
+		"name" : "FiFoMap"
+	}
+}

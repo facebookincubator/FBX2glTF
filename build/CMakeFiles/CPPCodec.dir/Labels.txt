@@ -1,0 +1,13 @@
+# Target labels
+ CPPCodec
+# Source files and their labels
+/document/FBX2glTF/build/CMakeFiles/CPPCodec
+/document/FBX2glTF/build/CMakeFiles/CPPCodec.rule
+/document/FBX2glTF/build/CMakeFiles/CPPCodec-complete.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-build.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-configure.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-download.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-install.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-mkdir.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-patch.rule
+/document/FBX2glTF/build/cppcodec/src/CPPCodec-stamp/CPPCodec-update.rule
