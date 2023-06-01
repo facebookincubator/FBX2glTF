@@ -753,7 +753,7 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
       eMode = FbxTime::eFrames60;
       break;
   }
-  const double epsilon = 1e-5f;
+ const double epsilon = 1e-5f;
 
   const int animationCount = pScene->GetSrcObjectCount<FbxAnimStack>();
   for (size_t animIx = 0; animIx < animationCount; animIx++) {
@@ -847,20 +847,26 @@ static void ReadAnimations(RawModel& raw, FbxScene* pScene, const GltfOptions& o
         const FbxQuaternion localRotation = localTransform.GetQ();
         const FbxVector4 localScale = computeLocalScale(pNode, pTime);
 
-        hasTranslation |=
-            (fabs(localTranslation[0] - baseTranslation[0]) > epsilon ||
-             fabs(localTranslation[1] - baseTranslation[1]) > epsilon ||
-             fabs(localTranslation[2] - baseTranslation[2]) > epsilon);
-        hasRotation |=
-            (fabs(localRotation[0] - baseRotation[0]) > epsilon ||
-             fabs(localRotation[1] - baseRotation[1]) > epsilon ||
-             fabs(localRotation[2] - baseRotation[2]) > epsilon ||
-             fabs(localRotation[3] - baseRotation[3]) > epsilon);
-        hasScale |=
-            (fabs(localScale[0] - baseScaling[0]) > epsilon ||
-             fabs(localScale[1] - baseScaling[1]) > epsilon ||
-             fabs(localScale[2] - baseScaling[2]) > epsilon);
 
+	if (!optAnimation) {
+          hasTranslation = true;
+          hasRotation = true;
+          hasScale = true;
+        } else {
+          hasTranslation |=
+            (fabs(localTranslation[0] - baseTranslation[0]) > epsilon ||
+            fabs(localTranslation[1] - baseTranslation[1]) > epsilon ||
+            fabs(localTranslation[2] - baseTranslation[2]) > epsilon);
+          hasRotation |=
+              (fabs(localRotation[0] - baseRotation[0]) > epsilon ||
+              fabs(localRotation[1] - baseRotation[1]) > epsilon ||
+              fabs(localRotation[2] - baseRotation[2]) > epsilon ||
+              fabs(localRotation[3] - baseRotation[3]) > epsilon);
+          hasScale |=
+              (fabs(localScale[0] - baseScaling[0]) > epsilon ||
+              fabs(localScale[1] - baseScaling[1]) > epsilon ||
+              fabs(localScale[2] - baseScaling[2]) > epsilon);
+        }
         channel.translations.push_back(toVec3f(localTranslation) * scaleFactor);
         channel.rotations.push_back(toQuatf(localRotation));
         channel.scales.push_back(toVec3f(localScale));
@@ -1148,9 +1154,11 @@ bool LoadFBXFile(
   }
   // this is always 0.01, but let's opt for clarity.
   scaleFactor = FbxSystemUnit::m.GetConversionFactorFrom(FbxSystemUnit::cm);
-
-  ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
-  ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
+FbxNode* rootNode = pScene->GetRootNode();
+  ReadNodeHierarchy(raw, pScene, rootNode->GetChild(0), 0, "");
+  ReadNodeAttributes(raw, pScene, rootNode->GetChild(0), textureLocations);
+ // ReadNodeHierarchy(raw, pScene, pScene->GetRootNode(), 0, "");
+ // ReadNodeAttributes(raw, pScene, pScene->GetRootNode(), textureLocations);
   ReadAnimations(raw, pScene, options);
 
   pScene->Destroy();

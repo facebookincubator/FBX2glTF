@@ -21,6 +21,7 @@
 #include "utils/String_Utils.hpp"
 
 bool verboseOutput = false;
+bool optAnimation = false;
 
 int main(int argc, char* argv[]) {
   GltfOptions gltfOptions;
@@ -34,6 +35,7 @@ int main(int argc, char* argv[]) {
       "-v,--verbose",
       verboseOutput,
       "Include blend shape tangents, if reported present by the FBX SDK.");
+  app.add_flag("--optAni", optAnimation, "Delete the curve that hasn't changed");
 
   app.add_flag_function("-V,--version", [&](size_t count) {
     fmt::printf("FBX2glTF version %s\nCopyright (c) 2016-2018 Oculus VR, LLC.\n", FBX2GLTF_VERSION);
@@ -46,6 +48,7 @@ int main(int argc, char* argv[]) {
 
   std::string outputPath;
   app.add_option("-o,--output", outputPath, "Where to generate the output, without suffix.");
+
 
   app.add_flag(
       "-e,--embed",

@@ -41,6 +41,8 @@ using workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<
 using json = nlohmann::basic_json<workaround_fifo_map>;
 
 extern bool verboseOutput;
+extern bool optAnimation;
+
 
 /**
  * Centralises all the laborious downcasting from your OS' 64-bit

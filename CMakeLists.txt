@@ -45,11 +45,11 @@ find_package(Threads REQUIRED)
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}")
 
 # stuff we get from Conan
-find_package(boost_filesystem MODULE REQUIRED)
-find_package(boost_optional MODULE REQUIRED)
-find_package(libxml2 MODULE REQUIRED)
-find_package(zlib MODULE REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(LibXml2 MODULE REQUIRED)
+find_package(ZLIB MODULE REQUIRED)
 find_package(fmt MODULE REQUIRED)
+find_package(libiconv MODULE REQUIRED)
 
 # create a compilation database for e.g. clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -201,25 +201,21 @@ endif()
 
 target_link_libraries(libFBX2glTF
   ${FRAMEWORKS}
-  boost_filesystem::boost_filesystem
-  boost_optional::boost_optional
+  Boost::filesystem
   ${DRACO_LIB}
   optimized ${FBXSDK_LIBRARY}
   debug ${FBXSDK_LIBRARY_DEBUG}
   fmt::fmt
-  libxml2::libxml2
-  zlib::zlib
+  ${LIBXML2_LIBRARIES}
+  ${ZLIB_LIBRARIES}
+    ${ICONV_LIBRARIES}
   ${CMAKE_DL_LIBS}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
-if (APPLE)
- find_package(Iconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF Iconv)
-else()
- find_package(libiconv MODULE REQUIRED)
- target_link_libraries(libFBX2glTF libiconv::libiconv)
-endif()
+ #find_package(libiconv MODULE REQUIRED)
+ #target_link_libraries(libFBX2glTF libiconv)
+
 
 target_include_directories(libFBX2glTF PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -244,3 +240,4 @@ install (TARGETS libFBX2glTF appFBX2glTF
         RUNTIME DESTINATION bin
         ARCHIVE DESTINATION lib
 )
+

@@ -9,17 +9,17 @@ from conans import ConanFile, CMake
 class FBX2glTFConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = (
-        ("boost_filesystem/1.69.0@bincrafters/stable"),
-        ("libiconv/1.15@bincrafters/stable"),
-        ("zlib/1.2.11@conan/stable"),
-        ("libxml2/2.9.9@bincrafters/stable"),
-        ("fmt/5.3.0@bincrafters/stable"),
+      ("boost/1.81.0"),
+      ("libiconv/1.15"),
+      ("zlib/1.2.13"),
+      ("libxml2/2.9.9"),
+      ("fmt/5.3.0"),
     )
     generators = "cmake_find_package", "cmake_paths"
-
+  
     def configure(self):
         if (
-            self.settings.compiler == "gcc"
+            self.settings.get_safe("compiler") == "gcc"
             and self.settings.compiler.libcxx == "libstdc++"
         ):
             raise Exception(
@@ -31,3 +31,4 @@ class FBX2glTFConan(ConanFile):
         cmake.definitions["FBXSDK_SDKS"] = os.getenv("FBXSDK_SDKS", "sdk")
         cmake.configure()
         cmake.build()
+
