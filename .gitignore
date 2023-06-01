@@ -7,3 +7,4 @@ npm/tests/test/*.js
 npm/tests/test/*.js.map
 build/*
 !build/FBX2glTF
+sdk
