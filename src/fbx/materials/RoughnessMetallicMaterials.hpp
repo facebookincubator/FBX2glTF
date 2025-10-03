@@ -8,9 +8,11 @@
 
 #pragma once
 
+#include <fbxsdk/scene/shading/fbxfiletexture.h>
 #include <map>
 
 #include "FbxMaterials.hpp"
+using namespace fbxsdk;
 
 struct FbxRoughMetMaterialInfo : FbxMaterialInfo {
   static constexpr const char* FBX_SHADER_METROUGH = "MetallicRoughness";

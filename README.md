@@ -144,51 +144,44 @@ We currently depend on the open source projects
 and [fmt](https://github.com/fmtlib/fmt);
 all of which are automatically downloaded and/or built.
 
-**At present, only version 2019.2 of the FBX SDK is supported**. The
+**At present, only version 2020.3.7 of the FBX SDK is supported**. The
 build system will not successfully locate any other version.
 
 ### Linux and MacOS X
 
-Your development environment will need to have:
-
-- build essentials (gcc for Linux, clang for Mac)
-- cmake
-- python 3.\* and associated pip3/pip command
-- zstd
-
-Then, compilation on Unix machines will look something like:
-
-```
-# Determine SDK location & build settings for Linux vs (Recent) Mac OS X
-> if [[ "$OSTYPE" == "darwin"* ]]; then
-    export CONAN_CONFIG="-s compiler=apple-clang -s compiler.version=10.0 -s compiler.libcxx=libc++"
-    export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Darwin/archive/2019.2.tar.gz"
-elif [[ "$OSTYPE" == "linux"* ]]; then
-    export CONAN_CONFIG="-s compiler.libcxx=libstdc++11"
-    export FBXSDK_TARBALL="https://github.com/zellski/FBXSDK-Linux/archive/2019.2.tar.gz"
-else
-    echo "This snippet only handles Mac OS X and Linux."
-fi
-
-# Fetch Project
-> git clone https://github.com/facebookincubator/FBX2glTF.git
-> cd FBX2glTF
-
-# Fetch and unpack FBX SDK
-> curl -sL "${FBXSDK_TARBALL}" | tar xz --strip-components=1 --include */sdk/
-# Then decompress the contents
-> zstd -d -r --rm sdk
-
-# Install and configure Conan, if needed
-> pip3 install conan # or sometimes just "pip"; you may need to install Python/PIP
-> conan remote add --force bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-
-# Initialize & run build
-> conan install . -i build -s build_type=Release ${CONAN_CONFIG}
-> conan build . -bf build
+1. Init vcpkg root
+```shell
+  git clone https://github.com/microsoft/vcpkg
+  export VCPKG_ROOT=/path/to/vcpkg
+  export PATH=${VCPKG_ROOT}:${PATH}
 ```
 
-If all goes well, you will end up with a statically linked executable in `./build/FBX2glTF`.
+2. Init Autodesk SDK 2020.3.7
+```shell
+  wget https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_gcc_linux.tar.gz # Linux
+  wget https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_clang_mac.pkg.tgz # macOS
+  tar -xvf /path/to/AutodeskFBXSDK
+  # Install using pkg if macOS
+  # Install using shell command if Linux
+  echo "yes\n\n" | ./fbx202037_fbxsdk_gcc_linux /path/to/autodeskfbxsdk/install
+  cp /path/to/autodeskfbxsdk/install/include sdk/Linux/2020.3.7
+  cp /path/to/autodeskfbxsdk/install/lib sdk/Linux/2020.3.7
+```
+3. Run cmake
+```shell
+  cmake . 
+```
+
+4. Run make 
+```shell
+make -j$(nproc)
+```
+
+5. Test
+```shell
+# if we prepared fbx in /input.fbx
+./FBX2glTF ./FBX2glTF --binary --verbose --keep-attribute --draco --input /input.fbx --output /output.glb
+```
 
 ### Windows
 

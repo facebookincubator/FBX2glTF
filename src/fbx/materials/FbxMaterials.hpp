@@ -8,19 +8,25 @@
 
 #pragma once
 
+#include <fbxsdk/core/arch/fbxtypes.h>
+#include <fbxsdk/core/base/fbxstring.h>
+#include <fbxsdk/scene/geometry/fbxlayer.h>
+#include <fbxsdk/scene/geometry/fbxmesh.h>
+#include <fbxsdk/scene/shading/fbxsurfacematerial.h>
+#include <fbxsdk/scene/shading/fbxtexture.h>
 #include <map>
+#include <memory>
 #include <vector>
-
-#include "FBX2glTF.h"
+using namespace fbxsdk;
 
 class FbxMaterialInfo {
  public:
   FbxMaterialInfo(const FbxUInt64 id, const FbxString& name, const FbxString& shadingModel)
       : id(id), name(name), shadingModel(shadingModel) {}
 
-  const FbxUInt64 id;
-  const FbxString name;
-  const FbxString shadingModel;
+  const fbxsdk::FbxUInt64 id;
+  const fbxsdk::FbxString name;
+  const fbxsdk::FbxString shadingModel;
 };
 
 template <class T>

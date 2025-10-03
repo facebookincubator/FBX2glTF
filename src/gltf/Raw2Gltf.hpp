@@ -17,6 +17,7 @@
 
 #include "FBX2glTF.h"
 #include "raw/RawModel.hpp"
+#include "mathfu.hpp" // ensure Vec2f/Vec3f/Mat4f/Quatf typedefs are available
 
 const std::string KHR_DRACO_MESH_COMPRESSION = "KHR_draco_mesh_compression";
 const std::string KHR_MATERIALS_CMN_UNLIT = "KHR_materials_unlit";
@@ -70,32 +71,104 @@ struct GLType {
     }
   }
 
-  template <class T, int d>
-  void write(uint8_t* buf, const mathfu::Vector<T, d>& vector) const {
-    for (int ii = 0; ii < d; ii++) {
-      ((T*)buf)[ii] = vector(ii);
+  // vector overloads (Vec2f/Vec3f/Vec4f are typedefs to glm types via mathfu.hpp shim)
+  void write(uint8_t* buf, const Vec2f& v) const {
+    for (int i = 0; i < 2; ++i) {
+      if (componentType.size == 1)
+        ((uint8_t*)buf)[i] = (uint8_t)v[i];
+      else if (componentType.size == 2)
+        ((uint16_t*)buf)[i] = (uint16_t)v[i];
+      else
+        ((float*)buf)[i] = (float)v[i];
     }
   }
-  template <class T, int d>
-  void write(uint8_t* buf, const mathfu::Matrix<T, d>& matrix) const {
-    // three matrix types require special alignment considerations that we don't handle
-    // https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#data-alignment
-    assert(!(sizeof(T) == 1 && d == 2));
-    assert(!(sizeof(T) == 1 && d == 3));
-    assert(!(sizeof(T) == 2 && d == 2));
-    for (int col = 0; col < d; col++) {
-      for (int row = 0; row < d; row++) {
-        // glTF matrices are column-major
-        ((T*)buf)[col * d + row] = matrix(row, col);
+  void write(uint8_t* buf, const Vec3f& v) const {
+    for (int i = 0; i < 3; ++i) {
+      if (componentType.size == 1)
+        ((uint8_t*)buf)[i] = (uint8_t)v[i];
+      else if (componentType.size == 2)
+        ((uint16_t*)buf)[i] = (uint16_t)v[i];
+      else
+        ((float*)buf)[i] = (float)v[i];
+    }
+  }
+  void write(uint8_t* buf, const Vec4f& v) const {
+    for (int i = 0; i < 4; ++i) {
+      if (componentType.size == 1)
+        ((uint8_t*)buf)[i] = (uint8_t)v[i];
+      else if (componentType.size == 2)
+        ((uint16_t*)buf)[i] = (uint16_t)v[i];
+      else
+        ((float*)buf)[i] = (float)v[i];
+    }
+  }
+  void write(uint8_t* buf, const Vec4i& v) const {
+    for (int i = 0; i < 4; ++i) {
+      if (componentType.size == 1)
+        ((uint8_t*)buf)[i] = (uint8_t)v[i];
+      else if (componentType.size == 2)
+        ((uint16_t*)buf)[i] = (uint16_t)v[i];
+      else
+        ((uint32_t*)buf)[i] = (uint32_t)v[i];
+    }
+  }
+  // matrix overloads: write column-major as glTF expects, converting element type by componentType.size
+  void write(uint8_t* buf, const Mat2f& m) const {
+    const int d = 2;
+    for (int col = 0; col < d; ++col) {
+      for (int row = 0; row < d; ++row) {
+        const float val = m[col][row];
+        const int idx = col * d + row;
+        if (componentType.size == 1)
+          ((uint8_t*)buf)[idx] = (uint8_t)val;
+        else if (componentType.size == 2)
+          ((uint16_t*)buf)[idx] = (uint16_t)val;
+        else
+          ((float*)buf)[idx] = (float)val;
       }
     }
   }
-  template <class T>
-  void write(uint8_t* buf, const mathfu::Quaternion<T>& quaternion) const {
-    for (int ii = 0; ii < 3; ii++) {
-      ((T*)buf)[ii] = quaternion.vector()(ii);
+  void write(uint8_t* buf, const Mat3f& m) const {
+    const int d = 3;
+    for (int col = 0; col < d; ++col) {
+      for (int row = 0; row < d; ++row) {
+        const float val = m[col][row];
+        const int idx = col * d + row;
+        if (componentType.size == 1)
+          ((uint8_t*)buf)[idx] = (uint8_t)val;
+        else if (componentType.size == 2)
+          ((uint16_t*)buf)[idx] = (uint16_t)val;
+        else
+          ((float*)buf)[idx] = (float)val;
+      }
     }
-    ((T*)buf)[3] = quaternion.scalar();
+  }
+  void write(uint8_t* buf, const Mat4f& m) const {
+    const int d = 4;
+    for (int col = 0; col < d; ++col) {
+      for (int row = 0; row < d; ++row) {
+        const float val = m[col][row];
+        const int idx = col * d + row;
+        if (componentType.size == 1)
+          ((uint8_t*)buf)[idx] = (uint8_t)val;
+        else if (componentType.size == 2)
+          ((uint16_t*)buf)[idx] = (uint16_t)val;
+        else
+          ((float*)buf)[idx] = (float)val;
+      }
+    }
+  }
+  void write(uint8_t* buf, const Quatf& q) const {
+    // write x, y, z, w
+    const float vals[4] = {q.x, q.y, q.z, q.w};
+    for (int i = 0; i < 4; ++i) {
+      if (componentType.size == 1)
+        ((uint8_t*)buf)[i] = (uint8_t)vals[i];
+      else if (componentType.size == 2)
+        ((uint16_t*)buf)[i] = (uint16_t)vals[i];
+      else
+        ((float*)buf)[i] = vals[i];
+    }
   }
 
   const ComponentType componentType;
@@ -103,17 +176,20 @@ struct GLType {
   const std::string dataType;
 };
 
-const GLType GLT_FLOAT = {CT_FLOAT, 1, "SCALAR"};
-const GLType GLT_USHORT = {CT_USHORT, 1, "SCALAR"};
-const GLType GLT_UINT = {CT_UINT, 1, "SCALAR"};
-const GLType GLT_VEC2F = {CT_FLOAT, 2, "VEC2"};
-const GLType GLT_VEC3F = {CT_FLOAT, 3, "VEC3"};
-const GLType GLT_VEC4F = {CT_FLOAT, 4, "VEC4"};
-const GLType GLT_VEC4I = {CT_USHORT, 4, "VEC4"};
-const GLType GLT_MAT2F = {CT_USHORT, 4, "MAT2"};
-const GLType GLT_MAT3F = {CT_USHORT, 9, "MAT3"};
-const GLType GLT_MAT4F = {CT_FLOAT, 16, "MAT4"};
-const GLType GLT_QUATF = {CT_FLOAT, 4, "VEC4"};
+// Inline definitions for GLT_* constants used by Raw2Gltf.cpp
+// Using inline to avoid multiple-definition issues when included in multiple TUs (C++17)
+inline const GLType GLT_FLOAT  = GLType(CT_FLOAT, 1, "SCALAR");
+inline const GLType GLT_VEC2F  = GLType(CT_FLOAT, 2, "VEC2");
+inline const GLType GLT_VEC3F  = GLType(CT_FLOAT, 3, "VEC3");
+inline const GLType GLT_VEC4F  = GLType(CT_FLOAT, 4, "VEC4");
+inline const GLType GLT_QUATF  = GLType(CT_FLOAT, 4, "VEC4");
+
+inline const GLType GLT_VEC4I  = GLType(CT_UINT,  4, "VEC4"); // integer vector (e.g. joint indices)
+inline const GLType GLT_USHORT = GLType(CT_USHORT, 1, "SCALAR");
+inline const GLType GLT_UINT   = GLType(CT_UINT,   1, "SCALAR");
+
+// added: 4x4 matrix type for inverse bind matrices, etc.
+inline const GLType GLT_MAT4F  = GLType(CT_FLOAT, 16, "MAT4");
 
 /**
  * The base of any indexed glTF entity.

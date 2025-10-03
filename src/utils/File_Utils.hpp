@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/filesystem.hpp>
-#include <boost/optional.hpp>
+#include <filesystem>
+#include <optional>
 
 namespace FileUtils {
 
@@ -23,7 +23,7 @@ bool FileExists(const std::string& folderPath);
 bool FolderExists(const std::string& folderPath);
 
 std::vector<std::string> ListFolderFiles(
-    const std::string folder,
+    std::string folder,
     const std::set<std::string>& matchExtensions);
 
 bool CreatePath(std::string path);
@@ -34,39 +34,38 @@ bool CopyFile(
     bool createPath = false);
 
 inline std::string GetAbsolutePath(const std::string& filePath) {
-  return boost::filesystem::absolute(filePath).string();
+  return std::filesystem::absolute(filePath).string();
 }
 
 inline std::string GetCurrentFolder() {
-  return boost::filesystem::current_path().string();
+  return std::filesystem::current_path().string();
 }
 
 inline bool FileExists(const std::string& filePath) {
-  return boost::filesystem::exists(filePath) && boost::filesystem::is_regular_file(filePath);
+  return std::filesystem::exists(filePath) && std::filesystem::is_regular_file(filePath);
 }
 
 inline bool FolderExists(const std::string& folderPath) {
-  return boost::filesystem::exists(folderPath) && boost::filesystem::is_directory(folderPath);
+  return std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath);
 }
 
 inline std::string getFolder(const std::string& path) {
-  return boost::filesystem::path(path).parent_path().string();
+  return std::filesystem::path(path).parent_path().string();
 }
 
 inline std::string GetFileName(const std::string& path) {
-  return boost::filesystem::path(path).filename().string();
+  return std::filesystem::path(path).filename().string();
 }
 
 inline std::string GetFileBase(const std::string& path) {
-  return boost::filesystem::path(path).stem().string();
+  return std::filesystem::path(path).stem().string();
 }
 
-inline boost::optional<std::string> GetFileSuffix(const std::string& path) {
-  const auto& extension = boost::filesystem::path(path).extension();
-  if (extension.empty()) {
-    return boost::none;
-  }
-  return extension.string().substr(1);
+inline std::optional<std::string> GetFileSuffix(std::string_view path) {
+  std::filesystem::path p{std::string(path)};
+  auto ext = p.extension().string();
+  if (ext.empty()) return std::nullopt;
+  return ext.substr(1);
 }
 
 } // namespace FileUtils

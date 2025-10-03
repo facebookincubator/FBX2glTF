@@ -1,0 +1,54 @@
+name: macos
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg_installed
+            ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11 # Always specify the specific _version_ of the
+
+      - name: Download, extract and install Autodesk FBX SDK
+        env:
+          DOWNLOAD_URL: https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_clang_mac.pkg.tgz
+        run: |
+          set -euo pipefail
+          WORKDIR=$(mktemp -d)
+          cd "$WORKDIR"
+          echo "Downloading $DOWNLOAD_URL ..."
+          curl -L --retry 5 -o fbx-sdk.tar.gz "$DOWNLOAD_URL"
+          mkdir extracted
+          tar -xzf fbx-sdk.tar.gz -C extracted
+          echo "Archive extracted. Listing top-level:"
+          ls -la extracted || true
+
+          target="${{ github.workspace }}/sdk/Darwin/2020.3.7"
+          mkdir -p "$target"
+          sudo installer -pkg ./extracted/fbx202037_fbxsdk_clang_macos.pkg -target /
+          cp -r -v /Applications/Autodesk/FBX\ SDK/2020.3.7/include "$target/include"
+          cp -r -v /Applications/Autodesk/FBX\ SDK/2020.3.7/lib "$target/lib"
+          sed -i '' 's/mLefttChild/mLeftChild/g' ${target}/include/fbxsdk/core/base/fbxredblacktree.h
+
+      - name: Configure and Build
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+          cmake --build build -j $(nproc)
+

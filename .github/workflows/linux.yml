@@ -1,0 +1,59 @@
+name: linux
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/vcpkg_installed
+            ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11 # Always specify the specific _version_ of the
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl tar gzip
+
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential ninja-build cmake
+
+      - name: Download, extract and install Autodesk FBX SDK
+        env:
+          DOWNLOAD_URL: https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_gcc_linux.tar.gz
+        run: |
+          set -euo pipefail
+          WORKDIR=$(mktemp -d)
+          cd "$WORKDIR"
+          echo "Downloading $DOWNLOAD_URL ..."
+          curl -L --retry 5 -o fbx-sdk.tar.gz "$DOWNLOAD_URL"
+          mkdir extracted
+          tar -xzf fbx-sdk.tar.gz -C extracted
+          echo "Archive extracted. Listing top-level:"
+          ls -la extracted || true
+
+          target="${{ github.workspace }}/sdk/Linux/2020.3.7"
+          mkdir -p "$target"
+          printf "yes\nyes\n"  | ./extracted/fbx202037_fbxsdk_linux "${target}"
+
+      - name: Configure and Build
+        run: |
+          cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+          cmake --build build -j $(nproc)
+

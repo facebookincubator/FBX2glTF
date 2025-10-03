@@ -6,6 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <fbxsdk/scene/shading/fbxfiletexture.h>
 #include "FbxMaterials.hpp"
 
 struct FbxTraditionalMaterialInfo : FbxMaterialInfo {

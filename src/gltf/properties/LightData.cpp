@@ -7,6 +7,12 @@
  */
 
 #include "LightData.hpp"
+#include <cmath>
+
+// Define M_PI_4 for MSVC compatibility
+#ifndef M_PI_4
+#define M_PI_4 0.785398163397448309616
+#endif
 
 LightData::LightData(
     std::string name,
@@ -37,7 +43,7 @@ json LightData::serialize() const {
       if (innerConeAngle != 0) {
         spotJson["innerConeAngle"] = innerConeAngle;
       }
-      if (outerConeAngle != M_PI_4) {
+      if (std::abs(outerConeAngle - static_cast<float>(M_PI_4)) > 1e-6f) {
         spotJson["outerConeAngle"] = outerConeAngle;
       }
       result["spot"] = spotJson;

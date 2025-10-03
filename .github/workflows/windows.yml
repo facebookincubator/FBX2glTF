@@ -1,0 +1,66 @@
+name: windows
+
+on:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_installed
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11 # Always specify the specific _version_ of the
+
+      - name: Download Autodesk FBX SDK
+        env:
+          DOWNLOAD_URL: https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_vs2022_win.exe
+        run: |
+          Write-Host "Downloading $env:DOWNLOAD_URL ..."
+          curl -L -o fbx-sdk.exe $env:DOWNLOAD_URL
+
+      - name: Install Autodesk FBX SDK (Silent Mode)
+        run: |
+          # Install target under repo relative path: .\sdk\Windows\2020.3.7\
+          $target = Join-Path $PWD 'sdk\Windows\2020.3.7'
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          # Try common silent install patterns. Many Autodesk installers accept /S and /D=<dir>.
+          $args = @('/S', "/D=$target")
+          Start-Process -FilePath "fbx-sdk.exe" -ArgumentList $args -Wait -NoNewWindow
+          # 树形图输出.\sdk\Windows\2020.3.7目录内容，验证安装成功
+          cmd /c "tree `"$target`" /F"
+
+      - name: Configure and Build
+        shell: pwsh
+        run: |
+          # Ensure VCPKG_ROOT is set (action that sets up vcpkg should export it)
+          if (-not $env:VCPKG_ROOT) {
+            Write-Error "VCPKG_ROOT is not set in the environment"
+            exit 1
+          }
+
+          $toolchain = Join-Path $env:VCPKG_ROOT "scripts\buildsystems\vcpkg.cmake"
+          $fbxPath = Join-Path $PWD "sdk\Windows\2020.3.7"
+
+          # Configure with explicit toolchain and FBX SDK path
+          cmake -S . -B build `
+            -DCMAKE_TOOLCHAIN_FILE="$toolchain" `
+            -DFBXSDK_SDKS="$fbxPath" `
+            -DCMAKE_BUILD_TYPE=Release
+
+          # Build using CMake's cross-platform parallel option
+          $procs = $env:NUMBER_OF_PROCESSORS
+          if (-not $procs) { $procs = 2 }
+          cmake --build build --config Release --parallel $procs

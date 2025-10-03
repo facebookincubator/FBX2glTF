@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "gltf/Raw2Gltf.hpp"
 
 struct AnimationData : Holdable {

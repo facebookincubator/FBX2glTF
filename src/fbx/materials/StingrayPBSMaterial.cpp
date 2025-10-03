@@ -6,7 +6,14 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+#include <cfloat>
+#include <fbxsdk/core/arch/fbxtypes.h>
+#include <fbxsdk/core/fbxproperty.h>
+#include <fbxsdk/scene/shading/fbxfiletexture.h>
+#include <fmt/printf.h>
+
 #include "RoughnessMetallicMaterials.hpp"
+using namespace fbxsdk;
 
 std::unique_ptr<FbxRoughMetMaterialInfo> FbxStingrayPBSMaterialResolver::resolve() const {
   const FbxProperty mayaProp = fbxMaterial->FindProperty("Maya");
@@ -14,10 +21,10 @@ std::unique_ptr<FbxRoughMetMaterialInfo> FbxStingrayPBSMaterialResolver::resolve
     return nullptr;
   }
   if (!fbxMaterial->ShadingModel.Get().IsEmpty()) {
-    ::fmt::printf(
-        "Warning: Material %s has surprising shading model: %s\n",
+    fmt::printf(
+        "Warning: Material {} has surprising shading model: {}\n",
         fbxMaterial->GetName(),
-        fbxMaterial->ShadingModel.Get());
+        fbxMaterial->ShadingModel.Get().Buffer());
   }
 
   auto getTex = [&](std::string propName) {

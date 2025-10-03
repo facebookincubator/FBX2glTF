@@ -1,0 +1,13 @@
+{
+  "dependencies": [
+    "draco",
+    "fmt",
+    "glm",
+    "libiconv",
+    "libxml2",
+    "nlohmann-json",
+    "stb",
+    "zlib",
+    "cli11"
+  ]
+}

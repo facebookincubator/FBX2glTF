@@ -94,8 +94,9 @@ json NodeData::serialize() const {
     auto& prop_map = result["extras"]["fromFBX"]["userProperties"];
 
     json j = json::parse(i);
-    for (const auto& k : json::iterator_wrapper(j)) {
-      prop_map[k.key()] = k.value();
+    // iterator_wrapper is deprecated; use items()
+    for (const auto& kv : j.items()) {
+      prop_map[kv.key()] = kv.value();
     }
   }
 

@@ -9,7 +9,6 @@
 #pragma once
 
 #include <functional>
-#include <set>
 #include <unordered_map>
 
 #include "FBX2glTF.h"
@@ -373,12 +372,12 @@ class RawModel {
       const std::vector<std::string>& userProperties);
   int AddLight(
       const char* name,
-      RawLightType lightType,
-      Vec3f color,
-      float intensity,
-      float innerConeAngle,
-      float outerConeAngle);
-  int AddSurface(const RawSurface& suface);
+      const RawLightType lightType,
+      const Vec3f color,
+      const float intensity,
+      const float innerConeAngle,
+      const float outerConeAngle);
+  int AddSurface(const RawSurface& surface);
   int AddSurface(const char* name, long surfaceId);
   int AddAnimation(const RawAnimation& animation);
   int AddCameraPerspective(
@@ -503,7 +502,7 @@ class RawModel {
   // Create individual attribute arrays.
   // Returns true if the vertices store the particular attribute.
   template <typename _attrib_type_>
-  void GetAttributeArray(std::vector<_attrib_type_>& out, const _attrib_type_ RawVertex::*ptr)
+  void GetAttributeArray(std::vector<_attrib_type_>& out, const _attrib_type_ RawVertex::* ptr)
       const;
 
   // Create an array with a raw model for each material.
@@ -535,7 +534,7 @@ class RawModel {
 template <typename _attrib_type_>
 void RawModel::GetAttributeArray(
     std::vector<_attrib_type_>& out,
-    const _attrib_type_ RawVertex::*ptr) const {
+    const _attrib_type_ RawVertex::* ptr) const {
   out.resize(vertices.size());
   for (size_t i = 0; i < vertices.size(); i++) {
     out[i] = vertices[i].*ptr;

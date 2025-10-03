@@ -9,7 +9,6 @@
 #include "RawModel.hpp"
 
 #include <cmath>
-#include <map>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -21,6 +20,10 @@
 
 #include "utils/Image_Utils.hpp"
 #include "utils/String_Utils.hpp"
+
+// Using GLM helpers for vector ops (to replace mathfu methods)
+#include <glm/glm.hpp>
+#include <glm/gtc/epsilon.hpp>
 
 size_t VertexHasher::operator()(const RawVertex& v) const {
   size_t seed = 5381;
@@ -659,25 +662,28 @@ int RawModel::GetSurfaceById(const long surfaceId) const {
 }
 
 Vec3f RawModel::getFaceNormal(int verts[3]) const {
-  const float l0 = (vertices[verts[1]].position - vertices[verts[0]].position).LengthSquared();
-  const float l1 = (vertices[verts[2]].position - vertices[verts[1]].position).LengthSquared();
-  const float l2 = (vertices[verts[0]].position - vertices[verts[2]].position).LengthSquared();
+  const float l0 = glm::dot(vertices[verts[1]].position - vertices[verts[0]].position,
+                            vertices[verts[1]].position - vertices[verts[0]].position);
+  const float l1 = glm::dot(vertices[verts[2]].position - vertices[verts[1]].position,
+                            vertices[verts[2]].position - vertices[verts[1]].position);
+  const float l2 = glm::dot(vertices[verts[0]].position - vertices[verts[2]].position,
+                            vertices[verts[0]].position - vertices[verts[2]].position);
   const int index = (l0 > l1) ? (l0 > l2 ? 2 : 1) : (l1 > l2 ? 0 : 1);
 
   const Vec3f e0 = vertices[verts[(index + 1) % 3]].position - vertices[verts[index]].position;
   const Vec3f e1 = vertices[verts[(index + 2) % 3]].position - vertices[verts[index]].position;
-  if (e0.LengthSquared() < FLT_MIN || e1.LengthSquared() < FLT_MIN) {
+  if (glm::dot(e0, e0) < FLT_MIN || glm::dot(e1, e1) < FLT_MIN) {
     return Vec3f{0.0f};
   }
-  auto result = Vec3f::CrossProduct(e0, e1);
-  auto resultLengthSquared = result.LengthSquared();
+  auto result = glm::cross(e0, e1);
+  auto resultLengthSquared = glm::dot(result, result);
   if (resultLengthSquared < FLT_MIN) {
     return Vec3f{0.0f};
   }
-  float edgeDot = std::max(-1.0f, std::min(1.0f, Vec3f::DotProduct(e0, e1)));
+  float edgeDot = std::max(-1.0f, std::min(1.0f, glm::dot(e0, e1)));
   float angle = acos(edgeDot);
   float area = resultLengthSquared / 2.0f;
-  return result.Normalized() * angle * area;
+  return glm::normalize(result) * angle * area;
 }
 
 size_t RawModel::CalculateNormals(bool onlyBroken) {
@@ -686,7 +692,7 @@ size_t RawModel::CalculateNormals(bool onlyBroken) {
   for (int vertIx = 0; vertIx < vertices.size(); vertIx++) {
     RawVertex& vertex = vertices[vertIx];
     averagePos += (vertex.position / (float)vertices.size());
-    if (onlyBroken && (vertex.normal.LengthSquared() >= FLT_MIN)) {
+    if (onlyBroken && (glm::dot(vertex.normal, vertex.normal) >= FLT_MIN)) {
       continue;
     }
     vertex.normal = Vec3f{0.0f};
@@ -716,14 +722,14 @@ size_t RawModel::CalculateNormals(bool onlyBroken) {
       continue;
     }
     RawVertex& vertex = vertices[vertIx];
-    if (vertex.normal.LengthSquared() < FLT_MIN) {
+    if (glm::dot(vertex.normal, vertex.normal) < FLT_MIN) {
       vertex.normal = vertex.position - averagePos;
-      if (vertex.normal.LengthSquared() < FLT_MIN) {
+      if (glm::dot(vertex.normal, vertex.normal) < FLT_MIN) {
         vertex.normal = Vec3f{0.0f, 1.0f, 0.0f};
         continue;
       }
     }
-    vertex.normal.Normalize();
+    vertex.normal = glm::normalize(vertex.normal);
   }
   return onlyBroken ? brokenVerts.size() : vertices.size();
 }

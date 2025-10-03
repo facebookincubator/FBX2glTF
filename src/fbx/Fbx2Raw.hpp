@@ -8,6 +8,9 @@
 
 #pragma once
 
+#include <set>
+#include <string>
+
 #include "raw/RawModel.hpp"
 
 bool LoadFBXFile(

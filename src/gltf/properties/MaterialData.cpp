@@ -9,6 +9,8 @@
 #include "MaterialData.hpp"
 #include "TextureData.hpp"
 
+#include <glm/glm.hpp> // added: use glm::clamp and glm::dot
+
 // TODO: retrieve & pass in correct UV set from FBX
 std::unique_ptr<Tex> Tex::ref(const TextureData* tex, uint32_t texCoord) {
   return std::unique_ptr<Tex>{(tex != nullptr) ? new Tex(tex->ix, texCoord) : nullptr};
@@ -31,11 +33,11 @@ inline float clamp(float d, float bottom = 0, float top = 1) {
 }
 inline Vec3f
 clamp(const Vec3f& vec, const Vec3f& bottom = VEC3F_ZERO, const Vec3f& top = VEC3F_ONE) {
-  return Vec3f::Max(bottom, Vec3f::Min(top, vec));
+  return glm::clamp(vec, bottom, top);
 }
 inline Vec4f
 clamp(const Vec4f& vec, const Vec4f& bottom = VEC4F_ZERO, const Vec4f& top = VEC4F_ONE) {
-  return Vec4f::Max(bottom, Vec4f::Min(top, vec));
+  return glm::clamp(vec, bottom, top);
 }
 
 PBRMetallicRoughness::PBRMetallicRoughness(
@@ -55,7 +57,7 @@ void to_json(json& j, const PBRMetallicRoughness& d) {
   if (d.baseColorTexture != nullptr) {
     j["baseColorTexture"] = *d.baseColorTexture;
   }
-  if (d.baseColorFactor.LengthSquared() > 0) {
+  if (glm::dot(d.baseColorFactor, d.baseColorFactor) > 0.0f) {
     j["baseColorFactor"] = toStdVec(d.baseColorFactor);
   }
   if (d.metRoughTexture != nullptr) {
@@ -108,7 +110,7 @@ json MaterialData::serialize() const {
   if (emissiveTexture != nullptr) {
     result["emissiveTexture"] = *emissiveTexture;
   }
-  if (emissiveFactor.LengthSquared() > 0) {
+  if (glm::dot(emissiveFactor, emissiveFactor) > 0.0f) {
     result["emissiveFactor"] = toStdVec(emissiveFactor);
   }
   if (pbrMetallicRoughness != nullptr) {
@@ -124,8 +126,9 @@ json MaterialData::serialize() const {
     auto& prop_map = result["extras"]["fromFBX"]["userProperties"];
 
     json j = json::parse(i);
-    for (const auto& k : json::iterator_wrapper(j)) {
-      prop_map[k.key()] = k.value();
+    // iterator_wrapper is deprecated; use items()
+    for (const auto& kv : j.items()) {
+      prop_map[kv.key()] = kv.value();
     }
   }
 

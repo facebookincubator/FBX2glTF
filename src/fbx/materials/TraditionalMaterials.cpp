@@ -7,6 +7,9 @@
  */
 
 #include "TraditionalMaterials.hpp"
+#include <fbxsdk/scene/shading/fbxfiletexture.h>
+#include <fmt/printf.h>
+using namespace fbxsdk;
 
 std::unique_ptr<FbxTraditionalMaterialInfo> FbxTraditionalMaterialResolver::resolve() const {
   auto getSurfaceScalar = [&](const char* propName) -> std::tuple<FbxDouble, FbxFileTexture*> {

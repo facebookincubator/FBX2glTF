@@ -8,6 +8,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "gltf/Raw2Gltf.hpp"
 
 struct BufferData : Holdable {

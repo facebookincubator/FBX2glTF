@@ -8,7 +8,12 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "FBX2glTF.h"
 

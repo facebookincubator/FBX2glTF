@@ -13,12 +13,15 @@
 #include <fstream>
 #include <iostream>
 
+// Define M_PI for MSVC compatibility
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 #include <stb_image.h>
 #include <stb_image_write.h>
 
 #include <utils/File_Utils.hpp>
-#include "utils/Image_Utils.hpp"
-#include "utils/String_Utils.hpp"
 
 #include "raw/RawModel.hpp"
 
@@ -27,12 +30,10 @@
 #include "gltf/properties/BufferData.hpp"
 #include "gltf/properties/BufferViewData.hpp"
 #include "gltf/properties/CameraData.hpp"
-#include "gltf/properties/ImageData.hpp"
 #include "gltf/properties/MaterialData.hpp"
 #include "gltf/properties/MeshData.hpp"
 #include "gltf/properties/NodeData.hpp"
 #include "gltf/properties/PrimitiveData.hpp"
-#include "gltf/properties/SamplerData.hpp"
 #include "gltf/properties/SceneData.hpp"
 #include "gltf/properties/SkinData.hpp"
 #include "gltf/properties/TextureData.hpp"
@@ -664,7 +665,8 @@ ModelData* Raw2Gltf(
             // glTF uses column-major matrices
             std::vector<Mat4f> inverseBindMatrices;
             for (const auto& inverseBindMatrice : rawSurface.inverseBindMatrices) {
-              inverseBindMatrices.push_back(inverseBindMatrice.Transpose());
+              // glm::mat4 does not have Transpose() member — use glm::transpose
+              inverseBindMatrices.push_back(glm::transpose(inverseBindMatrice));
             }
 
             std::vector<uint32_t> jointIndexes;

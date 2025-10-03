@@ -6,7 +6,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#include <cppcodec/base64_default_rfc4648.hpp>
+ #include <tobiaslocker/base64.hpp>
+ #include <string>
 
 #include "BufferData.hpp"
 
@@ -24,9 +25,13 @@ json BufferData::serialize() const {
   if (!isGlb) {
     if (!uri.empty()) {
       result["uri"] = uri;
+    } else if (binData && !binData->empty()) {
+        const auto &data = *binData;
+        std::string raw(reinterpret_cast<const char *>(data.data()), data.size());
+        std::string b64 = base64::to_base64(raw);
+        result["uri"] = "data:application/octet-stream;base64," + b64;
     } else {
-      std::string encoded = base64::encode(*binData);
-      result["uri"] = "data:application/octet-stream;base64," + encoded;
+        result["uri"] = std::string();
     }
   }
   return result;

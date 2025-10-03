@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "gltf/Raw2Gltf.hpp"
 
 struct LightData : Holdable {
