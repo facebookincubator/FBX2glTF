@@ -24,6 +24,6 @@
     "index.js"
   ],
   "dependencies": {
-    "rimraf": "^2.6.2"
+    "rimraf": "^6.1.3"
   }
 }
